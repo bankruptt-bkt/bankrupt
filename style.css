@@ -316,3 +316,146 @@ body {
 .nav-item.active { 
   color: var(--accent-green); 
 }
+/* ================= SHOP PAGE STYLES ================= */
+
+/* Header */
+.shop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0 20px 0;
+}
+
+.icon-btn {
+  background: #19201a;
+  border: none;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.shop-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.coin-balance {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #ffffff;
+}
+
+/* Category Filters */
+.filter-categories {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scrollbar-width: none; /* Hide scrollbar for clean UI */
+}
+
+.filter-categories::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-btn {
+  background: #151a16;
+  color: #889988;
+  border: 1px solid #1f2b21;
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn.active {
+  background: #89e612;
+  color: #0b0f0c;
+  border-color: #89e612;
+}
+
+/* Horizontal Scroll Carousel */
+.shop-carousel {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 8px 0 24px 0;
+  scrollbar-width: none;
+}
+
+.shop-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Shop Card */
+.shop-card {
+  min-width: 170px;
+  width: 170px;
+  background: #111613;
+  border: 1px solid #1c261e;
+  border-radius: 20px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 290px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.card-img-box {
+  width: 100%;
+  height: 120px;
+  background: #0b0f0c;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  border: 1px solid #1a221c;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.item-type {
+  font-size: 0.7rem;
+  color: #889988;
+}
+
+.item-desc {
+  font-size: 0.75rem;
+  color: #889988;
+  margin-top: 4px;
+}
+
+.item-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #89e612;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-top: 10px;
+}

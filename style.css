@@ -51,7 +51,7 @@ body {
 .hero-card {
   position: relative;
   background-color: var(--card-bg);
-  background-image: url('ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
+    background-image: url('Ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
   background-repeat: no-repeat;
   background-position: right bottom;
   background-size: contain;

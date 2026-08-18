@@ -459,3 +459,66 @@ body {
   font-size: 0.85rem;
   margin-top: 10px;
 }
+/* ================= TASKS UI MATCHING SCREENSHOT ================= */
+
+.task-card {
+  background: #111613;
+  border: 1px solid #1c261e;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.task-icon-box {
+  font-size: 1.6rem;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.task-desc {
+  font-size: 0.75rem;
+  color: #889988;
+  margin-top: 2px;
+}
+
+.task-reward {
+  font-size: 0.8rem;
+  color: #89e612;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.action-btn {
+  background: #1f2a21;
+  color: #89e612;
+  border: 1px solid #2a3a2d;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.completed-check {
+  background: #89e612;
+  color: #0b0f0c;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.9rem;
+}

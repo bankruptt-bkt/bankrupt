@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bankrupt - Tasks</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Tasks Header -->
+  <header class="shop-header">
+    <button class="icon-btn">⚙️</button>
+    <h1 class="shop-title">Earn BKT</h1>
+    <div class="coin-balance">
+      <span class="coin-icon">🟡</span>
+      <span class="balance-val">0.0000 BKT</span>
+    </div>
+  </header>
+
+  <!-- Tasks Container -->
+  <div class="tasks-list">
+    
+    <!-- Task Item 1 -->
+    <div class="task-card">
+      <div class="task-info">
+        <span class="task-icon">📢</span>
+        <div>
+          <h3 class="task-title">Join Telegram Channel</h3>
+          <p class="task-reward">+5.00 BKT</p>
+        </div>
+      </div>
+      <button class="task-btn" onclick="window.open('https://t.me', '_blank')">Start</button>
+    </div>
+
+    <!-- Task Item 2 -->
+    <div class="task-card">
+      <div class="task-info">
+        <span class="task-icon">🐦</span>
+        <div>
+          <h3 class="task-title">Follow on X (Twitter)</h3>
+          <p class="task-reward">+3.00 BKT</p>
+        </div>
+      </div>
+      <button class="task-btn" onclick="window.open('https://x.com', '_blank')">Start</button>
+    </div>
+
+    <!-- Task Item 3 -->
+    <div class="task-card">
+      <div class="task-info">
+        <span class="task-icon">👥</span>
+        <div>
+          <h3 class="task-title">Invite 3 Friends</h3>
+          <p class="task-reward">+10.00 BKT</p>
+        </div>
+      </div>
+      <button class="task-btn">Invite</button>
+    </div>
+
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <span>🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="shop.html" class="nav-item">
+      <span>🛒</span>
+      <span>Shop</span>
+    </a>
+    <a href="tasks.html" class="nav-item active">
+      <span>📋</span>
+      <span>Tasks</span>
+    </a>
+    <a href="leaderboard.html" class="nav-item">
+      <span>🏆</span>
+      <span>Leaderboard</span>
+    </a>
+    <a href="profile.html" class="nav-item">
+      <span>👤</span>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

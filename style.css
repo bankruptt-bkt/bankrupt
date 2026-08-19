@@ -341,20 +341,20 @@ body {
 }
 
 .shop-carousel {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   padding: 8px 0 24px 0;
-  scrollbar-width: none;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
-
 .shop-carousel::-webkit-scrollbar {
   display: none;
 }
 
 .shop-card {
-  min-width: 170px;
-  width: 170px;
+  width: 100%;
+  box-sizing: border-box;
   background: #111613;
   border: 1px solid #1c261e;
   border-radius: 20px;
@@ -362,9 +362,9 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 290px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+
 
 .card-img-box {
   width: 100%;

@@ -48,21 +48,35 @@ body {
 }
 
 /* Hero Balance Card with Fixed Mascot Background */
+/* Hero Balance Card with Mascot Background */
 .hero-card {
   position: relative;
   background-color: var(--card-bg);
-  background-image: url('./Ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
+  /* Use lowercase path or exact matching filename */
+  background-image: url('ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
   background-repeat: no-repeat;
-  background-position: right center;
-  background-size: cover;
+  background-position: right bottom;
+  background-size: 130px auto; /* Controls exact size so it doesn't get cut off */
   border: 1px solid var(--accent-green);
   border-radius: 16px;
-  padding: 24px 20px;
+  padding: 20px;
   margin-bottom: 16px;
   box-shadow: 0 0 15px rgba(56, 239, 125, 0.15);
   overflow: hidden;
-  min-height: 140px;
 }
+
+/* Gradient overlay to fade background behind text */
+.hero-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #131915 50%, rgba(19, 25, 21, 0.2) 100%);
+  z-index: 1;
+}
+
 
 /* Gradient overlay to ensure background art doesn't obscure high-contrast values */
 .hero-card::before {

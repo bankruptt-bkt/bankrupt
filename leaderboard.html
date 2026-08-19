@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BANKRUPT - Leaderboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="header">
+    <div class="logo">
+      <span class="brand-font">🏆 LEADERBOARD</span>
+    </div>
+    <span class="username">Top Degens</span>
+  </header>
+
+  <!-- User Rank Banner -->
+  <div class="hero-card" style="min-height: auto; padding: 16px; background-image: none;">
+    <div class="balance-title">YOUR CURRENT RANK</div>
+    <div class="balance-val" style="font-size: 1.8rem;" id="user-rank">#--</div>
+    <div class="sub-text">Keep completing tasks to climb up!</div>
+  </div>
+
+  <!-- Leaderboard List Container -->
+  <div class="section-title">GLOBAL RANKINGS</div>
+  <div id="leaderboard-list">
+    <div style="text-align: center; color: var(--text-gray); padding: 20px;">Loading ranks...</div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <span>🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="shop.html" class="nav-item">
+      <span>🛒</span>
+      <span>Shop</span>
+    </a>
+    <a href="tasks.html" class="nav-item">
+      <span>📋</span>
+      <span>Tasks</span>
+    </a>
+    <a href="leaderboard.html" class="nav-item active">
+      <span>🏆</span>
+      <span>Leaderboard</span>
+    </a>
+    <a href="profile.html" class="nav-item">
+      <span>👤</span>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script type="module" src="leaderboard.js"></script>
+</body>
+</html>

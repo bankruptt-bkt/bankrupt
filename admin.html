@@ -42,18 +42,27 @@
       </div>
     </div>
 
-    <!-- Manage Tasks -->
-    <div class="admin-card">
-      <div class="admin-title">Add New Task</div>
-      <input type="text" id="task-title" class="admin-input" placeholder="Task Title (e.g. Join Telegram)">
-      <input type="text" id="task-reward" class="admin-input" placeholder="Reward (e.g. +5.00 BKT)">
-      <input type="text" id="task-icon" class="admin-input" placeholder="Icon Emoji (e.g. ✈️)">
-      <input type="text" id="task-link" class="admin-input" placeholder="Target Link (https://...)">
-      <button onclick="createNewTask()" class="admin-btn">Publish Task</button>
+    <!-- Manage Tasks Card in admin.html -->
+<div class="admin-card">
+  <div class="admin-title">Add New Task</div>
+  <input type="text" id="task-title" class="admin-input" placeholder="Task Title (e.g. Join Telegram)">
+  <input type="text" id="task-reward" class="admin-input" placeholder="Reward (e.g. +5.00 BKT)">
+  <input type="text" id="task-icon" class="admin-input" placeholder="Icon Emoji (e.g. ✈️)">
+  <input type="text" id="task-link" class="admin-input" placeholder="Target Link (https://...)">
+  
+  <select id="task-category" class="admin-input" style="color:#fff;">
+    <option value="Daily">Daily</option>
+    <option value="Social">Social</option>
+    <option value="Community">Community</option>
+    <option value="Extra">Extra</option>
+  </select>
 
-      <div class="admin-title" style="margin-top: 25px;">Active Tasks</div>
-      <div id="active-tasks-list">Loading tasks...</div>
-    </div>
+  <button onclick="createNewTask()" class="admin-btn">Publish Task</button>
+
+  <div class="admin-title" style="margin-top: 25px;">Active Tasks</div>
+  <div id="active-tasks-list">Loading tasks...</div>
+</div>
+
 
     <!-- User Referral & Balance Control -->
     <div class="admin-card">
@@ -137,21 +146,21 @@
 
     // Task Actions
     function createNewTask() {
-      const title = document.getElementById("task-title").value;
-      const reward = document.getElementById("task-reward").value;
-      const icon = document.getElementById("task-icon").value;
-      const link = document.getElementById("task-link").value;
+  const title = document.getElementById("task-title").value;
+  const reward = document.getElementById("task-reward").value;
+  const icon = document.getElementById("task-icon").value;
+  const link = document.getElementById("task-link").value;
+  const category = document.getElementById("task-category").value;
 
-      if (!title || !reward) return alert("Fill in at least title and reward!");
+  if (!title || !reward) return alert("Fill in title and reward!");
 
-      db.collection("tasks").add({ title, reward, icon, link, createdAt: Date.now() }).then(() => {
-        alert("Task published successfully!");
-        document.getElementById("task-title").value = "";
-        document.getElementById("task-reward").value = "";
-        document.getElementById("task-icon").value = "";
-        document.getElementById("task-link").value = "";
-      });
-    }
+  db.collection("tasks").add({
+    title, reward, icon, link, category, createdAt: Date.now()
+  }).then(() => {
+    alert("Task published successfully!");
+  });
+}
+
 
     function deleteTask(id) {
       if (confirm("Remove this task?")) {

@@ -1,61 +1,118 @@
-      <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bankrupt - Tasks</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BANKRUPT - Tasks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Styling for Task List */
+    .tasks-container { padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 90px; }
+    .task-card { background: #111a13; border: 1px solid #1a2b1e; border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
+    .task-left { display: flex; align-items: center; gap: 12px; }
+    .task-icon-box { font-size: 1.5rem; background: #080d09; padding: 8px 12px; border-radius: 8px; border: 1px solid #1a291c; }
+    .task-title { color: #fff; font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; }
+    .task-reward { color: #00ff88; font-weight: 700; font-size: 0.85rem; }
+    .task-btn { background: #00ff88; color: #000; font-weight: 700; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; border: none; cursor: pointer; }
+    .tab-btn.active { background: #00ff88 !important; color: #000 !important; font-weight: 700; }
+  </style>
 </head>
 <body>
 
-  <!-- Tasks Header -->
-  <header class="shop-header">
-    <button class="icon-btn" onclick="history.back()">❮</button>
-    <h1 class="shop-title">Tasks</h1>
-    <div class="coin-balance">
-      <span class="coin-icon">🟡</span>
-      <span class="balance-val">0.0000 BKT</span>
-    </div>
+  <!-- Top Header -->
+  <header class="header" style="justify-content: flex-start; gap: 15px;">
+    <button class="icon-btn" onclick="history.back()">‹</button>
+    <span class="brand-font" style="font-size: 1.2rem;">Tasks</span>
+    <span style="margin-left: auto; color: #00ff88; font-weight: 700;">🟡 <span id="user-bkt-bal">0.0000</span> BKT</span>
   </header>
 
-  <!-- Filter Categories -->
-  <div class="filter-categories">
-    <button class="filter-btn active" data-category="Daily">Daily</button>
-    <button class="filter-btn" data-category="Social">Social</button>
-    <button class="filter-btn" data-category="Community">Community</button>
-    <button class="filter-btn" data-category="Extra">Extra</button>
+  <!-- Category Tabs -->
+  <div style="display: flex; gap: 8px; padding: 15px; overflow-x: auto;">
+    <button class="tab-btn active" onclick="switchCategory('Daily', this)">Daily</button>
+    <button class="tab-btn" onclick="switchCategory('Social', this)">Social</button>
+    <button class="tab-btn" onclick="switchCategory('Community', this)">Community</button>
+    <button class="tab-btn" onclick="switchCategory('Extra', this)">Extra</button>
   </div>
 
   <!-- Dynamic Tasks Container -->
-  <div class="tasks-list" id="tasks-container">
-    <!-- Tasks will be dynamically rendered here from Firestore -->
+  <div id="tasks-list" class="tasks-container">
+    <div style="color: #889988; text-align: center; margin-top: 20px;">Loading tasks...</div>
   </div>
 
-  <!-- Bottom Nav -->
+  <!-- Bottom Navigation Bar -->
   <nav class="bottom-nav">
-    <a href="index.html" class="nav-item">
-      <span>🏠</span>
-      <span>Home</span>
-    </a>
-    <a href="shop.html" class="nav-item">
-      <span>🛒</span>
-      <span>Shop</span>
-    </a>
-    <a href="tasks.html" class="nav-item active">
-      <span>📋</span>
-      <span>Tasks</span>
-    </a>
-    <a href="leaderboard.html" class="nav-item">
-      <span>🏆</span>
-      <span>Leaderboard</span>
-    </a>
-    <a href="profile.html" class="nav-item">
-      <span>👤</span>
-      <span>Profile</span>
-    </a>
+    <a href="index.html" class="nav-item"><span>🏠</span><span>Home</span></a>
+    <a href="shop.html" class="nav-item"><span>🛒</span><span>Shop</span></a>
+    <a href="tasks.html" class="nav-item active"><span>📋</span><span>Tasks</span></a>
+    <a href="leaderboard.html" class="nav-item"><span>🏆</span><span>Leaderboard</span></a>
+    <a href="profile.html" class="nav-item"><span>👤</span><span>Profile</span></a>
   </nav>
 
-  <script type="module" src="tasks.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
+      authDomain: "bankrupt-9068b.firebaseapp.com",
+      databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
+      projectId: "bankrupt-9068b",
+      storageBucket: "bankrupt-9068b.firebasestorage.app",
+      messagingSenderId: "961644576786",
+      appId: "1:961644576786:web:65eff34df07a18067458cb"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let currentCategory = "Daily";
+    let allTasks = [];
+
+    // Real-time task listener from Firebase
+    db.collection("tasks").onSnapshot((snapshot) => {
+      allTasks = [];
+      snapshot.forEach((doc) => {
+        allTasks.push({ id: doc.id, ...doc.data() });
+      });
+      renderTasks();
+    });
+
+    function switchCategory(category, element) {
+      currentCategory = category;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      element.classList.add('active');
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const listContainer = document.getElementById("tasks-list");
+      listContainer.innerHTML = "";
+
+      // Filter tasks by active tab category
+      const filtered = allTasks.filter(t => (t.category || "Daily") === currentCategory);
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `<div style="color: #889988; text-align: center; margin-top: 30px;">No tasks available under ${currentCategory} yet.</div>`;
+        return;
+      }
+
+      filtered.forEach((task) => {
+        listContainer.innerHTML += `
+          <div class="task-card">
+            <div class="task-left">
+              <div class="task-icon-box">${task.icon || '📋'}</div>
+              <div>
+                <div class="task-title">${task.title}</div>
+                <div class="task-reward">${task.reward}</div>
+              </div>
+            </div>
+            <a href="${task.link || '#'}" target="_blank" class="task-btn">Start</a>
+          </div>
+        `;
+      });
+    }
+  </script>
 </body>
 </html>

@@ -15,6 +15,11 @@
     .task-reward { color: #00ff88; font-weight: 700; font-size: 0.85rem; }
     .task-btn { background: #00ff88; color: #000; font-weight: 700; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; border: none; cursor: pointer; }
     .tab-btn.active { background: #00ff88 !important; color: #000 !important; font-weight: 700; }
+    
+    /* Action area for Start & Delete buttons */
+    .task-actions { display: flex; align-items: center; gap: 8px; }
+    .delete-btn { background: rgba(255, 77, 77, 0.15); color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.3); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
+    .delete-btn:hover { background: #ff4d4d; color: #fff; }
   </style>
 </head>
 <body>
@@ -27,11 +32,11 @@
   </header>
 
   <div class="tab-container">
-  <button class="tab-btn active" onclick="switchCategory('Daily', this)">Daily</button>
-  <button class="tab-btn" onclick="switchCategory('Social', this)">Social</button>
-  <button class="tab-btn" onclick="switchCategory('Community', this)">Community</button>
-  <button class="tab-btn" onclick="switchCategory('Extra', this)">Extra</button>
-</div>
+    <button class="tab-btn active" onclick="switchCategory('Daily', this)">Daily</button>
+    <button class="tab-btn" onclick="switchCategory('Social', this)">Social</button>
+    <button class="tab-btn" onclick="switchCategory('Community', this)">Community</button>
+    <button class="tab-btn" onclick="switchCategory('Extra', this)">Extra</button>
+  </div>
 
   <!-- Dynamic Tasks Container -->
   <div id="tasks-list" class="tasks-container">
@@ -67,6 +72,9 @@
 
     let currentCategory = "Daily";
     let allTasks = [];
+    
+    // ADMIN TOGGLE: Set to true to show the delete controls
+    const isAdmin = true;
 
     db.collection("tasks").onSnapshot((snapshot) => {
       allTasks = [];
@@ -95,6 +103,11 @@
       }
 
       filtered.forEach((task) => {
+        // Show delete button only if isAdmin is true
+        const deleteButtonHTML = isAdmin 
+          ? `<button class="delete-btn" onclick="deleteTask('${task.id}')">🗑️ Delete</button>` 
+          : '';
+
         listContainer.innerHTML += `
           <div class="task-card">
             <div class="task-left">
@@ -104,10 +117,26 @@
                 <div class="task-reward">${task.reward}</div>
               </div>
             </div>
-            <a href="${task.link || '#'}" target="_blank" class="task-btn">Start</a>
+            <div class="task-actions">
+              <a href="${task.link || '#'}" target="_blank" class="task-btn">Start</a>
+              ${deleteButtonHTML}
+            </div>
           </div>
         `;
       });
+    }
+
+    // Delete Task Function
+    async function deleteTask(taskId) {
+      if (confirm("Are you sure you want to delete this task?")) {
+        try {
+          await db.collection("tasks").doc(taskId).delete();
+          alert("Task deleted successfully!");
+        } catch (error) {
+          console.error("Error deleting task:", error);
+          alert("Failed to delete task.");
+        }
+      }
     }
   </script>
 </body>

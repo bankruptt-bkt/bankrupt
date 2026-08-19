@@ -1,101 +1,101 @@
-import { auth, db } from "./firebase-config.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { collection, getDocs, doc, getDoc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getFirestore, 
+  doc, 
+  getDoc,
+  updateDoc, 
+  increment, 
+  arrayUnion 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let currentUser = null;
+// ================= FIREBASE CONFIG =================
+const firebaseConfig = {
+  // Insert your Firebase configuration object here
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Current active user reference
+const currentUser = {
+  uid: "Probhat" // Matches the document ID in your 'users' collection
+};
+
+// Global state tracking
 let completedTasks = [];
-let activeCategory = "Daily";
+let activeCategory = "all";
 
-const tasksContainer = document.getElementById("tasks-container");
-const balanceDisplay = document.querySelector(".balance-val");
+// DOM Elements
+const taskListContainer = document.getElementById("task-list");
 const filterBtns = document.querySelectorAll(".filter-btn");
 
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    currentUser = user;
-    await loadUserData();
-    await loadTasks();
-  }
-});
-
-// Load user completed tasks and balance
+// ================= USER DATA LOADER =================
 async function loadUserData() {
-  const userRef = doc(db, "users", currentUser.uid);
-  const userSnap = await getDoc(userRef);
-  if (userSnap.exists()) {
-    const data = userSnap.data();
-    completedTasks = data.completedTasks || [];
-    if (balanceDisplay) {
-      balanceDisplay.textContent = `${(data.balance || 0).toFixed(4)} BKT`;
-    }
-  }
-}
-
-// Fetch tasks dynamically from Firestore
-async function loadTasks() {
-  if (!tasksContainer) return;
-  tasksContainer.innerHTML = "<p style='color:#888; text-align:center;'>Loading tasks...</p>";
-
   try {
-    const querySnapshot = await getDocs(collection(db, "tasks"));
-    tasksContainer.innerHTML = "";
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef);
 
-    querySnapshot.forEach((docSnap) => {
-      const task = docSnap.data();
-      const taskId = docSnap.id;
-
-      if (task.category === activeCategory) {
-        renderTaskCard(taskId, task);
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      completedTasks = data.completedTasks || [];
+      
+      // Update UI balance if element exists on page
+      const balanceElem = document.getElementById("user-balance");
+      if (balanceElem) {
+        balanceElem.innerText = (data.balance || 0).toFixed(4);
       }
-    });
-
-    if (tasksContainer.innerHTML === "") {
-      tasksContainer.innerHTML = "<p style='color:#666; text-align:center;'>No tasks in this category.</p>";
     }
   } catch (err) {
-    console.error("Error fetching tasks:", err);
+    console.error("Failed to load user data:", err);
   }
 }
 
-// Render individual task item UI matching screenshot
-function renderTaskCard(taskId, task) {
-  const isCompleted = completedTasks.includes(taskId);
-  
-  const card = document.createElement("div");
-  card.className = "task-card";
+// ================= TASK RENDER & CLICK HANDLERS =================
+function renderTaskCard(task) {
+  const isCompleted = completedTasks.includes(task.id);
 
-  card.innerHTML = `
-    <div class="task-info">
-      <div class="task-icon-box">${task.icon || '📋'}</div>
+  return `
+    <div class="task-card">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="task-icon-box">${task.icon || '⚡'}</div>
+        <div>
+          <div class="task-title">${task.title}</div>
+          <div class="task-desc">${task.desc}</div>
+          <div class="task-reward">+${task.reward} BKT</div>
+        </div>
+      </div>
       <div>
-        <h3 class="task-title">${task.title}</h3>
-        <p class="task-desc">${task.description}</p>
-        <p class="task-reward">+${task.reward} BKT</p>
+        ${
+          isCompleted
+            ? `<div class="completed-check">✓</div>`
+            : `<button class="action-btn" id="btn-${task.id}">Start</button>`
+        }
       </div>
     </div>
-    ${
-      isCompleted
-        ? `<div class="completed-check">✓</div>`
-        : `<button class="action-btn" data-id="${taskId}" data-reward="${task.reward}" data-url="${task.link}">Go</button>`
-    }
   `;
+}
 
-  tasksContainer.appendChild(card);
-
-  // Attach completion listener
-  const btn = card.querySelector(".action-btn");
-  if (btn) {
-    btn.addEventListener("click", () => handleTaskClick(taskId, task.reward, task.link));
-  }
+function attachTaskListeners(tasks) {
+  tasks.forEach((task) => {
+    if (!completedTasks.includes(task.id)) {
+      const btn = document.getElementById(`btn-${task.id}`);
+      if (btn) {
+        btn.addEventListener("click", () => handleTaskClick(task.id, task.reward, task.link));
+      }
+    }
+  });
 }
 
 // Task execution & reward allocation
 async function handleTaskClick(taskId, reward, link) {
-  if (link && link !== "#") window.open(link, "_blank");
+  if (link && link !== "#") {
+    window.open(link, "_blank");
+  }
 
   const userRef = doc(db, "users", currentUser.uid);
 
   try {
+    // Atomically increments balance & saves completed task ID to Firestore
     await updateDoc(userRef, {
       balance: increment(reward),
       completedTasks: arrayUnion(taskId)
@@ -109,7 +109,26 @@ async function handleTaskClick(taskId, reward, link) {
   }
 }
 
-// Category Tab Switching
+// Filter tasks and load into DOM
+function loadTasks() {
+  // Sample task list (Replace/Expand as needed)
+  const allTasks = [
+    { id: "task_1", category: "social", title: "Follow on X", desc: "Join our official Twitter", reward: 25, link: "https://x.com", icon: "🐦" },
+    { id: "task_2", category: "social", title: "Join Telegram", desc: "Stay updated on channel", reward: 30, link: "https://t.me", icon: "✈️" },
+    { id: "task_3", category: "daily", title: "Share App", desc: "Invite your degen friends", reward: 15, link: "#", icon: "📢" }
+  ];
+
+  const filtered = activeCategory === "all" 
+    ? allTasks 
+    : allTasks.filter(t => t.category === activeCategory);
+
+  if (taskListContainer) {
+    taskListContainer.innerHTML = filtered.map(t => renderTaskCard(t)).join("");
+    attachTaskListeners(filtered);
+  }
+}
+
+// ================= CATEGORY TAB SWITCHING =================
 filterBtns.forEach((btn) => {
   btn.addEventListener("click", (e) => {
     filterBtns.forEach((b) => b.classList.remove("active"));
@@ -118,3 +137,11 @@ filterBtns.forEach((btn) => {
     loadTasks();
   });
 });
+
+// ================= INITIALIZATION =================
+async function init() {
+  await loadUserData();
+  loadTasks();
+}
+
+init();

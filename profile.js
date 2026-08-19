@@ -5,42 +5,49 @@ import { doc, getDoc, setDoc, runTransaction } from "https://www.gstatic.com/fir
 const REFERRAL_REWARD = 100;
 const MAX_REFERRALS = 10;
 
-// 1. Auth Listener
+// 1. Run UI immediately so the link loads instantly on page load
+setupWebReferralUI();
+
+// 2. Auth Listener updates user-specific counts and processes incoming invites
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    // Check if new user visited via a referral URL parameter (?ref=USER_ID)
+    // Re-render UI with the user's specific UID
+    setupWebReferralUI(user.uid);
+
+    // Process incoming invite link (?ref=...)
     await handleIncomingWebReferral(user);
 
-    // Fetch user profile from Firestore
+    // Fetch and display live referral stats
     const userSnap = await getDoc(doc(db, "users", user.uid));
     const refCount = userSnap.exists() ? (userSnap.data().referralCount || 0) : 0;
-
-    // Set up web referral link UI
-    setupWebReferralUI(user.uid, refCount);
+    
+    const countDisplay = document.getElementById("ref-count-display");
+    if (countDisplay) countDisplay.textContent = `${refCount} / ${MAX_REFERRALS}`;
   }
 });
 
 /**
- * Creates a web URL using the current domain name
+ * Generates the web link immediately
  */
-function setupWebReferralUI(userId, referralCount = 0) {
+function setupWebReferralUI(userId = "guest") {
   const refInput = document.getElementById("referral-link");
-  const countDisplay = document.getElementById("ref-count-display");
   const copyBtn = document.getElementById("copy-ref-btn");
 
-  // Generates a clean Web URL: https://bankruptt-bkt.github.io/bankrupt/?ref=USER_ID
+  // Generates link using site URL
   const inviteLink = `${window.location.origin}${window.location.pathname}?ref=${userId}`;
 
   if (refInput) refInput.value = inviteLink;
-  if (countDisplay) countDisplay.textContent = `${referralCount} / ${MAX_REFERRALS}`;
 
   if (copyBtn) {
-    copyBtn.addEventListener("click", async () => {
+    // Remove previous listeners to prevent duplicates
+    const newCopyBtn = copyBtn.cloneNode(true);
+    copyBtn.parentNode.replaceChild(newCopyBtn, copyBtn);
+
+    newCopyBtn.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(inviteLink);
         alert("Referral link copied to clipboard!");
       } catch (err) {
-        // Fallback copy logic
         refInput.select();
         document.execCommand("copy");
         alert("Referral link copied!");
@@ -50,21 +57,18 @@ function setupWebReferralUI(userId, referralCount = 0) {
 }
 
 /**
- * Handles processing ?ref= in the web browser URL
+ * Handles processing ?ref= parameter in URL
  */
 async function handleIncomingWebReferral(newUser) {
   const newUserRef = doc(db, "users", newUser.uid);
   const newUserSnap = await getDoc(newUserRef);
 
-  // Stop if user already exists
   if (newUserSnap.exists()) return;
 
-  // Extract ?ref= from the website URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const referrerId = urlParams.get("ref");
 
-  if (!referrerId || referrerId === newUser.uid) {
-    // Standard user registration
+  if (!referrerId || referrerId === newUser.uid || referrerId === "guest") {
     await setDoc(newUserRef, {
       username: newUser.displayName || "Anonymous",
       balance: 0,
@@ -90,7 +94,6 @@ async function handleIncomingWebReferral(newUser) {
         }
       }
 
-      // Create new user with welcome reward
       transaction.set(newUserRef, {
         username: newUser.displayName || "Anonymous",
         balance: referrerEligible ? REFERRAL_REWARD : 0,
@@ -99,7 +102,6 @@ async function handleIncomingWebReferral(newUser) {
         createdAt: new Date()
       });
 
-      // Credit referrer
       if (referrerEligible) {
         const referrerBalance = referrerDoc.data().balance || 0;
         transaction.update(referrerRef, {

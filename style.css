@@ -48,15 +48,13 @@ body {
 }
 
 /* Hero Balance Card with Fixed Mascot Background */
-/* Hero Balance Card with Mascot Background */
 .hero-card {
   position: relative;
   background-color: var(--card-bg);
-  /* Use lowercase path or exact matching filename */
-  background-image: url('ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
+  background-image: url('./ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
   background-repeat: no-repeat;
   background-position: right bottom;
-  background-size: 130px auto; /* Controls exact size so it doesn't get cut off */
+  background-size: 140px auto;
   border: 1px solid var(--accent-green);
   border-radius: 16px;
   padding: 20px;
@@ -65,7 +63,7 @@ body {
   overflow: hidden;
 }
 
-/* Gradient overlay to fade background behind text */
+/* Gradient overlay to fade left side for readability while revealing image on right */
 .hero-card::before {
   content: "";
   position: absolute;
@@ -73,20 +71,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, #131915 50%, rgba(19, 25, 21, 0.2) 100%);
-  z-index: 1;
-}
-
-
-/* Gradient overlay to ensure background art doesn't obscure high-contrast values */
-.hero-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, rgba(19, 25, 21, 0.95) 45%, rgba(19, 25, 21, 0.35) 100%);
+  background: linear-gradient(90deg, rgba(19, 25, 21, 0.9) 40%, rgba(19, 25, 21, 0.1) 100%);
   z-index: 1;
 }
 
@@ -477,4 +462,5 @@ body {
   justify-content: center;
   font-weight: 900;
   font-size: 0.9rem;
-  }
+}
+

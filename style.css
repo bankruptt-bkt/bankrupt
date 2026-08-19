@@ -613,136 +613,197 @@ body {
 
 .xp-text {
   position: absolute;
-  right: 6px;
-  top: -12px;
-  font-size: 0.6rem;
-  color: #888;
+/* ==================== PROFILE PAGE REDESIGN ==================== */
+.profile-container {
+  padding: 12px 16px 80px 16px;
 }
 
-.profile-stats-list {
-  background: #111613;
-  border-radius: 14px;
-  padding: 12px;
+.profile-avatar-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  color: #a0b0a0;
-}
-
-.stat-val {
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.stat-val.highlight {
-  color: #89e612;
-}
-
-.badges-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: #7a8b7e;
-  font-weight: 700;
-}
-
-.view-all {
-  color: #a0b0a0;
-  text-decoration: none;
-}
-
-.badges-row {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-}
-
-.badge-item img {
-  width: 55px;
-  height: 55px;
+.avatar-glow-wrapper {
+  position: relative;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
-  border: 1px solid #28362a;
-}
-/* Referral Section Container */
-.referral-card {
-  background: #121913;
-  border: 1px solid #1f3022;
-  border-radius: 14px;
-  padding: 16px;
-  margin: 16px 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border: 2px solid #00ff88;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+  margin-bottom: 10px;
 }
 
-.referral-card h3 {
-  color: #ffffff;
-  font-size: 1rem;
-  margin: 0 0 4px 0;
-  letter-spacing: 0.5px;
+.avatar-glow-wrapper img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
-.referral-card p {
-  color: #8a9e8c;
-  font-size: 0.85rem;
-  margin: 0 0 14px 0;
-}
-
-.referral-card p strong {
-  color: #00ff88;
-}
-
-/* Input & Copy Button Row */
-.referral-box {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.referral-box input {
-  flex: 1;
-  background: #0a0e0b;
-  border: 1px solid #1a291c;
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: #00ff88;
-  font-family: monospace;
-  font-size: 0.85rem;
-  outline: none;
-}
-
-.referral-box button {
-  background: #00ff88;
-  color: #000000;
+.edit-avatar-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #ffffff;
   border: none;
-  border-radius: 8px;
-  padding: 0 16px;
-  font-weight: 700;
-  font-size: 0.85rem;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
   cursor: pointer;
-  transition: transform 0.1s ease, opacity 0.2s ease;
 }
 
-.referral-box button:active {
-  transform: scale(0.96);
-  opacity: 0.9;
+.user-display-name {
+  color: #fff;
+  font-size: 1.2rem;
+  margin: 0;
 }
 
-/* Stats Row */
-.referral-stats {
+.user-uid-label {
+  color: #667766;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+/* 4-Stat Box Grid */
+.stats-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #0f1510;
+  border: 1px solid #1a291c;
+  border-radius: 12px;
+  padding: 14px 8px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-icon {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.stat-number {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.stat-number.highlight {
+  color: #00ff88;
+}
+
+.stat-title {
+  color: #667766;
+  font-size: 0.7rem;
+  margin-top: 2px;
+}
+
+/* Badges Grid */
+.badges-card {
+  background: #0f1510;
+  border: 1px solid #1a291c;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.badges-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.85rem;
-  color: #8a9e8c;
-  padding-top: 6px;
-  border-top: 1px dashed #1a291c;
+  margin-bottom: 12px;
 }
 
-.referral-stats strong {
-  color: #ffffff;
+.badges-card-header h3 {
+  color: #889988;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  margin: 0;
 }
+
+.view-all-link {
+  color: #889988;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  text-align: center;
+}
+
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.badge-img-circle {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid #00ff88;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  background: #000;
+}
+
+.badge-img-circle img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.badge-item span {
+  color: #ccc;
+  font-size: 0.65rem;
+  line-height: 1.1;
+}
+
+/* Action Rows */
+.action-list-card {
+  background: #0f1510;
+  border: 1px solid #1a291c;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.action-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid #182419;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.action-item:last-child {
+  border-bottom: none;
+}
+
+.action-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-arrow {
+  color: #556655;
+  font-size: 1.1rem;
+}
+  

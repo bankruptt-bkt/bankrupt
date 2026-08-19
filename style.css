@@ -676,3 +676,137 @@ body {
   color: #556655;
   font-size: 1.1rem;
 }
+/* ================= CENTERED POPUP MENU ================= */
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  padding: 16px;
+}
+
+.menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.menu-modal {
+  background: rgba(15, 21, 16, 0.92);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 360px;
+  padding: 20px 18px 16px 18px;
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.15), 0 10px 40px rgba(0, 0, 0, 0.9);
+  position: relative;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.close-menu-btn {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #889988;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.close-menu-btn:hover {
+  color: #ffffff;
+}
+
+.menu-user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.menu-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  object-fit: cover;
+}
+
+.menu-user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-user-name {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.menu-user-uid {
+  color: #667766;
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+.menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 10px 0 14px 0;
+}
+
+.menu-section-label {
+  color: #38ef7d;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: 12px 0 6px 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #dddddd;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 8px 0;
+  transition: color 0.2s ease;
+}
+
+.menu-item:hover {
+  color: #00ff88;
+}
+
+.menu-item.danger {
+  color: #ff4d4d;
+}
+
+.menu-item-icon {
+  font-size: 1.05rem;
+  width: 22px;
+  text-align: center;
+}
+
+.menu-footer-brand {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  font-size: 1.1rem;
+}

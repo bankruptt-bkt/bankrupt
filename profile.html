@@ -9,40 +9,77 @@
 </head>
 <body>
 
-  <!-- Top Navbar -->
+  <!-- Top Header -->
   <header class="header">
-    <div class="logo">
-      <span class="brand-font">👤 PROFILE</span>
-    </div>
-    <span class="username" id="profile-handle">@Loading...</span>
+    <div style="width: 24px;"></div> <!-- Spacer -->
+    <span class="brand-font" style="font-size: 1.2rem;">Profile</span>
+    <button class="icon-btn" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">⚙️</button>
   </header>
 
-  <!-- Profile Card -->
-  <div class="hero-card" style="min-height: auto; padding: 20px; background-image: none;">
-    <div class="badge">DEGEN USER</div>
-    <div class="balance-title">TOTAL $BANKRUPT BALANCE</div>
-    <div class="balance-val" id="profile-balance">0.0000 BKT</div>
-    <div class="sub-text">Connected to Robinhood Chain</div>
+  <!-- User Identity Card -->
+  <div class="profile-card">
+    <div class="user-header-row">
+      <div class="avatar-wrapper">
+        <img src="avatar.png" alt="Avatar" id="user-avatar" onerror="this.src='https://via.placeholder.com/80/000000/89e612?text=Degen'">
+      </div>
+      <div class="user-info-col">
+        <div class="user-name-row">
+          <span class="user-fullname" id="profile-name">Probhat Santra</span>
+          <span class="edit-icon">✏️</span>
+        </div>
+        <div class="id-label">BANKRUPT ID</div>
+        <div class="id-value-row">
+          <span id="bankrupt-id">BK-8F29A</span>
+          <span class="copy-icon" onclick="navigator.clipboard.writeText('BK-8F29A')">📋</span>
+        </div>
+        <div class="level-xp-row">
+          <span class="level-badge" id="user-level">Level 12</span>
+          <div class="xp-bar-container">
+            <div class="xp-bar-fill" id="xp-fill" style="width: 49%;"></div>
+            <span class="xp-text" id="xp-text">2,450 / 5,000 XP</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Table Section -->
+    <div class="profile-stats-list">
+      <div class="stat-row">
+        <span class="stat-label">🪙 Total Balance</span>
+        <span class="stat-val highlight" id="profile-balance">336.9600 BKT</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">🔥 Current Streak</span>
+        <span class="stat-val" id="current-streak">23 Days</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">🏆 Longest Streak</span>
+        <span class="stat-val" id="longest-streak">31 Days</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">👥 Total Referrals</span>
+        <span class="stat-val" id="total-referrals">5</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">📋 Tasks Completed</span>
+        <span class="stat-val" id="tasks-completed">12</span>
+      </div>
+    </div>
+
+    <!-- Badges Horizontal Row -->
+    <div class="badges-header">
+      <span>BADGES</span>
+      <a href="shop.html" class="view-all">View All</a>
+    </div>
+    <div class="badges-row">
+      <div class="badge-item"><img src="badge1.png" alt="Badge" onerror="this.src='https://via.placeholder.com/50/111/89e612?text=💀'"></div>
+      <div class="badge-item"><img src="badge2.png" alt="Badge" onerror="this.src='https://via.placeholder.com/50/111/89e612?text=📅'"></div>
+      <div class="badge-item"><img src="badge3.png" alt="Badge" onerror="this.src='https://via.placeholder.com/50/111/89e612?text=👑'"></div>
+      <div class="badge-item"><img src="badge4.png" alt="Badge" onerror="this.src='https://via.placeholder.com/50/111/89e612?text=⚡'"></div>
+    </div>
   </div>
 
-  <!-- Stats Breakdown -->
-  <div class="section-title">USER PERFORMANCE</div>
-  <div class="streak-card">
-    <div class="streak-footer" style="margin-top: 0; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);">
-      <span>Completed Tasks</span>
-      <span class="timer-badge" id="profile-tasks-count">0</span>
-    </div>
-    <div class="streak-footer" style="margin-top: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);">
-      <span>Current Rank</span>
-      <span class="timer-badge" id="profile-rank">#--</span>
-    </div>
-    <div class="streak-footer" style="margin-top: 12px;">
-      <span>Account Status</span>
-      <span style="color: var(--accent-green); font-weight: 600;">Active</span>
-    </div>
-  </div>
-
-  <!-- Bottom Nav -->
+  <!-- Bottom Navigation -->
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item">
       <span>🏠</span>

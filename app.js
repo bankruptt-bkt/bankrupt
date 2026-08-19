@@ -1,13 +1,9 @@
-import { auth, db, provider } from "./firebase-config.js";
-import { signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { db, auth, provider } from "./firebase-config.js";
+import { onAuthStateChanged, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-auth.js";
+import { doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js";
 
-let currentUser = null;
-let userStreak = 1;
-let lastCheckIn = null;
-
-// Multipliers mapped to days
-const STREAK_MULTIPLIERS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 1.6 };
+// Multipliers & Base Rewards
+const STREAK_MULTIPLIERS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 2.0 };
 const BASE_REWARD = 2.5; // Base BKT earned per check-in
 
 // UI Elements
@@ -17,14 +13,19 @@ const claimBtn = document.querySelector(".btn-claim");
 const timerBadge = document.querySelector(".timer-badge");
 const streakText = document.querySelector(".streak-header h3");
 
+// Global State Variables
+let currentUser = null;
+let userStreak = 1;
+let lastCheckIn = null;
+
 // 1. Auth Listener
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
-    if (usernameDisplay) usernameDisplay.textContent = `@${user.displayName || "trader_anon"}`;
+    if (usernameDisplay) usernameDisplay.textContent = `@${user.displayName || "Anonymous"}`;
     await initializeUserData(user);
   } else {
-    signInWithPopup(auth, provider).catch(err => console.error("Login Error:", err));
+    signInWithPopup(auth, provider).catch(err => console.error("Auth Error:", err));
   }
 });
 
@@ -42,21 +43,21 @@ async function initializeUserData(user) {
       lastCheckIn: null
     };
     await setDoc(userRef, newData);
-    updateUI(newData);
+    userStreak = 1;
+    lastCheckIn = null;
   } else {
     const data = userSnap.data();
     userStreak = data.streak || 1;
     lastCheckIn = data.lastCheckIn ? data.lastCheckIn.toDate() : null;
-    updateUI(data);
-    checkClaimStatus();
+    if (balanceDisplay) balanceDisplay.textContent = `${(data.balance || 0).toFixed(4)} BKT`;
   }
+
+  updateStreakDisplay();
+  checkClaimStatus();
 }
 
-// 3. Update Balance & Streak UI
-function updateUI(data) {
-  if (balanceDisplay) {
-    balanceDisplay.textContent = `${(data.balance || 0).toFixed(4)} BKT`;
-  }
+// 3. UI Display Update
+function updateStreakDisplay() {
   if (streakText) {
     streakText.textContent = `DAY ${userStreak} STREAK`;
   }
@@ -113,7 +114,7 @@ if (claimBtn) {
   claimBtn.addEventListener("click", async () => {
     if (!currentUser || claimBtn.disabled) return;
 
-    const multiplier = STREAK_MULTIPLIERS[Math.min(userStreak, 7)];
+    const multiplier = STREAK_MULTIPLIERS[Math.min(userStreak, 7)] || 1.0;
     const reward = BASE_REWARD * multiplier;
     
     const userRef = doc(db, "users", currentUser.uid);
@@ -125,13 +126,14 @@ if (claimBtn) {
         lastCheckIn: new Date()
       });
 
-      // Update state local and refresh button state
+      // Update local state and refresh button UI
       userStreak += 1;
       lastCheckIn = new Date();
       
-      const currentVal = parseFloat(balanceDisplay.textContent) || 0;
-      balanceDisplay.textContent = `${(currentVal + reward).toFixed(4)} BKT`;
+      const currentVal = parseFloat(balanceDisplay?.textContent) || 0;
+      if (balanceDisplay) balanceDisplay.textContent = `${(currentVal + reward).toFixed(4)} BKT`;
 
+      updateStreakDisplay();
       disableClaimButton(24);
     } catch (err) {
       console.error("Failed to claim reward:", err);

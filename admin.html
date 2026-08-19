@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BANKRUPT - Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { padding: 20px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+    .admin-card { background: #111a13; border: 1px solid #1a2b1e; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+    .admin-title { color: #00ff88; font-size: 1.1rem; margin-bottom: 15px; font-weight: 700; }
+    .admin-input { width: 100%; padding: 12px; margin-bottom: 12px; background: #080d09; border: 1px solid #1a291c; color: #fff; border-radius: 8px; box-sizing: border-box; }
+    .admin-btn { width: 100%; padding: 12px; background: #00ff88; color: #000; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; }
+    .admin-btn.danger { background: #ff4d4d; color: #fff; }
+    .task-item-row { display: flex; justify-content: space-between; align-items: center; background: #080d09; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; }
+  </style>
+</head>
+<body>
+
+  <h2 class="brand-font" style="color:#00ff88; text-align:center;">👑 BANKRUPT CONTROL CENTER</h2>
+
+  <!-- Login Overlay -->
+  <div id="admin-login-card" class="admin-card">
+    <div class="admin-title">ADMIN ACCESS</div>
+    <input type="password" id="admin-pass" class="admin-input" placeholder="Enter Security PIN">
+    <button onclick="checkAdminPass()" class="admin-btn">Unlock Panel</button>
+  </div>
+
+  <!-- Main Panel (Hidden until unlocked) -->
+  <div id="panel-content" style="display:none;">
+
+    <!-- Maintenance Switch -->
+    <div class="admin-card">
+      <div class="toggle-row">
+        <div>
+          <div class="admin-title" style="margin:0;">App Status</div>
+          <small style="color:#889988;">Pause app for upgrades</small>
+        </div>
+        <button id="maint-toggle-btn" class="admin-btn" style="width:auto; padding: 8px 16px;" onclick="toggleMaintenance()">Loading...</button>
+      </div>
+    </div>
+
+    <!-- Manage Tasks -->
+    <div class="admin-card">
+      <div class="admin-title">Add New Task</div>
+      <input type="text" id="task-title" class="admin-input" placeholder="Task Title (e.g. Join Telegram)">
+      <input type="text" id="task-reward" class="admin-input" placeholder="Reward (e.g. +5.00 BKT)">
+      <input type="text" id="task-icon" class="admin-input" placeholder="Icon Emoji (e.g. ✈️)">
+      <input type="text" id="task-link" class="admin-input" placeholder="Target Link (https://...)">
+      <button onclick="createNewTask()" class="admin-btn">Publish Task</button>
+
+      <div class="admin-title" style="margin-top: 25px;">Active Tasks</div>
+      <div id="active-tasks-list">Loading tasks...</div>
+    </div>
+
+    <!-- User Referral & Balance Control -->
+    <div class="admin-card">
+      <div class="admin-title">Manage User Balance / Referrals</div>
+      <input type="text" id="user-uid" class="admin-input" placeholder="User UID or Telegram ID">
+      <input type="number" id="bonus-bkt" class="admin-input" placeholder="Bonus BKT Amount">
+      <button onclick="grantUserBonus()" class="admin-btn">Grant Bonus BKT</button>
+    </div>
+
+    <!-- User Ban System -->
+    <div class="admin-card">
+      <div class="admin-title">Ban / Unban User</div>
+      <input type="text" id="ban-uid" class="admin-input" placeholder="User UID to Ban">
+      <div style="display:flex; gap:10px;">
+        <button onclick="setUserBan(true)" class="admin-btn danger">Ban User</button>
+        <button onclick="setUserBan(false)" class="admin-btn">Unban User</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Firebase Integration -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
+      authDomain: "bankrupt-9068b.firebaseapp.com",
+      databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
+      projectId: "bankrupt-9068b",
+      storageBucket: "bankrupt-9068b.firebasestorage.app",
+      messagingSenderId: "961644576786",
+      appId: "1:961644576786:web:65eff34df07a18067458cb"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const SECRET_PIN = "7777"; // Set your preferred admin PIN here
+    let isMaintenance = false;
+
+    function checkAdminPass() {
+      const pin = document.getElementById("admin-pass").value;
+      if (pin === SECRET_PIN) {
+        document.getElementById("admin-login-card").style.display = "none";
+        document.getElementById("panel-content").style.display = "block";
+        loadPanelData();
+      } else {
+        alert("Incorrect Security PIN!");
+      }
+    }
+
+    function loadPanelData() {
+      // 1. Listen for Tasks
+      db.collection("tasks").onSnapshot((snapshot) => {
+        const list = document.getElementById("active-tasks-list");
+        list.innerHTML = "";
+        snapshot.forEach((doc) => {
+          const task = doc.data();
+          list.innerHTML += `
+            <div class="task-item-row">
+              <div><b>${task.icon || '📋'} ${task.title}</b> (${task.reward})</div>
+              <button onclick="deleteTask('${doc.id}')" style="background:#ff4d4d; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">Delete</button>
+            </div>
+          `;
+        });
+      });
+
+      // 2. Listen for Maintenance Mode Status
+      db.collection("settings").doc("app_state").onSnapshot((doc) => {
+        if (doc.exists) {
+          isMaintenance = doc.data().maintenance || false;
+          const btn = document.getElementById("maint-toggle-btn");
+          btn.innerText = isMaintenance ? "Maintenance: ON" : "Maintenance: OFF";
+          btn.style.background = isMaintenance ? "#ff4d4d" : "#00ff88";
+          btn.style.color = isMaintenance ? "#fff" : "#000";
+        }
+      });
+    }
+
+    // Task Actions
+    function createNewTask() {
+      const title = document.getElementById("task-title").value;
+      const reward = document.getElementById("task-reward").value;
+      const icon = document.getElementById("task-icon").value;
+      const link = document.getElementById("task-link").value;
+
+      if (!title || !reward) return alert("Fill in at least title and reward!");
+
+      db.collection("tasks").add({ title, reward, icon, link, createdAt: Date.now() }).then(() => {
+        alert("Task published successfully!");
+        document.getElementById("task-title").value = "";
+        document.getElementById("task-reward").value = "";
+        document.getElementById("task-icon").value = "";
+        document.getElementById("task-link").value = "";
+      });
+    }
+
+    function deleteTask(id) {
+      if (confirm("Remove this task?")) {
+        db.collection("tasks").doc(id).delete();
+      }
+    }
+
+    // Toggle Maintenance Mode
+    function toggleMaintenance() {
+      db.collection("settings").doc("app_state").set({ maintenance: !isMaintenance }, { merge: true });
+    }
+
+    // Bonus Points Allocation
+    function grantUserBonus() {
+      const uid = document.getElementById("user-uid").value;
+      const amount = parseFloat(document.getElementById("bonus-bkt").value);
+      if (!uid || isNaN(amount)) return alert("Enter valid UID and Amount!");
+
+      db.collection("users").doc(uid).set({
+        balance: firebase.firestore.FieldValue.increment(amount)
+      }, { merge: true }).then(() => alert(`Granted ${amount} BKT to User: ${uid}`));
+    }
+
+    // Ban System
+    function setUserBan(status) {
+      const uid = document.getElementById("ban-uid").value;
+      if (!uid) return alert("Enter User UID!");
+
+      db.collection("users").doc(uid).set({ isBanned: status }, { merge: true })
+        .then(() => alert(`User ${uid} has been ${status ? 'BANNED' : 'UNBANNED'}`));
+    }
+  </script>
+</body>
+</html>

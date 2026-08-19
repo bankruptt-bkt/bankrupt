@@ -669,3 +669,44 @@ body {
   border-radius: 50%;
   border: 1px solid #28362a;
 }
+.referral-card {
+  background: #141b15;
+  border: 1px solid #233527;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  color: #fff;
+}
+
+.referral-box {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.referral-box input {
+  flex: 1;
+  background: #0a0f0b;
+  border: 1px solid #1d2a20;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #00ff88;
+  font-size: 12px;
+}
+
+.referral-box button {
+  background: var(--accent-green, #00ff88);
+  color: #000;
+  border: none;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.referral-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #889988;
+}

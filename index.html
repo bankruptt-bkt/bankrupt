@@ -95,5 +95,64 @@
 <script src="app.js"></script>
 
   <script type="module" src="app.js"></script>
+  <!-- Centered Transparent Menu Popup -->
+<div id="menu-overlay" class="menu-overlay" onclick="closeMenu(event)">
+  <div class="menu-modal">
+    <button class="close-menu-btn" onclick="toggleMenu(false)">✕</button>
+    
+    <!-- Profile Info Block -->
+    <div class="menu-user-card">
+      <img src="avatar.png" alt="Avatar" class="menu-avatar" onerror="this.src='https://via.placeholder.com/60/000/00ff88?text=BKT'">
+      <div class="menu-user-details">
+        <h4 class="menu-user-name">Probhat Santra</h4>
+        <span class="menu-user-uid">UID: 0m6C1j7m...</span>
+      </div>
+    </div>
+
+    <div class="menu-divider"></div>
+
+    <!-- Menu Sections -->
+    <div class="menu-section-label">COMMUNITY</div>
+    <a href="#" class="menu-item"><span class="menu-item-icon">✈️</span> Telegram Channel</a>
+    <a href="#" class="menu-item"><span class="menu-item-icon">𝕏</span> X (Twitter)</a>
+
+    <div class="menu-section-label">PROJECT INFO</div>
+    <a href="#" class="menu-item"><span class="menu-item-icon">📄</span> Whitepaper & Roadmap</a>
+    <a href="#" class="menu-item"><span class="menu-item-icon">ℹ️</span> How to Earn</a>
+
+    <div class="menu-section-label">MORE</div>
+    <a href="#" class="menu-item"><span class="menu-item-icon">🐰</span> Achievements</a>
+    <a href="#" class="menu-item"><span class="menu-item-icon">📢</span> Announcements</a>
+
+    <div class="menu-section-label">SYSTEM</div>
+    <a href="#" class="menu-item"><span class="menu-item-icon">⚙️</span> Settings</a>
+    <a href="#" class="menu-item danger"><span class="menu-item-icon">🚪</span> Sign Out</a>
+
+    <div class="menu-footer-brand">
+      <span class="brand-font">💀 BANKRUPT</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openMenu() {
+    document.getElementById('menu-overlay').classList.add('active');
+  }
+
+  function toggleMenu(show) {
+    if (show) {
+      document.getElementById('menu-overlay').classList.add('active');
+    } else {
+      document.getElementById('menu-overlay').classList.remove('active');
+    }
+  }
+
+  function closeMenu(event) {
+    if (event.target.id === 'menu-overlay') {
+      toggleMenu(false);
+    }
+  }
+</script>
+  
 </body>
 </html>

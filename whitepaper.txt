@@ -1,0 +1,41 @@
+1. Complete Tokenomics Allocation ($BKT)
+​Total Supply: 1,000,000,000 $BKT (1 Billion)
+​50% — Proof-of-Engagement Mining (500,000,000 BKT): Minted strictly through daily app check-ins, streak bonuses, and verified tasks.
+​10% — KOLs & Strategic Ambassadors (100,000,000 BKT): Allocated for marketing pushes, creator partnerships, and influencer onboarding.
+​10% — Ecosystem Growth & Community Treasury (100,000,000 BKT): Grants, future mini-app integrations, and seasonal community competitions.
+​10% — Team & Core Contributors (100,000,000 BKT): Reserved for core development and long-term project sustainability (subject to vesting).
+​10% — Initial Liquidity Pools (100,000,000 BKT): Locked liquidity upon DEX/CEX listings to ensure trading stability.
+​5% — Viral Referral Engine (50,000,000 BKT): Dedicated pool rewarding direct referral invites.
+​5% — Early Adopter & Genesis Airdrops (50,000,000 BKT): Initial rewards for first-wave users and active beta testers.
+​2. Dynamic Mining Mechanics & Supply Control
+​To make the 500M $BKT mining pool last through heavy traffic without inflating prematurely, we implement a Traffic-Adaptive Halving Algorithm.
+​Base Streak Loop (7-Day Cycle):
+​Days 1–6 build sequential multiplier bonuses.
+​Day 7 awards a peak Streak Bonus.
+​On Day 8, the cycle resets automatically to Day 1 to create an active daily habit loop without infinite multiplier compounding.
+​Dynamic Reward Scaling (Halving Tiers):
+​As active user volume scales, base task and daily check-in rewards dynamically decrease based on active global user thresholds.
+​Phase 1 (< 50,000 Active Users): 100% Base Yield.
+​Phase 2 (50,000 – 250,000 Users): 50% Base Yield (1st Halving).
+​Phase 3 (250,000 – 1,000,000 Users): 25% Base Yield (2nd Halving).
+​Phase 4 (1,000,000+ Users): 12.5% Base Yield (3rd Halving).
+​Referral Guardrails:
+​Default cap: 10 Referrals per user (prevents bot farms from draining the allocation).
+​Administrative Override: Custom higher referral caps can be manually granted to high-volume creators/promoters directly via Firestore.
+​3. Strategic Roadmap (Phased Execution)
+​Phase 1: Genesis & Web3 Architecture
+​Launch of BANKRUPT DApp on Robinhood Chain ecosystem.
+​Rollout of the 7-day streak engine, task engine, and real-time Firestore Leaderboard.
+​Genesis Phase rewards activation and community bootstrapping.
+​Phase 2: Ecosystem Expansion & Shop Mechanics
+​Integration of the DApp Shop (purchasable boosters, avatar NFTs, and dynamic multipliers).
+​Anti-sybil verification system rollout for fair mining distribution.
+​Strategic KOL onboarding and referral expansion.
+​Phase 3: Liquidity & Robinhood Chain Integration
+​Token Generation Event (TGE) on Robinhood Chain.
+​Mainnet smart contract deployment and audit release.
+​10% Liquidity Pool lock and DEX trading enablement.
+​Phase 4: Decentralized Governance & Utility
+​Launch of $BKT Staking & Yield Vaults.
+​DAO Governance integration for community-led treasury grants.
+​Cross-dapp integrations within the broader Robinhood Chain ecosystem

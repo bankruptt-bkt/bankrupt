@@ -47,40 +47,52 @@ body {
   font-size: 0.9rem; 
 }
 
-/* Hero Balance Card with Fixed Mascot Background */
-/* Hero Balance Card with Full Background Image */
+/* Glossy Full-Height Hero Section */
 .hero-card {
   position: relative;
-  background-color: var(--card-bg);
+  background-color: #0b0f0c;
   background-image: url('./ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
   background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover; /* Fills entire card area */
-  border: 1px solid var(--accent-green);
-  border-radius: 16px;
+  background-position: right top;
+  background-size: cover;
+  border: 1px solid rgba(56, 239, 125, 0.3);
+  border-radius: 20px;
   padding: 24px 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 0 15px rgba(56, 239, 125, 0.15);
+  margin-bottom: 20px;
+  min-height: 220px; /* Gives full vertical room for the character art */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 239, 125, 0.15);
   overflow: hidden;
 }
 
-/* Semi-transparent dark overlay to keep white text readable over artwork */
+/* Subtle gradient only on the left side to keep text crisp without blurring the mascot */
 .hero-card::before {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
+  width: 60%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(11, 15, 12, 0.85) 0%, rgba(11, 15, 12, 0.45) 100%);
+  background: linear-gradient(90deg, rgba(11, 15, 12, 0.92) 0%, rgba(11, 15, 12, 0) 100%);
   z-index: 1;
 }
-
 
 .hero-card * {
   position: relative;
   z-index: 2;
 }
+
+/* Vibrant Green Numbers */
+.balance-val {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #38ef7d;
+  text-shadow: 0 0 12px rgba(56, 239, 125, 0.4);
+  margin: 6px 0;
+}
+
 
 .badge {
   display: inline-block;

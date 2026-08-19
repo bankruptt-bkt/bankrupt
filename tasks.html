@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Styling for Task List */
     .tasks-container { padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 90px; }
     .task-card { background: #111a13; border: 1px solid #1a2b1e; border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
     .task-left { display: flex; align-items: center; gap: 12px; }
@@ -70,7 +69,6 @@
     let currentCategory = "Daily";
     let allTasks = [];
 
-    // Real-time task listener from Firebase
     db.collection("tasks").onSnapshot((snapshot) => {
       allTasks = [];
       snapshot.forEach((doc) => {
@@ -90,7 +88,6 @@
       const listContainer = document.getElementById("tasks-list");
       listContainer.innerHTML = "";
 
-      // Filter tasks by active tab category
       const filtered = allTasks.filter(t => (t.category || "Daily") === currentCategory);
 
       if (filtered.length === 0) {

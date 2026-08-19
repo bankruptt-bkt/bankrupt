@@ -5,63 +5,64 @@ import { doc, getDoc, setDoc, runTransaction } from "https://www.gstatic.com/fir
 const REFERRAL_REWARD = 100;
 const MAX_REFERRALS = 10;
 
-// 1. Run UI immediately so the link loads instantly on page load
-setupWebReferralUI();
-
-// 2. Auth Listener updates user-specific counts and processes incoming invites
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    // Re-render UI with the user's specific UID
-    setupWebReferralUI(user.uid);
-
-    // Process incoming invite link (?ref=...)
-    await handleIncomingWebReferral(user);
-
-    // Fetch and display live referral stats
-    const userSnap = await getDoc(doc(db, "users", user.uid));
-    const refCount = userSnap.exists() ? (userSnap.data().referralCount || 0) : 0;
-    
-    const countDisplay = document.getElementById("ref-count-display");
-    if (countDisplay) countDisplay.textContent = `${refCount} / ${MAX_REFERRALS}`;
-  }
+// Immediate DOM Setup (Runs instantly before waiting on Firebase)
+document.addEventListener("DOMContentLoaded", () => {
+  renderReferralLink("guest");
 });
 
-/**
- * Generates the web link immediately
- */
-function setupWebReferralUI(userId = "guest") {
+// Firebase Auth Listener
+try {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      renderReferralLink(user.uid);
+      await handleIncomingWebReferral(user);
+
+      try {
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        const refCount = userSnap.exists() ? (userSnap.data().referralCount || 0) : 0;
+        const countDisplay = document.getElementById("ref-count-display");
+        if (countDisplay) countDisplay.textContent = `${refCount} / ${MAX_REFERRALS}`;
+      } catch (e) {
+        console.error("Firestore read error:", e);
+      }
+    }
+  });
+} catch (err) {
+  console.error("Firebase Auth failed to initialize:", err);
+}
+
+function renderReferralLink(userId) {
   const refInput = document.getElementById("referral-link");
   const copyBtn = document.getElementById("copy-ref-btn");
 
-  // Generates link using site URL
   const inviteLink = `${window.location.origin}${window.location.pathname}?ref=${userId}`;
 
   if (refInput) refInput.value = inviteLink;
 
   if (copyBtn) {
-    // Remove previous listeners to prevent duplicates
-    const newCopyBtn = copyBtn.cloneNode(true);
-    copyBtn.parentNode.replaceChild(newCopyBtn, copyBtn);
-
-    newCopyBtn.addEventListener("click", async () => {
+    copyBtn.onclick = async () => {
       try {
         await navigator.clipboard.writeText(inviteLink);
-        alert("Referral link copied to clipboard!");
+        alert("Referral link copied!");
       } catch (err) {
         refInput.select();
         document.execCommand("copy");
         alert("Referral link copied!");
       }
-    });
+    };
   }
 }
 
-/**
- * Handles processing ?ref= parameter in URL
- */
 async function handleIncomingWebReferral(newUser) {
   const newUserRef = doc(db, "users", newUser.uid);
-  const newUserSnap = await getDoc(newUserRef);
+  let newUserSnap;
+  
+  try {
+    newUserSnap = await getDoc(newUserRef);
+  } catch (e) {
+    console.error("Error fetching user snapshot:", e);
+    return;
+  }
 
   if (newUserSnap.exists()) return;
 
@@ -89,9 +90,7 @@ async function handleIncomingWebReferral(newUser) {
 
       if (referrerDoc.exists()) {
         currentRefCounts = referrerDoc.data().referralCount || 0;
-        if (currentRefCounts < MAX_REFERRALS) {
-          referrerEligible = true;
-        }
+        if (currentRefCounts < MAX_REFERRALS) referrerEligible = true;
       }
 
       transaction.set(newUserRef, {
@@ -111,6 +110,6 @@ async function handleIncomingWebReferral(newUser) {
       }
     });
   } catch (err) {
-    console.error("Error processing web referral:", err);
+    console.error("Error processing referral transaction:", err);
   }
 }

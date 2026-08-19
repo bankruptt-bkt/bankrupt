@@ -7,7 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Full Page Dark Background with Centered Hero */
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       padding: 0;
@@ -15,8 +18,8 @@
       background: #080d09;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
       overflow-x: hidden;
+      font-family: 'Inter', sans-serif;
     }
 
     .hero-container {
@@ -40,40 +43,31 @@
       font-size: 0.9rem;
     }
 
-    /* Bottom Sheet Overlay & Drawer */
-    /* Updated Bottom Sheet Drawer CSS */
-.drawer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  /* Allows scrolling if screen is too small */
-  overflow-y: auto; 
-}
+    /* Fixed Drawer Overlay */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
 
-.bottom-sheet {
-  width: 100%;
-  max-width: 480px;
-  background: rgba(17, 26, 19, 0.96);
-  border-top: 1px solid rgba(0, 255, 136, 0.2);
-  border-radius: 28px 28px 0 0;
-  padding: 20px 20px 40px 20px; /* Increased bottom padding */
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8);
-  animation: slideUp 0.35s ease-out forwards;
-  
-  /* Fix height clipping & allow inner scrolling if needed */
-  max-height: 85vh; 
-  overflow-y: auto;
-  box-sizing: border-box;
-}
-
+    /* Bottom Sheet Container */
+    .bottom-sheet {
+      width: 100%;
+      max-width: 480px;
+      background: rgba(17, 26, 19, 0.98);
+      border-top: 1px solid rgba(0, 255, 136, 0.2);
+      border-radius: 28px 28px 0 0;
+      padding: 20px 20px 32px 20px;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.9);
+      animation: slideUp 0.35s ease-out forwards;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
 
     @keyframes slideUp {
       from { transform: translateY(100%); }
@@ -101,7 +95,7 @@
       font-weight: 700;
     }
 
-    /* Auth Options */
+    /* Form & Controls */
     .tab-switch {
       display: flex;
       background: #080d09;
@@ -116,213 +110,102 @@
       background: transparent;
       border: none;
       color: #889988;
-      padding: 8px;
-/* Full Page Container */
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  background: #080d09;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end; /* Keeps drawer at the bottom naturally */
-  overflow-x: hidden;
-}
+      padding: 10px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
 
-.hero-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  text-align: center;
-  padding: 20px;
-}
+    .tab-btn.active {
+      background: #00ff88;
+      color: #000000;
+    }
 
-.app-logo-large {
-  font-size: 2.5rem;
-  color: #00ff88;
-  margin-bottom: 8px;
-}
+    .input-group {
+      margin-bottom: 12px;
+    }
 
-.tagline {
-  color: #889988;
-  font-size: 0.9rem;
-}
+    .input-field {
+      width: 100%;
+      background: #080d09;
+      border: 1px solid #1a2b1e;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+    }
 
-/* Fixed Bottom Sheet Container */
-.drawer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end; /* Anchor drawer to bottom */
-}
+    .input-field:focus {
+      border-color: #00ff88;
+    }
 
-.bottom-sheet {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  background: rgba(17, 26, 19, 0.98);
-  border-top: 1px solid rgba(0, 255, 136, 0.2);
-  border-radius: 28px 28px 0 0;
-  padding: 20px 20px 30px 20px;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.9);
-  animation: slideUp 0.35s ease-out forwards;
-  
-  /* Critical scroll & height fixes */
-  max-height: 90vh; /* Limits card height so it never cuts off on mobile screens */
-  overflow-y: auto; /* Makes the drawer inner-scrollable */
-  box-sizing: border-box;
-}
+    .btn-submit {
+      width: 100%;
+      background: #00ff88;
+      color: #000;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+    }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
+    .divider {
+      display: flex;
+      align-items: center;
+      color: #889988;
+      font-size: 0.75rem;
+      margin: 18px 0;
+    }
 
-.sheet-handle {
-  width: 40px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  margin: 0 auto 16px auto;
-}
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #1a2b1e;
+    }
 
-.sheet-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
+    .divider span {
+      padding: 0 10px;
+    }
 
-.sheet-title {
-  color: #ffffff;
-  font-size: 1.3rem;
-  font-weight: 700;
-}
+    /* Social Action Buttons */
+    .social-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-/* Form & Input Styles */
-.tab-switch {
-  display: flex;
-  background: #080d09;
-  border-radius: 30px;
-  padding: 4px;
-  margin-bottom: 16px;
-  border: 1px solid #1a2b1e;
-}
-
-.tab-btn {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: #889988;
-  padding: 8px;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.tab-btn.active {
-  background: #00ff88;
-  color: #000000;
-}
-
-.input-group {
-  margin-bottom: 10px;
-}
-
-.input-field {
-  width: 100%;
-  background: #080d09;
-  border: 1px solid #1a2b1e;
-  border-radius: 12px;
-  padding: 12px 14px;
-  color: #fff;
-  font-size: 0.9rem;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.input-field:focus {
-  border-color: #00ff88;
-}
-
-.btn-submit {
-  width: 100%;
-  background: #00ff88;
-  color: #000;
-  border: none;
-  padding: 12px;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 4px;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  color: #889988;
-  font-size: 0.75rem;
-  margin: 16px 0;
-}
-
-.divider::before, .divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: #1a2b1e;
-}
-
-.divider span {
-  padding: 0 10px;
-}
-
-/* Social Login Buttons */
-.social-btns {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.btn-social {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 11px;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
+    .btn-social {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Background Screen -->
+  <!-- Hero Background -->
   <div class="hero-container">
     <div class="app-logo-large brand-font">👑 BANKRUPT</div>
     <div class="tagline">Robinhood Chain Mining Portal</div>
   </div>
 
-  <!-- Bottom Sheet Drawer -->
+  <!-- Drawer View -->
   <div class="drawer-overlay">
     <div class="bottom-sheet">
       <div class="sheet-handle"></div>
@@ -331,13 +214,13 @@ body {
         <div class="sheet-title">Sign In</div>
       </div>
 
-      <!-- Login / Signup Tabs -->
+      <!-- Auth Mode Selector -->
       <div class="tab-switch">
         <button class="tab-btn active" id="tab-login" onclick="switchAuth('login')">Login</button>
         <button class="tab-btn" id="tab-signup" onclick="switchAuth('signup')">Sign Up</button>
       </div>
 
-      <!-- Email / Password Form -->
+      <!-- Credentials Form -->
       <form id="auth-form" onsubmit="handleEmailAuth(event)">
         <div class="input-group">
           <input type="email" id="email" class="input-field" placeholder="Email Address" required>
@@ -351,9 +234,8 @@ body {
 
       <div class="divider"><span>OR CONTINUE WITH</span></div>
 
-      <!-- Social Logins -->
+      <!-- Provider Auth -->
       <div class="social-btns">
-        <!-- Google -->
         <button class="btn-social" onclick="loginWithGoogle()">
           <svg width="18" height="18" viewBox="0 0 18 18">
             <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.616z"/>
@@ -364,7 +246,6 @@ body {
           Google
         </button>
 
-        <!-- Twitter / X -->
         <button class="btn-social" onclick="loginWithTwitter()">
           <svg width="16" height="16" fill="#ffffff" viewBox="0 0 24 24">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -376,7 +257,7 @@ body {
     </div>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase Integration -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -396,7 +277,6 @@ body {
     const auth = firebase.auth();
     let currentMode = 'login';
 
-    // Redirect user if already logged in
     auth.onAuthStateChanged((user) => {
       if (user) {
         window.location.href = "index.html";
@@ -410,7 +290,6 @@ body {
       document.getElementById('submit-btn').textContent = type === 'signup' ? 'CREATE ACCOUNT' : 'LOG IN';
     }
 
-    // Email & Password Authentication Handler
     async function handleEmailAuth(e) {
       e.preventDefault();
       const email = document.getElementById('email').value;
@@ -428,7 +307,6 @@ body {
       }
     }
 
-    // Google Provider Login
     async function loginWithGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
@@ -439,7 +317,6 @@ body {
       }
     }
 
-    // Twitter Provider Login
     async function loginWithTwitter() {
       const provider = new firebase.auth.TwitterAuthProvider();
       try {

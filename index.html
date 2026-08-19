@@ -50,7 +50,7 @@
 
   <!-- Quote Banner -->
   <div class="quote-card">
-    "We're not poor, we're just early on Robinhood Chain."
+    "We're not poor, we early on Robinhood Chain."
     <div class="quote-author">— $BANKRUPT Degens</div>
   </div>
 
@@ -155,26 +155,51 @@
       <a href="javascript:void(0)" onclick="openMenuInfo('Settings', '⚙️ Sound Effects: ON\n🔔 Push Notifications: ON\n🌐 Language: English')" class="menu-item">
         <span class="menu-item-icon">⚙️</span> Settings
       </a>
-      <!-- Locate your menu list in HTML -->
-<div class="menu-item" onclick="handleSignOut()" style="color: #ff4d4d; cursor: pointer;">
-  🚪 Sign Out
-</div>
+      
+      <!-- Sign Out Button -->
+      <div class="menu-item" onclick="handleSignOut()" style="color: #ff4d4d; cursor: pointer;">
+        <span class="menu-item-icon">🚪</span> Sign Out
+      </div>
+
       <div class="menu-footer-brand">
         <span class="brand-font">💀 BANKRUPT</span>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- App Scripts -->
   <script src="streak.js"></script>
   <script type="module" src="app.js"></script>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs (App, Auth, and Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // Menu Logic
+    // 1. Firebase Config & Initialization
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
+      authDomain: "bankrupt-9068b.firebaseapp.com",
+      databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
+      projectId: "bankrupt-9068b",
+      storageBucket: "bankrupt-9068b.firebasestorage.app",
+      messagingSenderId: "961644576786",
+      appId: "1:961644576786:web:65eff34df07a18067458cb"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // 2. Auth State Guard (Redirects to login drawer if user is not signed in)
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
+
+    // 3. Menu Controls
     function openMenu() {
       document.getElementById('menu-overlay').classList.add('active');
     }
@@ -201,33 +226,14 @@
       }, 200);
     }
 
-    <script>
-  // Your existing Firebase config and initialization code goes here...
-
-  // Add this Sign Out handler function
-  function handleSignOut() {
-    firebase.auth().signOut().then(() => {
-      window.location.href = "login.html";
-    }).catch((error) => {
-      console.error("Sign out error:", error);
-    });
-  }
-</script>
-
-
-    // Firebase Initialization
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
-      authDomain: "bankrupt-9068b.firebaseapp.com",
-      databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
-      projectId: "bankrupt-9068b",
-      storageBucket: "bankrupt-9068b.firebasestorage.app",
-      messagingSenderId: "961644576786",
-      appId: "1:961644576786:web:65eff34df07a18067458cb"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    // 4. Sign Out Function
+    function handleSignOut() {
+      auth.signOut().then(() => {
+        window.location.href = "login.html";
+      }).catch((error) => {
+        console.error("Sign out error:", error);
+      });
+    }
   </script>
 </body>
 </html>

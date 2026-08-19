@@ -4,94 +4,102 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BANKRUPT - Profile</title>
-  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Top Header -->
+  <!-- Top Header Navigation -->
   <header class="header">
-    <div style="width: 24px;"></div> <!-- Spacer -->
-    <span class="brand-font" style="font-size: 1.2rem;">Profile</span>
-    <button class="icon-btn" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">⚙️</button>
+    <button class="icon-btn" onclick="history.back()">‹</button>
+    <span class="brand-font page-title">Profile</span>
+    <button class="icon-btn">⚙️</button>
   </header>
 
-  <!-- User Identity Card -->
-  <div class="profile-card">
-    <div class="user-header-row">
-      <div class="avatar-wrapper">
-        <img src="avatar.png" alt="Avatar" id="user-avatar" onerror="this.src='https://via.placeholder.com/80/000000/89e612?text=Degen'">
+  <div class="profile-container">
+    <!-- Centered Avatar & Identity Header -->
+    <div class="profile-avatar-section">
+      <div class="avatar-glow-wrapper">
+        <img src="avatar.png" alt="Avatar" id="user-avatar" onerror="this.src='https://via.placeholder.com/100/000/00ff88?text=Degen'">
+        <button class="edit-avatar-btn">✏️</button>
       </div>
-      <div class="user-info-col">
-        <div class="user-name-row">
-          <span class="user-fullname" id="profile-name">Probhat Santra</span>
-          <span class="edit-icon">✏️</span>
+      <h2 class="user-display-name" id="profile-name">Probhat Santra</h2>
+      <p class="user-uid-label">UID: <span id="bankrupt-id">0m6C1j7m5...</span></p>
+    </div>
+
+    <!-- 4-Column Core Stats Box -->
+    <div class="stats-card-grid">
+      <div class="stat-box">
+        <span class="stat-icon">💲</span>
+        <span class="stat-number highlight" id="profile-balance">336.9600</span>
+        <span class="stat-title">Balance</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-icon">🔥</span>
+        <span class="stat-number" id="current-streak">23</span>
+        <span class="stat-title">Streak</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-icon">🏆</span>
+        <span class="stat-number" id="longest-streak">31</span>
+        <span class="stat-title">Longest</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-icon">👥</span>
+        <span class="stat-number" id="total-referrals">5</span>
+        <span class="stat-title">Referrals</span>
+      </div>
+    </div>
+
+    <!-- Circular Badges Grid -->
+    <div class="badges-card">
+      <div class="badges-card-header">
+        <h3>BADGES</h3>
+        <a href="shop.html" class="view-all-link">View all ›</a>
+      </div>
+      <div class="badges-grid">
+        <div class="badge-item">
+          <div class="badge-img-circle"><img src="badge1.png" alt="Badge" onerror="this.src='https://via.placeholder.com/60/111/00ff88?text=💀'"></div>
+          <span>Early Bankrupt</span>
         </div>
-        <div class="id-label">BANKRUPT ID</div>
-        <div class="id-value-row">
-          <span id="bankrupt-id">BK-8F29A</span>
-          <span class="copy-icon" onclick="navigator.clipboard.writeText('BK-8F29A')">📋</span>
+        <div class="badge-item">
+          <div class="badge-img-circle"><img src="badge2.png" alt="Badge" onerror="this.src='https://via.placeholder.com/60/111/00ff88?text=📅'"></div>
+          <span>7 Day Streak</span>
         </div>
-        <div class="level-xp-row">
-          <span class="level-badge" id="user-level">Level 12</span>
-          <div class="xp-bar-container">
-            <div class="xp-bar-fill" id="xp-fill" style="width: 49%;"></div>
-            <span class="xp-text" id="xp-text">2,450 / 5,000 XP</span>
-          </div>
+        <div class="badge-item">
+          <div class="badge-img-circle"><img src="badge3.png" alt="Badge" onerror="this.src='https://via.placeholder.com/60/111/00ff88?text=👑'"></div>
+          <span>Recruiter</span>
+        </div>
+        <div class="badge-item">
+          <div class="badge-img-circle"><img src="badge4.png" alt="Badge" onerror="this.src='https://via.placeholder.com/60/111/00ff88?text=⚡'"></div>
+          <span>Top Miner</span>
         </div>
       </div>
     </div>
 
-    <!-- Referral Card Section -->
-    <div class="referral-card">
-      <h3>INVITE FRIENDS</h3>
-      <p>Earn <strong>100 $BKT</strong> per friend (Max 10 Friends)</p>
-
-      <div class="referral-box">
-        <input type="text" id="referral-link" readonly value="Loading invite link..." />
-        <button id="copy-ref-btn">COPY</button>
+    <!-- Action List Options -->
+    <div class="action-list-card">
+      <div class="action-item">
+        <div class="action-left"><span class="action-icon">🐰</span> Streak History</div>
+        <span class="action-arrow">›</span>
       </div>
-
-      <div class="referral-stats">
-        <span>Friends Invited:</span>
-        <strong id="ref-count-display">0 / 10</strong>
+      <div class="action-item">
+        <div class="action-left"><span class="action-icon">🎯</span> Transaction History</div>
+        <span class="action-arrow">›</span>
       </div>
-    </div>
-
-    <!-- Stats Table Section -->
-    <div class="profile-stats-list">
-      <div class="stat-row">
-        <span class="stat-label">🪙 Total Balance</span>
-        <span class="stat-val highlight" id="profile-balance">336.9600 BKT</span>
+      <div class="action-item">
+        <div class="action-left"><span class="action-icon">🪪</span> Referral History</div>
+        <span class="action-arrow">›</span>
       </div>
-      <div class="stat-row">
-        <span class="stat-label">🔥 Current Streak</span>
-        <span class="stat-val" id="current-streak">23 Days</span>
+      <!-- Additional Essential Options -->
+      <div class="action-item">
+        <div class="action-left"><span class="action-icon">💎</span> Connect Web3 Wallet</div>
+        <span class="action-arrow">›</span>
       </div>
-      <div class="stat-row">
-        <span class="stat-label">🏆 Longest Streak</span>
-        <span class="stat-val" id="longest-streak">31 Days</span>
+      <div class="action-item">
+        <div class="action-left"><span class="action-icon">🎧</span> Support & FAQ</div>
+        <span class="action-arrow">›</span>
       </div>
-      <div class="stat-row">
-        <span class="stat-label">👥 Total Referrals</span>
-        <span class="stat-val" id="total-referrals">5</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">📋 Tasks Completed</span>
-        <span class="stat-val" id="tasks-completed">12</span>
-      </div>
-    </div>
-
-    <!-- Badges Horizontal Row -->
-    <div class="badges-header">
-      <span>BADGES</span>
-      <a href="shop.html" class="view-all">View All</a>
-    </div>
-    <div class="badges-row">
-      <div class="badge-item"><img src="badge1.png" alt="Badge" onerror="this.src='https://via.placeholder.com/50/111/89e612?text=💀'"></div>
-      <div class="badge-item"><img src="badge2.png" alt="Badge" onerror="this.src='https://via.placeholder.com/50/111/89e612?text=📅'"></div>
-      <div class="badge-item"><img src="badge3.png" alt="Badge" onerror="this.src='https://via.placeholder.com/50/111/89e612?text=👑'"></div>
-      <div class="badge-item"><img src="badge4.png" alt="Badge" onerror="this.src='https://via.placeholder.com/50/111/89e612?text=⚡'"></div>
     </div>
   </div>
 

@@ -155,10 +155,10 @@
       <a href="javascript:void(0)" onclick="openMenuInfo('Settings', '⚙️ Sound Effects: ON\n🔔 Push Notifications: ON\n🌐 Language: English')" class="menu-item">
         <span class="menu-item-icon">⚙️</span> Settings
       </a>
-      <a href="javascript:void(0)" onclick="handleSignOut()" class="menu-item danger">
-        <span class="menu-item-icon">🚪</span> Sign Out
-      </a>
-
+      <!-- Locate your menu list in HTML -->
+<div class="menu-item" onclick="handleSignOut()" style="color: #ff4d4d; cursor: pointer;">
+  🚪 Sign Out
+</div>
       <div class="menu-footer-brand">
         <span class="brand-font">💀 BANKRUPT</span>
       </div>
@@ -201,12 +201,19 @@
       }, 200);
     }
 
-    function handleSignOut() {
-      toggleMenu(false);
-      if (confirm("Are you sure you want to sign out?")) {
-        alert("Signed out successfully.");
-      }
-    }
+    <script>
+  // Your existing Firebase config and initialization code goes here...
+
+  // Add this Sign Out handler function
+  function handleSignOut() {
+    firebase.auth().signOut().then(() => {
+      window.location.href = "login.html";
+    }).catch((error) => {
+      console.error("Sign out error:", error);
+    });
+  }
+</script>
+
 
     // Firebase Initialization
     const firebaseConfig = {

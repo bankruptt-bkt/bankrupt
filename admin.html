@@ -44,24 +44,23 @@
 
     <!-- Manage Tasks -->
     <div class="admin-card">
-      <div class="admin-title">Add New Task</div>
-      <input type="text" id="task-title" class="admin-input" placeholder="Task Title (e.g. Join Telegram)">
-      <input type="text" id="task-reward" class="admin-input" placeholder="Reward (e.g. +5.00 BKT)">
-      <input type="text" id="task-icon" class="admin-input" placeholder="Icon Emoji (e.g. ✈️)">
-      <input type="text" id="task-link" class="admin-input" placeholder="Target Link (https://...)">
-      
-      <select id="task-category" class="admin-input" style="color:#fff;">
-        <option value="Daily">Daily</option>
-        <option value="Social">Social</option>
-        <option value="Community">Community</option>
-        <option value="Extra">Extra</option>
-      </select>
+  <div class="admin-title">Add New Task</div>
+  <input type="text" id="task-title" class="admin-input" placeholder="Task Title (e.g. Join Telegram)">
+  <input type="text" id="task-reward" class="admin-input" placeholder="Reward (e.g. +5.00 BKT)">
+  <input type="text" id="task-icon" class="admin-input" placeholder="Icon Emoji (e.g. ✈️)">
+  <input type="text" id="task-link" class="admin-input" placeholder="Target Link (https://...)">
+  
+  <label style="color:#889988; font-size:0.8rem; display:block; margin-bottom:4px;">Select Tab Category:</label>
+  <select id="task-category" class="admin-input" style="color:#fff; background:#080d09;">
+    <option value="Daily">Daily</option>
+    <option value="Social">Social</option>
+    <option value="Community">Community</option>
+    <option value="Extra">Extra</option>
+  </select>
 
-      <button onclick="createNewTask()" class="admin-btn">Publish Task</button>
+  <button onclick="createNewTask()" class="admin-btn">Publish Task</button>
+</div>
 
-      <div class="admin-title" style="margin-top: 25px;">Active Tasks</div>
-      <div id="active-tasks-list">Loading tasks...</div>
-    </div>
 
     <!-- User Referral & Balance Control -->
     <div class="admin-card">

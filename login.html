@@ -117,96 +117,201 @@
       border: none;
       color: #889988;
       padding: 8px;
-      border-radius: 25px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
+/* Full Page Container */
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: #080d09;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Keeps drawer at the bottom naturally */
+  overflow-x: hidden;
+}
 
-    .tab-btn.active {
-      background: #00ff88;
-      color: #000000;
-    }
+.hero-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  padding: 20px;
+}
 
-    .input-group {
-      margin-bottom: 10px;
-    }
+.app-logo-large {
+  font-size: 2.5rem;
+  color: #00ff88;
+  margin-bottom: 8px;
+}
 
-    .input-field {
-      width: 100%;
-      background: #080d09;
-      border: 1px solid #1a2b1e;
-      border-radius: 12px;
-      padding: 12px 14px;
-      color: #fff;
-      font-size: 0.9rem;
-      outline: none;
-      box-sizing: border-box;
-    }
+.tagline {
+  color: #889988;
+  font-size: 0.9rem;
+}
 
-    .input-field:focus {
-      border-color: #00ff88;
-    }
+/* Fixed Bottom Sheet Container */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Anchor drawer to bottom */
+}
 
-    .btn-submit {
-      width: 100%;
-      background: #00ff88;
-      color: #000;
-      border: none;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 4px;
-    }
+.bottom-sheet {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  background: rgba(17, 26, 19, 0.98);
+  border-top: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 28px 28px 0 0;
+  padding: 20px 20px 30px 20px;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.9);
+  animation: slideUp 0.35s ease-out forwards;
+  
+  /* Critical scroll & height fixes */
+  max-height: 90vh; /* Limits card height so it never cuts off on mobile screens */
+  overflow-y: auto; /* Makes the drawer inner-scrollable */
+  box-sizing: border-box;
+}
 
-    .divider {
-      display: flex;
-      align-items: center;
-      color: #889988;
-      font-size: 0.75rem;
-      margin: 16px 0;
-    }
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
 
-    .divider::before, .divider::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: #1a2b1e;
-    }
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin: 0 auto 16px auto;
+}
 
-    .divider span {
-      padding: 0 10px;
-    }
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
 
-    /* Social Buttons */
-    .social-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+.sheet-title {
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
 
-    .btn-social {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.06);
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 11px;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
+/* Form & Input Styles */
+.tab-switch {
+  display: flex;
+  background: #080d09;
+  border-radius: 30px;
+  padding: 4px;
+  margin-bottom: 16px;
+  border: 1px solid #1a2b1e;
+}
 
-    .btn-social:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #889988;
+  padding: 8px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: #00ff88;
+  color: #000000;
+}
+
+.input-group {
+  margin-bottom: 10px;
+}
+
+.input-field {
+  width: 100%;
+  background: #080d09;
+  border: 1px solid #1a2b1e;
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.input-field:focus {
+  border-color: #00ff88;
+}
+
+.btn-submit {
+  width: 100%;
+  background: #00ff88;
+  color: #000;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  color: #889988;
+  font-size: 0.75rem;
+  margin: 16px 0;
+}
+
+.divider::before, .divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #1a2b1e;
+}
+
+.divider span {
+  padding: 0 10px;
+}
+
+/* Social Login Buttons */
+.social-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.btn-social {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 11px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
   </style>
 </head>
 <body>

@@ -669,44 +669,80 @@ body {
   border-radius: 50%;
   border: 1px solid #28362a;
 }
+/* Referral Section Container */
 .referral-card {
-  background: #141b15;
-  border: 1px solid #233527;
-  border-radius: 12px;
+  background: #121913;
+  border: 1px solid #1f3022;
+  border-radius: 14px;
   padding: 16px;
-  margin-top: 16px;
-  color: #fff;
+  margin: 16px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+.referral-card h3 {
+  color: #ffffff;
+  font-size: 1rem;
+  margin: 0 0 4px 0;
+  letter-spacing: 0.5px;
+}
+
+.referral-card p {
+  color: #8a9e8c;
+  font-size: 0.85rem;
+  margin: 0 0 14px 0;
+}
+
+.referral-card p strong {
+  color: #00ff88;
+}
+
+/* Input & Copy Button Row */
 .referral-box {
   display: flex;
   gap: 8px;
-  margin: 12px 0;
+  margin-bottom: 12px;
 }
 
 .referral-box input {
   flex: 1;
-  background: #0a0f0b;
-  border: 1px solid #1d2a20;
+  background: #0a0e0b;
+  border: 1px solid #1a291c;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   color: #00ff88;
-  font-size: 12px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  outline: none;
 }
 
 .referral-box button {
-  background: var(--accent-green, #00ff88);
-  color: #000;
+  background: #00ff88;
+  color: #000000;
   border: none;
-  font-weight: bold;
-  padding: 8px 16px;
   border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 700;
+  font-size: 0.85rem;
   cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease;
 }
 
+.referral-box button:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+/* Stats Row */
 .referral-stats {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
-  color: #889988;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #8a9e8c;
+  padding-top: 6px;
+  border-top: 1px dashed #1a291c;
+}
+
+.referral-stats strong {
+  color: #ffffff;
 }

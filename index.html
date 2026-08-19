@@ -11,12 +11,11 @@
 <body>
 
   <!-- Top Header Navigation -->
-<header class="header">
-  <button class="icon-btn" onclick="openMenu()">☰</button>
-  <span class="brand-font logo">👑 BANKRUPT</span>
-  <span class="username">Probhat</span>
-</header>
-
+  <header class="header">
+    <button class="icon-btn" onclick="openMenu()">☰</button>
+    <span class="brand-font logo">👑 BANKRUPT</span>
+    <span class="username">Probhat</span>
+  </header>
 
   <!-- Total Balance Hero Card -->
   <div class="hero-card">
@@ -55,145 +54,173 @@
     <div class="quote-author">— $BANKRUPT Degens</div>
   </div>
 
-    <!-- Quick Hub Section -->
-    <div class="home-actions-card">
-      <div class="card-header-row">
-        <span class="section-title-sm">QUICK HUB</span>
-        <span class="status-dot-online">● Live</span>
-   <!-- Bottom Navigation Bar -->
-<nav class="bottom-nav">
-  <a href="index.html" class="nav-item active">
-    <span>🏠</span>
-    <span>Home</span>
-  </a>
-  <a href="shop.html" class="nav-item">
-    <span>🛒</span>
-    <span>Shop</span>
-  </a>
-  <a href="tasks.html" class="nav-item">
-    <span>📋</span>
-    <span>Tasks</span>
-  </a>
-  <a href="leaderboard.html" class="nav-item">
-    <span>🏆</span>
-    <span>Leaderboard</span>
-  </a>
-  <a href="profile.html" class="nav-item">
-    <span>👤</span>
-    <span>Profile</span>
-  </a>
-</nav>
-        
-      </div>
-
-      <div class="quick-grid">
-        <!-- Quick Task Action -->
-        <a href="tasks.html" class="quick-action-btn">
-          <div class="quick-icon-wrapper">📋</div>
-          <div class="quick-text-group">
-            <span class="quick-title">Daily Tasks</span>
-            <span class="quick-sub">3 Tasks Pending</span>
-          </div>
-          <span class="quick-arrow">›</span>
-        </a>
-
-        <!-- Invite Friends Action -->
-        <a href="profile.html" class="quick-action-btn">
-          <div class="quick-icon-wrapper">👥</div>
-          <div class="quick-text-group">
-            <span class="quick-title">Invite & Earn</span>
-            <span class="quick-sub">+5.00 BKT / Referral</span>
-          </div>
-          <span class="quick-arrow">›</span>
-        </a>
-      </div>
-    </div>
-  
-<!-- Style your existing button with your theme class -->
-<button class="btn-claim" id="claim-streak-btn">CHECK IN & CLAIM</button>
-
-
-<script src="streak.js"></script>
-<script src="app.js"></script>
-
-  <script type="module" src="app.js"></script>
-  <!-- Centered Transparent Menu Popup -->
-<div id="menu-overlay" class="menu-overlay" onclick="closeMenu(event)">
-  <div class="menu-modal">
-    <button class="close-menu-btn" onclick="toggleMenu(false)">✕</button>
-    
-    <!-- Profile Info Block -->
-    <div class="menu-user-card">
-      <img src="avatar.png" alt="Avatar" class="menu-avatar" onerror="this.src='https://via.placeholder.com/60/000/00ff88?text=BKT'">
-      <div class="menu-user-details">
-        <h4 class="menu-user-name">Probhat Santra</h4>
-        <span class="menu-user-uid">UID: 0m6C1j7m...</span>
-      </div>
+  <!-- Quick Hub Section -->
+  <div class="home-actions-card">
+    <div class="card-header-row">
+      <span class="section-title-sm">QUICK HUB</span>
+      <span class="status-dot-online">● Live</span>
     </div>
 
-    <div class="menu-divider"></div>
+    <div class="quick-grid">
+      <!-- Quick Task Action -->
+      <a href="tasks.html" class="quick-action-btn">
+        <div class="quick-icon-wrapper">📋</div>
+        <div class="quick-text-group">
+          <span class="quick-title">Daily Tasks</span>
+          <span class="quick-sub">3 Tasks Pending</span>
+        </div>
+        <span class="quick-arrow">›</span>
+      </a>
 
-    <!-- Menu Sections -->
-    <div class="menu-section-label">COMMUNITY</div>
-    <a href="#" class="menu-item"><span class="menu-item-icon">✈️</span> Telegram Channel</a>
-    <a href="#" class="menu-item"><span class="menu-item-icon">𝕏</span> X (Twitter)</a>
-
-    <div class="menu-section-label">PROJECT INFO</div>
-    <a href="#" class="menu-item"><span class="menu-item-icon">📄</span> Whitepaper & Roadmap</a>
-    <a href="#" class="menu-item"><span class="menu-item-icon">ℹ️</span> How to Earn</a>
-
-    <div class="menu-section-label">MORE</div>
-    <a href="#" class="menu-item"><span class="menu-item-icon">🐰</span> Achievements</a>
-    <a href="#" class="menu-item"><span class="menu-item-icon">📢</span> Announcements</a>
-
-    <div class="menu-section-label">SYSTEM</div>
-    <a href="#" class="menu-item"><span class="menu-item-icon">⚙️</span> Settings</a>
-    <a href="#" class="menu-item danger"><span class="menu-item-icon">🚪</span> Sign Out</a>
-
-    <div class="menu-footer-brand">
-      <span class="brand-font">💀 BANKRUPT</span>
+      <!-- Invite Friends Action -->
+      <a href="profile.html" class="quick-action-btn">
+        <div class="quick-icon-wrapper">👥</div>
+        <div class="quick-text-group">
+          <span class="quick-title">Invite & Earn</span>
+          <span class="quick-sub">+5.00 BKT / Referral</span>
+        </div>
+        <span class="quick-arrow">›</span>
+      </a>
     </div>
   </div>
-</div>
 
-<script>
-  function openMenu() {
-    document.getElementById('menu-overlay').classList.add('active');
-  }
+  <button class="btn-claim" id="claim-streak-btn">CHECK IN & CLAIM</button>
 
-  function toggleMenu(show) {
-    if (show) {
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item active">
+      <span>🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="shop.html" class="nav-item">
+      <span>🛒</span>
+      <span>Shop</span>
+    </a>
+    <a href="tasks.html" class="nav-item">
+      <span>📋</span>
+      <span>Tasks</span>
+    </a>
+    <a href="leaderboard.html" class="nav-item">
+      <span>🏆</span>
+      <span>Leaderboard</span>
+    </a>
+    <a href="profile.html" class="nav-item">
+      <span>👤</span>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <!-- Centered Transparent Menu Popup -->
+  <div id="menu-overlay" class="menu-overlay" onclick="closeMenu(event)">
+    <div class="menu-modal">
+      <button class="close-menu-btn" onclick="toggleMenu(false)">✕</button>
+      
+      <!-- Profile Info Block -->
+      <a href="profile.html" class="menu-user-card" style="text-decoration: none;">
+        <img src="avatar.png" alt="Avatar" class="menu-avatar" onerror="this.src='https://via.placeholder.com/60/000/00ff88?text=BKT'">
+        <div class="menu-user-details">
+          <h4 class="menu-user-name">Probhat Santra</h4>
+          <span class="menu-user-uid">UID: 0m6C1j7m...</span>
+        </div>
+      </a>
+
+      <div class="menu-divider"></div>
+
+      <!-- Menu Sections -->
+      <div class="menu-section-label">COMMUNITY</div>
+      <a href="https://t.me/your_telegram_channel" target="_blank" rel="noopener" class="menu-item">
+        <span class="menu-item-icon">✈️</span> Telegram Channel
+      </a>
+      <a href="https://x.com/your_twitter_handle" target="_blank" rel="noopener" class="menu-item">
+        <span class="menu-item-icon">𝕏</span> X (Twitter)
+      </a>
+
+      <div class="menu-section-label">PROJECT INFO</div>
+      <a href="javascript:void(0)" onclick="openMenuInfo('Whitepaper & Roadmap', '🚀 Phase 1: Mini-App Launch\n⚡ Phase 2: Staking & Daily Rewards\n💎 Phase 3: Token Generation Event (TGE) on Robinhood Chain.')" class="menu-item">
+        <span class="menu-item-icon">📄</span> Whitepaper & Roadmap
+      </a>
+      <a href="javascript:void(0)" onclick="openMenuInfo('How to Earn', '1. Check in daily for streak multipliers.\n2. Complete social tasks.\n3. Invite friends to earn +5.00 BKT per referral!')" class="menu-item">
+        <span class="menu-item-icon">ℹ️</span> How to Earn
+      </a>
+
+      <div class="menu-section-label">MORE</div>
+      <a href="javascript:void(0)" onclick="openMenuInfo('Achievements', '🏆 Early Adopter: Unlocked\n🔥 7-Day Streak: Unlocked\n👑 10 Referrals: In Progress')" class="menu-item">
+        <span class="menu-item-icon">🐰</span> Achievements
+      </a>
+      <a href="javascript:void(0)" onclick="openMenuInfo('Announcements', '📢 Genesis Phase is active! Earn bonus rewards for daily check-ins on Robinhood Chain.')" class="menu-item">
+        <span class="menu-item-icon">📢</span> Announcements
+      </a>
+
+      <div class="menu-section-label">SYSTEM</div>
+      <a href="javascript:void(0)" onclick="openMenuInfo('Settings', '⚙️ Sound Effects: ON\n🔔 Push Notifications: ON\n🌐 Language: English')" class="menu-item">
+        <span class="menu-item-icon">⚙️</span> Settings
+      </a>
+      <a href="javascript:void(0)" onclick="handleSignOut()" class="menu-item danger">
+        <span class="menu-item-icon">🚪</span> Sign Out
+      </a>
+
+      <div class="menu-footer-brand">
+        <span class="brand-font">💀 BANKRUPT</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="streak.js"></script>
+  <script type="module" src="app.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Menu Logic
+    function openMenu() {
       document.getElementById('menu-overlay').classList.add('active');
-    } else {
-      document.getElementById('menu-overlay').classList.remove('active');
     }
-  }
 
-  function closeMenu(event) {
-    if (event.target.id === 'menu-overlay') {
+    function toggleMenu(show) {
+      const menu = document.getElementById('menu-overlay');
+      if (show) {
+        menu.classList.add('active');
+      } else {
+        menu.classList.remove('active');
+      }
+    }
+
+    function closeMenu(event) {
+      if (event.target.id === 'menu-overlay') {
+        toggleMenu(false);
+      }
+    }
+
+    function openMenuInfo(title, content) {
       toggleMenu(false);
+      setTimeout(() => {
+        alert(`${title.toUpperCase()}\n\n${content}`);
+      }, 200);
     }
-  }
-</script>
- <!-- Firebase SDKs (v10 Compatibility Mode) -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-<script>
-  // 1. Paste your Firebase config here
-  const firebaseConfig = {
-  apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
-  authDomain: "bankrupt-9068b.firebaseapp.com",
-  databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
-  projectId: "bankrupt-9068b",
-  storageBucket: "bankrupt-9068b.firebasestorage.app",
-  messagingSenderId: "961644576786",
-  appId: "1:961644576786:web:65eff34df07a18067458cb"
-};
-  // 2. Initialize App & Firestore
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-</script>
-  
+    function handleSignOut() {
+      toggleMenu(false);
+      if (confirm("Are you sure you want to sign out?")) {
+        alert("Signed out successfully.");
+      }
+    }
+
+    // Firebase Initialization
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
+      authDomain: "bankrupt-9068b.firebaseapp.com",
+      databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
+      projectId: "bankrupt-9068b",
+      storageBucket: "bankrupt-9068b.firebasestorage.app",
+      messagingSenderId: "961644576786",
+      appId: "1:961644576786:web:65eff34df07a18067458cb"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
 </body>
 </html>

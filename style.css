@@ -514,3 +514,158 @@ body {
   font-weight: 700;
   color: var(--accent-green);
 }
+/* ================= PROFILE PAGE REDESIGN ================= */
+.profile-card {
+  background: #0b0f0c;
+  border: 1px solid #1c261e;
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 80px;
+}
+
+.user-header-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.avatar-wrapper img {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  border: 2px solid #89e612;
+  box-shadow: 0 0 12px rgba(137, 230, 18, 0.4);
+  object-fit: cover;
+}
+
+.user-info-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.user-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-fullname {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.edit-icon, .copy-icon {
+  font-size: 0.8rem;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.id-label {
+  font-size: 0.65rem;
+  color: #7a8b7e;
+  margin-top: 2px;
+}
+
+.id-value-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #c0d0c0;
+}
+
+.level-xp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.level-badge {
+  background: #89e612;
+  color: #000;
+  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.xp-bar-container {
+  flex: 1;
+  background: #19201a;
+  height: 10px;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.xp-bar-fill {
+  background: #89e612;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.xp-text {
+  position: absolute;
+  right: 6px;
+  top: -12px;
+  font-size: 0.6rem;
+  color: #888;
+}
+
+.profile-stats-list {
+  background: #111613;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #a0b0a0;
+}
+
+.stat-val {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stat-val.highlight {
+  color: #89e612;
+}
+
+.badges-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #7a8b7e;
+  font-weight: 700;
+}
+
+.view-all {
+  color: #a0b0a0;
+  text-decoration: none;
+}
+
+.badges-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.badge-item img {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: 1px solid #28362a;
+}

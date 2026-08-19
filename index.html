@@ -222,18 +222,5 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
   </script>
-  // Maintenance Mode & Ban Guard
-db.collection("settings").doc("app_state").onSnapshot((doc) => {
-  if (doc.exists && doc.data().maintenance) {
-    document.body.innerHTML = `
-      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; background:#080d09; color:#fff;">
-        <h1 style="font-size:3rem; margin-bottom:10px;">🛠️</h1>
-        <h2 class="brand-font" style="color:#00ff88;">UNDER MAINTENANCE</h2>
-        <p style="color:#889988; max-width:300px;">We are upgrading the $BANKRUPT app! Please check back in a few minutes.</p>
-      </div>
-    `;
-  }
-});
-  
 </body>
 </html>

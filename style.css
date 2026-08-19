@@ -239,6 +239,40 @@ body {
   color: var(--accent-green); 
 }
 
+/* ================= CATEGORY TAB BUTTONS (FIXED) ================= */
+.tab-container {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0 16px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab-container::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn {
+  background: #111a13;
+  color: #889988;
+  border: 1px solid #1a2b1e;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease-in-out;
+}
+
+.tab-btn.active {
+  background: #00ff88 !important;
+  color: #000000 !important;
+  border-color: #00ff88 !important;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
 /* ================= SHOP PAGE STYLES ================= */
 .shop-header {
   display: flex;
@@ -676,6 +710,7 @@ body {
   color: #556655;
   font-size: 1.1rem;
 }
+
 /* ================= CENTERED POPUP MENU ================= */
 .menu-overlay {
   position: fixed;
@@ -810,6 +845,7 @@ body {
   text-align: center;
   font-size: 1.1rem;
 }
+
 /* ================= HOMEPAGE QUICK HUB ================= */
 .home-actions-card {
   background: var(--card-bg);

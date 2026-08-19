@@ -478,3 +478,39 @@ body {
   font-size: 0.9rem;
 }
 
+/* ================= LEADERBOARD STYLES ================= */
+.leaderboard-item {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.rank-badge {
+  font-weight: 700;
+  font-size: 1rem;
+  width: 32px;
+}
+
+.top-1 { color: #ffd700; } /* Gold */
+.top-2 { color: #c0c0c0; } /* Silver */
+.top-3 { color: #cd7f32; } /* Bronze */
+
+.user-info {
+  flex-grow: 1;
+  margin-left: 12px;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.user-score {
+  font-weight: 700;
+  color: var(--accent-green);
+}

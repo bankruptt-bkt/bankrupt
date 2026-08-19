@@ -48,22 +48,23 @@ body {
 }
 
 /* Hero Balance Card with Fixed Mascot Background */
+/* Hero Balance Card with Full Background Image */
 .hero-card {
   position: relative;
   background-color: var(--card-bg);
   background-image: url('./ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
   background-repeat: no-repeat;
-  background-position: right bottom;
-  background-size: 140px auto;
+  background-position: center;
+  background-size: cover; /* Fills entire card area */
   border: 1px solid var(--accent-green);
   border-radius: 16px;
-  padding: 20px;
+  padding: 24px 20px;
   margin-bottom: 16px;
   box-shadow: 0 0 15px rgba(56, 239, 125, 0.15);
   overflow: hidden;
 }
 
-/* Gradient overlay to fade left side for readability while revealing image on right */
+/* Semi-transparent dark overlay to keep white text readable over artwork */
 .hero-card::before {
   content: "";
   position: absolute;
@@ -71,9 +72,10 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, rgba(19, 25, 21, 0.9) 40%, rgba(19, 25, 21, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(11, 15, 12, 0.85) 0%, rgba(11, 15, 12, 0.45) 100%);
   z-index: 1;
 }
+
 
 .hero-card * {
   position: relative;

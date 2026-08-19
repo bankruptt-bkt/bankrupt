@@ -1,4 +1,4 @@
-  :root {
+:root {
   --bg-color: #0b0f0c;
   --card-bg: #131915;
   --accent-green: #38ef7d;
@@ -47,23 +47,24 @@ body {
   font-size: 0.9rem; 
 }
 
-/* Hero Balance Card with Mascot Background */
+/* Hero Balance Card with Fixed Mascot Background */
 .hero-card {
   position: relative;
   background-color: var(--card-bg);
-    background-image: url('Ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
+  background-image: url('./Ba5e9fc2-6c8d-4120-93ac-c39b19b89c0d.png');
   background-repeat: no-repeat;
-  background-position: right bottom;
-  background-size: contain;
+  background-position: right center;
+  background-size: cover;
   border: 1px solid var(--accent-green);
   border-radius: 16px;
-  padding: 20px;
+  padding: 24px 20px;
   margin-bottom: 16px;
   box-shadow: 0 0 15px rgba(56, 239, 125, 0.15);
   overflow: hidden;
+  min-height: 140px;
 }
 
-/* Dark gradient overlay so text remains readable over artwork */
+/* Gradient overlay to ensure background art doesn't obscure high-contrast values */
 .hero-card::before {
   content: "";
   position: absolute;
@@ -71,7 +72,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, #131915 45%, rgba(19, 25, 21, 0.3) 100%);
+  background: linear-gradient(90deg, rgba(19, 25, 21, 0.95) 45%, rgba(19, 25, 21, 0.35) 100%);
   z-index: 1;
 }
 
@@ -82,7 +83,7 @@ body {
 
 .badge {
   display: inline-block;
-  background: rgba(56, 239, 125, 0.1);
+  background: rgba(56, 239, 125, 0.12);
   color: var(--accent-green);
   padding: 4px 12px;
   border-radius: 20px;
@@ -106,61 +107,6 @@ body {
 .sub-text { 
   font-size: 0.75rem; 
   color: var(--accent-green); 
-}
-
-/* Mining Card */
-.mining-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.energy-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--text-gray);
-  margin-bottom: 6px;
-}
-
-.energy-progress-bg {
-  background: #0d130e;
-  height: 8px;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.energy-progress-fill {
-  background: var(--accent-green);
-  height: 100%;
-}
-
-.mine-node-box {
-  background: radial-gradient(circle, #1a3a22 0%, #0d130e 100%);
-  border: 2px dashed var(--accent-green);
-  border-radius: 12px;
-  padding: 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.05s ease;
-}
-
-.mine-node-box:active { 
-  transform: scale(0.97); 
-}
-
-.mine-icon { 
-  font-size: 2.5rem; 
-  margin-bottom: 4px; 
-}
-
-.mine-power { 
-  font-size: 0.75rem; 
-  color: var(--text-gray); 
-  margin-top: 4px; 
 }
 
 /* Daily Streak Card */
@@ -316,9 +262,8 @@ body {
 .nav-item.active { 
   color: var(--accent-green); 
 }
-/* ================= SHOP PAGE STYLES ================= */
 
-/* Header */
+/* ================= SHOP PAGE STYLES ================= */
 .shop-header {
   display: flex;
   justify-content: space-between;
@@ -351,13 +296,12 @@ body {
   color: #ffffff;
 }
 
-/* Category Filters */
 .filter-categories {
   display: flex;
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 16px;
-  scrollbar-width: none; /* Hide scrollbar for clean UI */
+  scrollbar-width: none;
 }
 
 .filter-categories::-webkit-scrollbar {
@@ -383,7 +327,6 @@ body {
   border-color: #89e612;
 }
 
-/* Horizontal Scroll Carousel */
 .shop-carousel {
   display: flex;
   gap: 14px;
@@ -396,7 +339,6 @@ body {
   display: none;
 }
 
-/* Shop Card */
 .shop-card {
   min-width: 170px;
   width: 170px;
@@ -459,8 +401,8 @@ body {
   font-size: 0.85rem;
   margin-top: 10px;
 }
-/* ================= TASKS UI MATCHING SCREENSHOT ================= */
 
+/* ================= TASKS UI MATCHING SCREENSHOT ================= */
 .task-card {
   background: #111613;
   border: 1px solid #1c261e;
@@ -521,4 +463,4 @@ body {
   justify-content: center;
   font-weight: 900;
   font-size: 0.9rem;
-}
+  }

@@ -14,14 +14,14 @@
   <header class="header">
     <button class="icon-btn" onclick="openMenu()">☰</button>
     <span class="brand-font logo">👑 BANKRUPT</span>
-    <span class="username">Probhat</span>
+    <span class="username">Loading...</span>
   </header>
 
   <!-- Total Balance Hero Card -->
   <div class="hero-card">
     <div class="badge">🏹 Launching on Robinhood Chain</div>
     <div class="balance-title">TOTAL $BANKRUPT BALANCE</div>
-    <div class="balance-val">82.3725 <span class="brand-font">BKT</span></div>
+    <div class="balance-val">0.0000 <span class="brand-font">BKT</span></div>
     <div class="sub-text">⚡ Genesis Phase Rewards Active</div>
   </div>
 
@@ -29,7 +29,7 @@
   <div class="streak-card">
     <div class="streak-header">
       <h3 class="brand-font">STREAK</h3>
-      <span class="sub-label">Streak multipliers cap at Day 7 (1.6x)</span>
+      <span class="sub-label">Streak multipliers cap at Day 7 (2.0x)</span>
     </div>
 
     <div class="streak-days">
@@ -40,11 +40,11 @@
       <div class="day-box"><span>Day 5+</span><div class="multiplier">1.4x+</div>🔒</div>
     </div>
 
-    <button class="btn-claim brand-font">CHECKED IN</button>
+    <button class="btn-claim brand-font">CHECK IN & CLAIM</button>
     
     <div class="streak-footer">
-      <span>Next check-in reward: <b>+3.50 BKT</b></span>
-      <span class="timer-badge">⏳ 11h 01m 40s</span>
+      <span>Next check-in reward: <b>+2.50 BKT</b></span>
+      <span class="timer-badge">⏳ 24h 00m 00s</span>
     </div>
   </div>
 
@@ -84,8 +84,6 @@
     </div>
   </div>
 
-  <button class="btn-claim" id="claim-streak-btn">CHECK IN & CLAIM</button>
-
   <!-- Bottom Navigation Bar -->
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item active">
@@ -119,8 +117,8 @@
       <a href="profile.html" class="menu-user-card" style="text-decoration: none;">
         <img id="menuUserAvatar" src="./assets/images/profile/rookie.png" alt="Avatar" class="menu-avatar" onerror="this.src='https://via.placeholder.com/60/000/00ff88?text=BKT'">
         <div class="menu-user-details">
-          <h4 class="menu-user-name">Probhat Santra</h4>
-          <span class="menu-user-uid">UID: 0m6C1j7m...</span>
+          <h4 class="menu-user-name" id="menu-username-display">User</h4>
+          <span class="menu-user-uid" id="menu-uid-display">UID: Connecting...</span>
         </div>
       </a>
 
@@ -144,7 +142,7 @@
       </a>
 
       <div class="menu-section-label">MORE</div>
-      <a href="javascript:void(0)" onclick="openMenuInfo('Achievements', '🏆 Early Adopter: Unlocked\n🔥 7-Day Streak: Unlocked\n👑 10 Referrals: In Progress')" class="menu-item">
+      <a href="javascript:void(0)" onclick="openMenuInfo('Achievements', '🏆 Early Adopter: Unlocked\n🔥 7-Day Streak: In Progress\n👑 10 Referrals: In Progress')" class="menu-item">
         <span class="menu-item-icon">🐰</span> Achievements
       </a>
       <a href="javascript:void(0)" onclick="openMenuInfo('Announcements', '📢 Genesis Phase is active! Earn bonus rewards for daily check-ins on Robinhood Chain.')" class="menu-item">
@@ -167,17 +165,16 @@
     </div>
   </div>
 
-  <!-- App Scripts -->
-  <script src="streak.js"></script>
+  <!-- App Main Module JS -->
   <script type="module" src="app.js"></script>
 
-  <!-- Firebase SDKs (App, Auth, and Firestore) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // 1. Firebase Config & Initialization
+    // 1. Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
       authDomain: "bankrupt-9068b.firebaseapp.com",
@@ -188,11 +185,13 @@
       appId: "1:961644576786:web:65eff34df07a18067458cb"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // 2. Rank Avatar Image Mapping
+    // 2. Rank Avatars Mapping
     const RANK_AVATARS = {
       rookie: "./assets/images/profile/rookie.png",
       grinder: "./assets/images/profile/grinder.png",
@@ -205,17 +204,16 @@
     function renderProfileAvatar(userRank) {
       const avatarImg = document.getElementById("menuUserAvatar");
       if (!avatarImg) return;
-
       const normalizedRank = (userRank || "rookie").toLowerCase().replace(/\s+/g, '');
       avatarImg.src = RANK_AVATARS[normalizedRank] || RANK_AVATARS["rookie"];
     }
 
-    // 3. Auth State Guard & Realtime Rank Listener
+    // 3. Sync Header & Slide-out Menu User Info
     auth.onAuthStateChanged((user) => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
-        // Fetch user rank from Firestore and listen for changes
+      if (user) {
+        document.getElementById("menu-username-display").textContent = user.displayName || "Degen User";
+        document.getElementById("menu-uid-display").textContent = `UID: ${user.uid.substring(0, 8)}...`;
+
         db.collection("users").doc(user.uid).onSnapshot((doc) => {
           if (doc.exists) {
             const userData = doc.data();
@@ -225,39 +223,29 @@
       }
     });
 
-    // 4. Menu Controls
+    // 4. Menu Actions
     function openMenu() {
       document.getElementById('menu-overlay').classList.add('active');
     }
 
     function toggleMenu(show) {
       const menu = document.getElementById('menu-overlay');
-      if (show) {
-        menu.classList.add('active');
-      } else {
-        menu.classList.remove('active');
-      }
+      if (show) menu.classList.add('active');
+      else menu.classList.remove('active');
     }
 
     function closeMenu(event) {
-      if (event.target.id === 'menu-overlay') {
-        toggleMenu(false);
-      }
+      if (event.target.id === 'menu-overlay') toggleMenu(false);
     }
 
     function openMenuInfo(title, content) {
       toggleMenu(false);
-      setTimeout(() => {
-        alert(`${title.toUpperCase()}\n\n${content}`);
-      }, 200);
+      setTimeout(() => alert(`${title.toUpperCase()}\n\n${content}`), 200);
     }
 
-    // 5. Sign Out Function
     function handleSignOut() {
       auth.signOut().then(() => {
         window.location.href = "login.html";
-      }).catch((error) => {
-        console.error("Sign out error:", error);
       });
     }
   </script>

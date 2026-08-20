@@ -133,6 +133,7 @@
       <span>Profile</span>
     </a>
   </nav>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -140,17 +141,18 @@
 
   <!-- Profile Script -->
   <script>
-    // 1. ADD YOUR FIREBASE CONFIG HERE
+    // 1. YOUR FIREBASE CONFIG (REPLACE WITH YOUR ACTUAL KEYS FROM FIREBASE CONSOLE)
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+  apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
+  authDomain: "bankrupt-9068b.firebaseapp.com",
+  databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
+  projectId: "bankrupt-9068b",
+  storageBucket: "bankrupt-9068b.firebasestorage.app",
+  messagingSenderId: "961644576786",
+  appId: "1:961644576786:web:65eff34df07a18067458cb"
+};
 
-    // 2. Initialize Firebase explicitly
+    // 2. Safe Firebase Initialization
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
@@ -200,21 +202,36 @@
       }
     }
 
+    // 3. Persistent Auth Listener (Prevents False Redirects)
     auth.onAuthStateChanged((user) => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
+      if (user) {
+        // Active session confirmed, listen for Firestore updates
         db.collection("users").doc(user.uid).onSnapshot((doc) => {
           if (doc.exists) {
             const userData = doc.data();
             userData.uid = user.uid;
             updateProfileUI(userData);
+          } else {
+            // Fallback display if user doc doesn't exist yet
+            updateProfileUI({
+              username: user.displayName || "Degen User",
+              uid: user.uid,
+              balance: 0,
+              streak: 0,
+              longestStreak: 0,
+              referrals: 0,
+              rank: "rookie"
+            });
           }
+        }, (error) => {
+          console.error("Firestore error:", error);
         });
+      } else {
+        // Only redirect if auth status check finishes and confirm no session exists
+        window.location.href = "login.html";
       }
     });
   </script>
 
-  
 </body>
 </html>

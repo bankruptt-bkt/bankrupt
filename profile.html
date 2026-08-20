@@ -133,7 +133,6 @@
       <span>Profile</span>
     </a>
   </nav>
-
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -141,6 +140,23 @@
 
   <!-- Profile Script -->
   <script>
+    // 1. ADD YOUR FIREBASE CONFIG HERE
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // 2. Initialize Firebase explicitly
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
     const RANK_AVATARS = {
       rookie: "./assets/images/profile/rookie.png",
       grinder: "./assets/images/profile/grinder.png",
@@ -199,5 +215,6 @@
     });
   </script>
 
+  
 </body>
 </html>

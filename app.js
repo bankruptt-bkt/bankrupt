@@ -1,13 +1,14 @@
 // Constants
-const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 Hours
+const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const BASE_REWARD_INITIAL = 5.0; 
-const WELCOME_BONUS = 50.00; // 50 BKT Welcome Bonus
+const WELCOME_BONUS = 50.00;
 
 let currentUser = null;
 let currentuserData = null;
 let countdownTimer = null;
+let cachedTotalUsers = 1;
 
-// Dynamic Base Rate Calculator based on total users
+// Base Rate Calculator based on total global users
 function calculateBaseReward(totalUsers) {
   if (totalUsers <= 1000) return BASE_REWARD_INITIAL;
   if (totalUsers <= 10000) return BASE_REWARD_INITIAL * 0.75;
@@ -16,24 +17,23 @@ function calculateBaseReward(totalUsers) {
   return BASE_REWARD_INITIAL * 0.1;
 }
 
-// Multipliers based on streak days
+// Streak Multipliers
 function getStreakMultiplier(streakDays) {
   const multipliers = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 1.6 };
   return streakDays >= 7 ? 1.6 : (multipliers[streakDays] || 1.0);
 }
 
-// Global Check-In Click Function
+// Check-In Claim Action
 window.claimCheckIn = async function() {
   const claimBtn = document.getElementById('claim-btn');
 
   if (!currentUser || !currentuserData) {
-    alert("Authenticating session... Please try again in a moment.");
+    alert("Authenticating session... Please try again.");
     return;
   }
 
   const now = Date.now();
   const nextAvailableTime = (currentuserData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS;
-
   if (now < nextAvailableTime) return; 
 
   if (claimBtn) {
@@ -42,29 +42,21 @@ window.claimCheckIn = async function() {
   }
 
   try {
-    // 1. Fetch current live global total users
-    const globalSnap = await db.ref('global/totalUsers').once('value');
-    const totalUsers = globalSnap.val() || 1;
-
-    // 2. Calculate streak logic
     let newStreak = currentuserData.streakDays || 0;
     if (now - (currentuserData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
-      newStreak = 1; // Streak broken (>48 hrs missed)
+      newStreak = 1;
     } else {
-      newStreak += 1; // Streak continued
+      newStreak += 1;
     }
 
-    // 3. Compute earnings
-    const baseRate = calculateBaseReward(totalUsers);
+    const baseRate = calculateBaseReward(cachedTotalUsers);
     const earned = baseRate * getStreakMultiplier(newStreak);
 
-    // 4. Update user profile in Firebase Realtime Database
     await db.ref('users/' + currentUser.uid).update({
       balance: (currentuserData.balance || 0) + earned,
       streakDays: newStreak,
       lastCheckIn: now
     });
-
   } catch (err) {
     console.error("Check-in Error:", err);
     alert("Check-in failed: " + err.message);
@@ -80,13 +72,20 @@ auth.onAuthStateChanged((user) => {
   if (user) {
     currentUser = user;
     initUserData(user);
+    listenToGlobalStats();
     listenToTasks();
   } else {
-    auth.signInAnonymously().catch((err) => {
-      console.error("Anonymous Auth Failed:", err);
-    });
+    auth.signInAnonymously().catch(console.error);
   }
 });
+
+// Non-blocking background listener for live user totals
+function listenToGlobalStats() {
+  db.ref('global/totalUsers').on('value', (snap) => {
+    cachedTotalUsers = snap.val() || 1;
+    if (currentuserData) updateUI(currentuserData);
+  });
+}
 
 // Initialize User Profile Realtime Listener
 function initUserData(user) {
@@ -96,7 +95,6 @@ function initUserData(user) {
     let data = snapshot.val();
     
     if (!data) {
-      // New user registration flow
       data = {
         uid: user.uid,
         name: user.displayName || 'Miner ' + user.uid.substring(0, 5),
@@ -108,7 +106,6 @@ function initUserData(user) {
         createdAt: firebase.database.ServerValue.TIMESTAMP
       };
 
-      // Atomic batch save for user creation and global counter increment
       userRef.set(data);
       db.ref('global/totalUsers').transaction(current => (current || 0) + 1);
     }
@@ -118,9 +115,9 @@ function initUserData(user) {
   });
 }
 
-// UI Synchronization
-async function updateUI(userData) {
-  // Update Profile Text
+// Synchronous Instant UI Updates
+function updateUI(userData) {
+  // Update Profile Info
   const nameDisplay = document.getElementById('user-display-name');
   if (nameDisplay) nameDisplay.innerText = userData.name;
   
@@ -130,7 +127,7 @@ async function updateUI(userData) {
   const menuUid = document.getElementById('menu-user-uid');
   if (menuUid) menuUid.innerText = "UID: " + userData.uid.substring(0, 8) + "...";
 
-  // Balance
+  // Balance Display
   const balanceEl = document.getElementById('balance-display');
   if (balanceEl) balanceEl.innerText = (userData.balance || 0).toFixed(4);
 
@@ -140,33 +137,26 @@ async function updateUI(userData) {
     streakTitle.innerText = userData.streakDays > 0 ? `DAY ${userData.streakDays} STREAK` : 'START STREAK';
   }
 
-  // Next Reward Calculation from live database state
-  try {
-    const globalSnap = await db.ref('global/totalUsers').once('value');
-    const totalUsers = globalSnap.val() || 1;
-    const baseRate = calculateBaseReward(totalUsers);
-    
-    const now = Date.now();
-    let nextStreak = userData.streakDays || 0;
-    if (now - (userData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
-      nextStreak = 1; 
-    } else if (now >= (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS) {
-      nextStreak += 1; 
-    }
-    if (nextStreak === 0) nextStreak = 1;
+  // Calculate Next Reward instantly using cached global stats
+  const baseRate = calculateBaseReward(cachedTotalUsers);
+  const now = Date.now();
+  let nextStreak = userData.streakDays || 0;
+  
+  if (now - (userData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
+    nextStreak = 1; 
+  } else if (now >= (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS) {
+    nextStreak += 1; 
+  }
+  if (nextStreak === 0) nextStreak = 1;
 
-    const nextReward = baseRate * getStreakMultiplier(nextStreak);
-    
-    const rewardLabel = document.getElementById('next-reward-val');
-    if (rewardLabel) {
-      rewardLabel.innerText = `+${nextReward.toFixed(2)} BKT`;
-    }
-  } catch (err) {
-    console.error("Error computing reward rate:", err);
+  const nextReward = baseRate * getStreakMultiplier(nextStreak);
+  
+  const rewardLabel = document.getElementById('next-reward-val');
+  if (rewardLabel) {
+    rewardLabel.innerText = `+${nextReward.toFixed(2)} BKT`;
   }
 
-  // Button & Timer state synchronization
-  const now = Date.now();
+  // Button & Timer state handling
   const nextAvailableTime = (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS;
   const claimBtn = document.getElementById('claim-btn');
 
@@ -215,13 +205,10 @@ function startCountdown(targetTime) {
 function setTimerDisplay(text, isReady) {
   const badge = document.getElementById('countdown-badge');
   if (badge) {
-    if (isReady) {
-      badge.className = "px-2.5 py-1 rounded-full bg-[#0d2216] text-[#00ff66] border border-[#144225] font-mono text-[11px] font-bold flex items-center gap-1";
-      badge.innerHTML = `<i class="fa-regular fa-clock"></i> ${text}`;
-    } else {
-      badge.className = "px-2.5 py-1 rounded-full bg-[#18221b] text-gray-300 border border-[#2a382f] font-mono text-[11px] font-bold flex items-center gap-1";
-      badge.innerHTML = `<i class="fa-regular fa-clock"></i> ${text}`;
-    }
+    badge.className = isReady 
+      ? "px-2.5 py-1 rounded-full bg-[#0d2216] text-[#00ff66] border border-[#144225] font-mono text-[11px] font-bold flex items-center gap-1"
+      : "px-2.5 py-1 rounded-full bg-[#18221b] text-gray-300 border border-[#2a382f] font-mono text-[11px] font-bold flex items-center gap-1";
+    badge.innerHTML = `<i class="fa-regular fa-clock"></i> ${text}`;
   }
 }
 

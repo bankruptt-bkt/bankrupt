@@ -70,7 +70,7 @@
     <div class="admin-card">
       <div class="admin-title">Add New Task</div>
       <input type="text" id="task-title" class="admin-input" placeholder="Task Title (e.g. Join Telegram)">
-      <input type="number" id="task-reward" class="admin-input" placeholder="Reward (e.g. 5.00)">
+      <input type="number" id="task-reward" class="admin-input" placeholder="Reward (e.g. 5.00)" step="any">
       <input type="text" id="task-icon" class="admin-input" placeholder="Icon Emoji (e.g. ✈️)">
       <input type="text" id="task-link" class="admin-input" placeholder="Target Link (https://...)">
       
@@ -97,7 +97,7 @@
     <div class="admin-card">
       <div class="admin-title">Manage User Balance / Referrals</div>
       <input type="text" id="user-uid" class="admin-input" placeholder="User UID or Telegram ID">
-      <input type="number" id="bonus-bkt" class="admin-input" placeholder="Bonus BKT Amount">
+      <input type="number" id="bonus-bkt" class="admin-input" placeholder="Bonus BKT Amount" step="any">
       <button onclick="grantUserBonus()" class="admin-btn">Grant Bonus BKT</button>
     </div>
 
@@ -146,7 +146,6 @@
     }
 
     function loadPanelData() {
-      // Sync Tasks List
       db.collection("tasks").onSnapshot((snapshot) => {
         const container = document.getElementById("admin-tasks-list");
         container.innerHTML = "";
@@ -173,7 +172,6 @@
         });
       });
 
-      // App Maintenance Mode Check
       db.collection("settings").doc("app_state").onSnapshot((doc) => {
         if (doc.exists) {
           isMaintenance = doc.data().maintenance || false;
@@ -186,17 +184,21 @@
     }
 
     function createNewTask() {
-      const title = document.getElementById("task-title").value;
-      const reward = document.getElementById("task-reward").value;
-      const icon = document.getElementById("task-icon").value;
-      const link = document.getElementById("task-link").value;
+      const title = document.getElementById("task-title").value.trim();
+      const rawReward = document.getElementById("task-reward").value;
+      const icon = document.getElementById("task-icon").value.trim();
+      const link = document.getElementById("task-link").value.trim();
       const category = document.getElementById("task-category").value;
 
-      if (!title || !reward) return alert("Fill in title and reward!");
+      const rewardNumber = parseFloat(rawReward);
+
+      if (!title || isNaN(rewardNumber) || rewardNumber <= 0) {
+        return alert("Please fill in a valid title and positive numeric reward amount!");
+      }
 
       db.collection("tasks").add({
         title,
-        reward: parseFloat(reward),
+        reward: rewardNumber,
         icon: icon || '📋',
         link: link || '#',
         category,
@@ -207,6 +209,9 @@
         document.getElementById("task-reward").value = "";
         document.getElementById("task-icon").value = "";
         document.getElementById("task-link").value = "";
+      }).catch((error) => {
+        console.error("Error creating task:", error);
+        alert("Failed to publish task.");
       });
     }
 
@@ -225,7 +230,7 @@
     }
 
     function grantUserBonus() {
-      const uid = document.getElementById("user-uid").value;
+      const uid = document.getElementById("user-uid").value.trim();
       const amount = parseFloat(document.getElementById("bonus-bkt").value);
       if (!uid || isNaN(amount)) return alert("Enter valid UID and Amount!");
 
@@ -235,7 +240,7 @@
     }
 
     function setUserBan(status) {
-      const uid = document.getElementById("ban-uid").value;
+      const uid = document.getElementById("ban-uid").value.trim();
       if (!uid) return alert("Enter User UID!");
 
       db.collection("users").doc(uid).set({ isBanned: status }, { merge: true })

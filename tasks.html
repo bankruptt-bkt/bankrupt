@@ -14,6 +14,7 @@
     .task-title { color: #fff; font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; }
     .task-reward { color: #00ff88; font-weight: 700; font-size: 0.85rem; }
     .task-btn { background: #00ff88; color: #000; font-weight: 700; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; border: none; cursor: pointer; }
+    .task-btn.completed { background: #1a291c; color: #00ff88; cursor: default; border: 1px solid #00ff88; }
     .tab-btn.active { background: #00ff88 !important; color: #000 !important; font-weight: 700; }
   </style>
 </head>
@@ -64,9 +65,24 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Dynamically retrieve user ID or fallback
+    let currentUserId = localStorage.getItem("bkt_user_id") || "guest_user";
+
     let currentCategory = "Daily";
     let allTasks = [];
+    let completedTasks = [];
 
+    // Sync Completed Tasks for current user
+    db.collection("users").doc(currentUserId).onSnapshot((doc) => {
+      if (doc.exists) {
+        completedTasks = doc.data().completedTasks || [];
+      } else {
+        completedTasks = [];
+      }
+      renderTasks();
+    });
+
+    // Sync Active Tasks
     db.collection("tasks").onSnapshot((snapshot) => {
       allTasks = [];
       snapshot.forEach((doc) => {
@@ -94,19 +110,57 @@
       }
 
       filtered.forEach((task) => {
+        const isDone = completedTasks.includes(task.id);
         listContainer.innerHTML += `
           <div class="task-card">
             <div class="task-left">
               <div class="task-icon-box">${task.icon || '📋'}</div>
               <div>
                 <div class="task-title">${task.title}</div>
-                <div class="task-reward">${task.reward}</div>
+                <div class="task-reward">+${task.reward} BKT</div>
               </div>
             </div>
-            <a href="${task.link || '#'}" target="_blank" class="task-btn">Start</a>
+            ${isDone 
+              ? `<button class="task-btn completed" disabled>Completed</button>` 
+              : `<button class="task-btn" onclick="startAndCompleteTask('${task.id}', '${task.link || '#'}', '${task.reward}')">Start</button>`
+            }
           </div>
         `;
       });
+    }
+
+    async function startAndCompleteTask(taskId, link, rewardStr) {
+      if (link && link !== "#") {
+        window.open(link, "_blank");
+      }
+
+      const rewardVal = parseFloat(rewardStr.toString().replace(/[^0-9.]/g, '')) || 0;
+      const userRef = db.collection("users").doc(currentUserId);
+
+      try {
+        await db.runTransaction(async (transaction) => {
+          const userDoc = await transaction.get(userRef);
+          let currentBal = 0;
+          let doneList = [];
+
+          if (userDoc.exists) {
+            currentBal = userDoc.data().balance || 0;
+            doneList = userDoc.data().completedTasks || [];
+          }
+
+          if (doneList.includes(taskId)) return;
+
+          doneList.push(taskId);
+          const newBal = currentBal + rewardVal;
+
+          transaction.set(userRef, {
+            balance: newBal,
+            completedTasks: doneList
+          }, { merge: true });
+        });
+      } catch (err) {
+        console.error("Task completion failed: ", err);
+      }
     }
   </script>
 </body>

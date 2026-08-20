@@ -1,6 +1,6 @@
 import { db, auth, provider } from "./firebase-config.js";
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, setDoc, updateDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, setDoc, updateDoc, increment, onSnapshot, getDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Multipliers & Base Rewards
 const STREAK_MULTIPLIERS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 2.0 };
@@ -26,6 +26,7 @@ const timerBadge = document.querySelector(".timer-badge");
 const streakText = document.querySelector(".streak-header h3");
 const nextRewardText = document.querySelector(".streak-footer b");
 const menuAvatarImg = document.getElementById("menuUserAvatar");
+const pendingTasksBadge = document.getElementById("pending-tasks-count");
 
 // Global State
 let currentUser = null;
@@ -33,6 +34,7 @@ let userStreak = 1;
 let lastCheckIn = null;
 let timerInterval = null;
 let unsubscribeUser = null;
+let unsubscribeTasks = null;
 
 // Rank Upgrade Evaluator
 async function checkRankUpgrade(userId, currentBalance) {
@@ -56,6 +58,9 @@ async function checkRankUpgrade(userId, currentBalance) {
 onAuthStateChanged(auth, (user) => {
   if (user) {
     currentUser = user;
+    // Save UID to localStorage so tasks.js can read the exact same account
+    localStorage.setItem("bkt_user_id", user.uid);
+
     if (headerUsername) headerUsername.textContent = user.displayName || "Degen";
     if (menuUsername) menuUsername.textContent = user.displayName || "Degen User";
     if (menuUid) menuUid.textContent = `UID: ${user.uid.substring(0, 8)}...`;
@@ -68,7 +73,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// 2. Real-time Firestore Sync
+// 2. Real-time Firestore Sync (Balance + User Data)
 function listenToUserData(user) {
   const userRef = doc(db, "users", user.uid);
 
@@ -82,12 +87,14 @@ function listenToUserData(user) {
         balance: 0,
         streak: 1,
         rank: "rookie",
-        lastCheckIn: null
+        lastCheckIn: null,
+        completedTasks: []
       };
       await setDoc(userRef, newData);
       userStreak = 1;
       lastCheckIn = null;
       updateUI(0, "rookie");
+      listenToPendingTasks([]);
     } else {
       const data = userSnap.data();
       userStreak = data.streak || 1;
@@ -95,13 +102,34 @@ function listenToUserData(user) {
       
       updateUI(data.balance || 0, data.rank || "rookie");
       checkClaimStatus();
+      
+      // Listen to task count using completed array from this user
+      listenToPendingTasks(data.completedTasks || []);
     }
   }, (err) => {
     console.error("Snapshot error:", err);
   });
 }
 
-// 3. UI Update Engine
+// 3. Real-time Pending Task Counter Sync
+function listenToPendingTasks(completedTaskIds) {
+  if (!pendingTasksBadge) return;
+  if (unsubscribeTasks) unsubscribeTasks();
+
+  const tasksRef = collection(db, "tasks");
+  unsubscribeTasks = onSnapshot(tasksRef, (querySnap) => {
+    let pendingCount = 0;
+    querySnap.forEach((taskDoc) => {
+      if (!completedTaskIds.includes(taskDoc.id)) {
+        pendingCount++;
+      }
+    });
+
+    pendingTasksBadge.innerText = `${pendingCount} ${pendingCount === 1 ? 'Task' : 'Tasks'} Pending`;
+  });
+}
+
+// 4. UI Update Engine
 function updateUI(balance, rank) {
   if (balanceDisplay) {
     balanceDisplay.innerHTML = `${Number(balance).toFixed(4)} <span class="brand-font">BKT</span>`;
@@ -137,7 +165,7 @@ function updateUI(balance, rank) {
   });
 }
 
-// 4. Live Countdown Timer & Status
+// 5. Live Countdown Timer & Status
 function checkClaimStatus() {
   if (timerInterval) clearInterval(timerInterval);
 
@@ -199,7 +227,7 @@ function disableClaimButton(msLeft) {
   }
 }
 
-// 5. Event Listeners
+// 6. Event Listeners
 if (claimBtn) {
   claimBtn.addEventListener("click", async () => {
     if (!currentUser || claimBtn.disabled) return;
@@ -263,6 +291,7 @@ document.querySelectorAll(".menu-info-btn").forEach(btn => {
 if (signoutBtn) {
   signoutBtn.addEventListener("click", () => {
     signOut(auth).then(() => {
+      localStorage.removeItem("bkt_user_id");
       window.location.href = "login.html";
     });
   });

@@ -13,52 +13,32 @@
     .admin-input { width: 100%; padding: 12px; margin-bottom: 12px; background: #080d09; border: 1px solid #1a291c; color: #fff; border-radius: 8px; box-sizing: border-box; }
     .admin-btn { width: 100%; padding: 12px; background: #00ff88; color: #000; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; }
     .admin-btn.danger { background: #ff4d4d; color: #fff; }
-    .task-item-row { display: flex; justify-content: space-between; align-items: center; background: #080d09; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; }
     .toggle-row { display: flex; justify-content: space-between; align-items: center; }
     .admin-task-row {
-  background: #0b0f0c;
-  border: 1px solid #1c261e;
-  border-radius: 12px;
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.admin-task-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.admin-task-title {
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.admin-task-meta {
-  color: #889988;
-  font-size: 0.75rem;
-}
-
-.btn-delete-admin {
-  background: rgba(255, 77, 77, 0.15);
-  color: #ff4d4d;
-  border: 1px solid rgba(255, 77, 77, 0.3);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-delete-admin:hover {
-  background: #ff4d4d;
-  color: #ffffff;
-}
-    
+      background: #0b0f0c;
+      border: 1px solid #1c261e;
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .admin-task-info { display: flex; align-items: center; gap: 10px; }
+    .admin-task-title { color: #ffffff; font-weight: 600; font-size: 0.9rem; }
+    .admin-task-meta { color: #889988; font-size: 0.75rem; }
+    .btn-delete-admin {
+      background: rgba(255, 77, 77, 0.15);
+      color: #ff4d4d;
+      border: 1px solid rgba(255, 77, 77, 0.3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-delete-admin:hover { background: #ff4d4d; color: #ffffff; }
   </style>
 </head>
 <body>
@@ -86,32 +66,32 @@
       </div>
     </div>
 
-    <!-- Manage Tasks -->
+    <!-- Add New Task -->
     <div class="admin-card">
-  <div class="admin-title">Add New Task</div>
-  <input type="text" id="task-title" class="admin-input" placeholder="Task Title (e.g. Join Telegram)">
-  <input type="text" id="task-reward" class="admin-input" placeholder="Reward (e.g. +5.00 BKT)">
-  <input type="text" id="task-icon" class="admin-input" placeholder="Icon Emoji (e.g. ✈️)">
-  <input type="text" id="task-link" class="admin-input" placeholder="Target Link (https://...)">
-  
-  <label style="color:#889988; font-size:0.8rem; display:block; margin-bottom:4px;">Select Tab Category:</label>
-  <select id="task-category" class="admin-input" style="color:#fff; background:#080d09;">
-    <option value="Daily">Daily</option>
-    <option value="Social">Social</option>
-    <option value="Community">Community</option>
-    <option value="Extra">Extra</option>
-  </select>
+      <div class="admin-title">Add New Task</div>
+      <input type="text" id="task-title" class="admin-input" placeholder="Task Title (e.g. Join Telegram)">
+      <input type="number" id="task-reward" class="admin-input" placeholder="Reward (e.g. 5.00)">
+      <input type="text" id="task-icon" class="admin-input" placeholder="Icon Emoji (e.g. ✈️)">
+      <input type="text" id="task-link" class="admin-input" placeholder="Target Link (https://...)">
+      
+      <label style="color:#889988; font-size:0.8rem; display:block; margin-bottom:4px;">Select Tab Category:</label>
+      <select id="task-category" class="admin-input" style="color:#fff; background:#080d09;">
+        <option value="Daily">Daily</option>
+        <option value="Social">Social</option>
+        <option value="Community">Community</option>
+        <option value="Extra">Extra</option>
+      </select>
 
-  <button onclick="createNewTask()" class="admin-btn">Publish Task</button>
-</div>
-<!-- Manage Existing Tasks Section -->
-<div class="card" style="background: #111a13; border: 1px solid #1a2b1e; border-radius: 16px; padding: 16px; margin-bottom: 20px;">
-  <h3 style="color: #38ef7d; font-size: 1.1rem; margin-bottom: 12px;">Manage Active Tasks</h3>
-  <div id="admin-tasks-list" style="display: flex; flex-direction: column; gap: 10px;">
-    <div style="color: #889988; text-align: center;">Loading tasks...</div>
-  </div>
-</div>
-    
+      <button onclick="createNewTask()" class="admin-btn">Publish Task</button>
+    </div>
+
+    <!-- Manage Active Tasks -->
+    <div class="admin-card">
+      <div class="admin-title">Manage Active Tasks</div>
+      <div id="admin-tasks-list">
+        <div style="color: #889988; text-align: center;">Loading tasks...</div>
+      </div>
+    </div>
 
     <!-- User Referral & Balance Control -->
     <div class="admin-card">
@@ -151,7 +131,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const SECRET_PIN = "7777"; // Your admin PIN
+    const SECRET_PIN = "7777";
     let isMaintenance = false;
 
     function checkAdminPass() {
@@ -166,20 +146,34 @@
     }
 
     function loadPanelData() {
+      // Sync Tasks List
       db.collection("tasks").onSnapshot((snapshot) => {
-        const list = document.getElementById("active-tasks-list");
-        list.innerHTML = "";
+        const container = document.getElementById("admin-tasks-list");
+        container.innerHTML = "";
+
+        if (snapshot.empty) {
+          container.innerHTML = `<div style="color: #889988; text-align: center;">No active tasks found.</div>`;
+          return;
+        }
+
         snapshot.forEach((doc) => {
           const task = doc.data();
-          list.innerHTML += `
-            <div class="task-item-row">
-              <div><b>${task.icon || '📋'} ${task.title}</b> [${task.category || 'Daily'}] (${task.reward})</div>
-              <button onclick="deleteTask('${doc.id}')" style="background:#ff4d4d; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">Delete</button>
+          container.innerHTML += `
+            <div class="admin-task-row">
+              <div class="admin-task-info">
+                <span>${task.icon || '📌'}</span>
+                <div>
+                  <div class="admin-task-title">${task.title}</div>
+                  <div class="admin-task-meta">+${task.reward} BKT • ${task.category || 'Daily'}</div>
+                </div>
+              </div>
+              <button class="btn-delete-admin" onclick="deleteTaskFromAdmin('${doc.id}')">🗑️ Delete</button>
             </div>
           `;
         });
       });
 
+      // App Maintenance Mode Check
       db.collection("settings").doc("app_state").onSnapshot((doc) => {
         if (doc.exists) {
           isMaintenance = doc.data().maintenance || false;
@@ -201,7 +195,12 @@
       if (!title || !reward) return alert("Fill in title and reward!");
 
       db.collection("tasks").add({
-        title, reward, icon, link, category, createdAt: Date.now()
+        title,
+        reward: parseFloat(reward),
+        icon: icon || '📋',
+        link: link || '#',
+        category,
+        createdAt: Date.now()
       }).then(() => {
         alert("Task published successfully!");
         document.getElementById("task-title").value = "";
@@ -211,9 +210,13 @@
       });
     }
 
-    function deleteTask(id) {
-      if (confirm("Remove this task?")) {
-        db.collection("tasks").doc(id).delete();
+    async function deleteTaskFromAdmin(taskId) {
+      if (confirm("Are you sure you want to delete this task?")) {
+        try {
+          await db.collection("tasks").doc(taskId).delete();
+        } catch (error) {
+          alert("Failed to delete task.");
+        }
       }
     }
 
@@ -238,48 +241,6 @@
       db.collection("users").doc(uid).set({ isBanned: status }, { merge: true })
         .then(() => alert(`User ${uid} has been ${status ? 'BANNED' : 'UNBANNED'}`));
     }
-    // Real-time listener for tasks in the admin panel
-db.collection("tasks").onSnapshot((snapshot) => {
-  const container = document.getElementById("admin-tasks-list");
-  container.innerHTML = "";
-
-  if (snapshot.empty) {
-    container.innerHTML = `<div style="color: #889988; text-align: center;">No active tasks found.</div>`;
-    return;
-  }
-
-  snapshot.forEach((doc) => {
-    const task = doc.data();
-    const taskId = doc.id;
-
-    container.innerHTML += `
-      <div class="admin-task-row">
-        <div class="admin-task-info">
-          <span>${task.icon || '📌'}</span>
-          <div>
-            <div class="admin-task-title">${task.title}</div>
-            <div class="admin-task-meta">${task.reward} BKT • ${task.category || 'Daily'}</div>
-          </div>
-        </div>
-        <button class="btn-delete-admin" onclick="deleteTaskFromAdmin('${taskId}')">🗑️ Delete</button>
-      </div>
-    `;
-  });
-});
-
-// Delete function for admin panel
-async function deleteTaskFromAdmin(taskId) {
-  if (confirm("Are you sure you want to delete this task?")) {
-    try {
-      await db.collection("tasks").doc(taskId).delete();
-      alert("Task successfully deleted!");
-    } catch (error) {
-      console.error("Error removing task: ", error);
-      alert("Failed to delete task.");
-    }
-  }
-}
-    
   </script>
 </body>
 </html>

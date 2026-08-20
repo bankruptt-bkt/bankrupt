@@ -4,326 +4,237 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BANKRUPT - Sign In</title>
-  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      background: #080d09;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .hero-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      flex: 1;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .app-logo-large {
-      font-size: 2.5rem;
-      color: #00ff88;
-      margin-bottom: 8px;
-    }
-
-    .tagline {
-      color: #889988;
-      font-size: 0.9rem;
-    }
-
-    /* Fixed Drawer Overlay */
-    .drawer-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
-      z-index: 1000;
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-    }
-
-    /* Bottom Sheet Container */
-    .bottom-sheet {
-      width: 100%;
-      max-width: 480px;
-      background: rgba(17, 26, 19, 0.98);
-      border-top: 1px solid rgba(0, 255, 136, 0.2);
-      border-radius: 28px 28px 0 0;
-      padding: 20px 20px 32px 20px;
-      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.9);
-      animation: slideUp 0.35s ease-out forwards;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .sheet-handle {
-      width: 40px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 2px;
-      margin: 0 auto 16px auto;
-    }
-
-    .sheet-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-    }
-
-    .sheet-title {
-      color: #ffffff;
-      font-size: 1.3rem;
-      font-weight: 700;
-    }
-
-    /* Form & Controls */
-    .tab-switch {
-      display: flex;
-      background: #080d09;
-      border-radius: 30px;
-      padding: 4px;
-      margin-bottom: 16px;
-      border: 1px solid #1a2b1e;
-    }
-
-    .tab-btn {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #889988;
-      padding: 10px;
-      border-radius: 25px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-
-    .tab-btn.active {
-      background: #00ff88;
-      color: #000000;
-    }
-
-    .input-group {
-      margin-bottom: 12px;
-    }
-
-    .input-field {
-      width: 100%;
-      background: #080d09;
-      border: 1px solid #1a2b1e;
-      border-radius: 12px;
-      padding: 12px 14px;
-      color: #fff;
-      font-size: 0.9rem;
-      outline: none;
-    }
-
-    .input-field:focus {
-      border-color: #00ff88;
-    }
-
-    .btn-submit {
-      width: 100%;
-      background: #00ff88;
-      color: #000;
-      border: none;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 4px;
-    }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      color: #889988;
-      font-size: 0.75rem;
-      margin: 18px 0;
-    }
-
-    .divider::before, .divider::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: #1a2b1e;
-    }
-
-    .divider span {
-      padding: 0 10px;
-    }
-
-    /* Social Action Buttons */
-    .social-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .btn-social {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.06);
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      cursor: pointer;
-    }
+    body { background-color: #000000; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+    .font-marker { font-family: 'Permanent Marker', cursive; }
+    .sheet-bg { background-color: #0c120e; border-top: 1px solid #1a261f; }
+    .input-field { background-color: #070a08; border: 1px solid #1c2820; color: #ffffff; }
+    .input-field:focus { outline: none; border-color: #00ff66; }
   </style>
+
+  <!-- Firebase Web SDK v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="firebase-config.js"></script>
 </head>
-<body>
+<body class="min-h-screen flex flex-col justify-end max-w-md mx-auto relative overflow-hidden">
 
-  <!-- Hero Background -->
-  <div class="hero-container">
-    <div class="app-logo-large brand-font">👑 BANKRUPT</div>
-    <div class="tagline">Robinhood Chain Mining Portal</div>
-  </div>
+  <!-- BOTTOM SHEET CONTAINER -->
+  <div class="sheet-bg rounded-t-3xl p-6 space-y-5 w-full relative z-10 shadow-2xl">
+    
+    <!-- Drag handle indicator -->
+    <div class="w-12 h-1 bg-gray-700 rounded-full mx-auto -mt-2 mb-2"></div>
 
-  <!-- Drawer View -->
-  <div class="drawer-overlay">
-    <div class="bottom-sheet">
-      <div class="sheet-handle"></div>
+    <h2 class="text-2xl font-bold text-white tracking-tight">Sign In</h2>
+
+    <!-- LOGIN / SIGN UP TABS -->
+    <div class="bg-[#060907] p-1 rounded-full flex border border-[#17221a]">
+      <button id="tab-login" onclick="switchTab('login')" class="flex-1 py-2.5 rounded-full font-bold text-sm bg-[#00ff66] text-black transition-all">
+        Login
+      </button>
+      <button id="tab-signup" onclick="switchTab('signup')" class="flex-1 py-2.5 rounded-full font-semibold text-sm text-gray-400 hover:text-white transition-all">
+        Sign Up
+      </button>
+    </div>
+
+    <!-- AUTH FORM -->
+    <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-3">
       
-      <div class="sheet-header">
-        <div class="sheet-title">Sign In</div>
+      <!-- Name field (Hidden by default, shown during Sign Up) -->
+      <div id="name-field-wrapper" class="hidden">
+        <input type="text" id="display-name" placeholder="Display Name / Username" class="w-full px-4 py-3.5 rounded-xl input-field text-sm" />
       </div>
 
-      <!-- Auth Mode Selector -->
-      <div class="tab-switch">
-        <button class="tab-btn active" id="tab-login" onclick="switchAuth('login')">Login</button>
-        <button class="tab-btn" id="tab-signup" onclick="switchAuth('signup')">Sign Up</button>
+      <div>
+        <input type="email" id="email" required placeholder="Email Address" class="w-full px-4 py-3.5 rounded-xl input-field text-sm" />
       </div>
 
-      <!-- Credentials Form -->
-      <form id="auth-form" onsubmit="handleEmailAuth(event)">
-        <div class="input-group">
-          <input type="email" id="email" class="input-field" placeholder="Email Address" required>
-        </div>
-        <div class="input-group">
-          <input type="password" id="password" class="input-field" placeholder="Password" required>
-        </div>
+      <div>
+        <input type="password" id="password" required placeholder="Password" class="w-full px-4 py-3.5 rounded-xl input-field text-sm" />
+      </div>
 
-        <button type="submit" class="btn-submit" id="submit-btn">LOG IN</button>
-      </form>
-
-      <div class="divider"><span>OR CONTINUE WITH</span></div>
-
-      <!-- Provider Auth -->
-      <div class="social-btns">
-        <button class="btn-social" onclick="loginWithGoogle()">
-          <svg width="18" height="18" viewBox="0 0 18 18">
-            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.616z"/>
-            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-            <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-          </svg>
-          Google
-        </button>
-
-        <button class="btn-social" onclick="loginWithTwitter()">
-          <svg width="16" height="16" fill="#ffffff" viewBox="0 0 24 24">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-          </svg>
-          Twitter (X)
+      <!-- FORGOT PASSWORD LINK -->
+      <div id="forgot-pass-wrapper" class="text-right">
+        <button type="button" onclick="openForgotModal()" class="text-xs text-[#00ff66] hover:underline font-medium">
+          Forgot Password?
         </button>
       </div>
 
+      <!-- SUBMIT BUTTON -->
+      <button type="submit" id="submit-btn" class="w-full py-3.5 bg-[#00ff66] text-black font-extrabold text-sm rounded-xl tracking-wider hover:bg-[#00e65c] transition-all shadow-lg shadow-[#00ff66]/20 mt-2">
+        LOG IN
+      </button>
+    </form>
+
+    <!-- DIVIDER -->
+    <div class="relative my-4 flex items-center justify-center">
+      <div class="w-full border-t border-gray-800"></div>
+      <span class="absolute bg-[#0c120e] px-3 text-[10px] text-gray-500 font-semibold tracking-wider uppercase">
+        OR CONTINUE WITH
+      </span>
+    </div>
+
+    <!-- SOCIAL BUTTONS -->
+    <div class="space-y-2.5">
+      <button onclick="handleGoogleSignIn()" type="button" class="w-full py-3 bg-[#131b15] border border-[#212f25] rounded-xl flex items-center justify-center gap-2.5 text-sm font-semibold text-white hover:bg-[#1a251d] transition-all">
+        <svg class="w-4 h-4" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        Google
+      </button>
+
+      <button onclick="alert('Twitter (X) Sign-In requires a custom developer OAuth setup in Firebase.')" type="button" class="w-full py-3 bg-[#131b15] border border-[#212f25] rounded-xl flex items-center justify-center gap-2.5 text-sm font-semibold text-white hover:bg-[#1a251d] transition-all">
+        <i class="fa-brands fa-x-twitter text-base"></i>
+        Twitter (X)
+      </button>
     </div>
   </div>
 
-  <!-- Firebase Integration -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <!-- FORGOT PASSWORD MODAL -->
+  <div id="forgot-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="sheet-bg border border-[#1f2d24] w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-white text-lg">Reset Password</h3>
+        <button onclick="closeForgotModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <p class="text-xs text-gray-400">Enter your account email and we'll send you a link to reset your password.</p>
+      
+      <input type="email" id="reset-email" placeholder="Enter your email" class="w-full px-4 py-3 rounded-xl input-field text-sm" />
+      
+      <button onclick="sendPasswordReset()" id="reset-btn" class="w-full py-3 bg-[#00ff66] text-black font-bold text-sm rounded-xl hover:bg-[#00e65c] transition-all">
+        Send Reset Link
+      </button>
+    </div>
+  </div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
-      authDomain: "bankrupt-9068b.firebaseapp.com",
-      databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
-      projectId: "bankrupt-9068b",
-      storageBucket: "bankrupt-9068b.firebasestorage.app",
-      messagingSenderId: "961644576786",
-      appId: "1:961644576786:web:65eff34df07a18067458cb"
-    };
+    let currentMode = 'login'; // 'login' or 'signup'
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    let currentMode = 'login';
+    function switchTab(mode) {
+      currentMode = mode;
+      const loginTab = document.getElementById('tab-login');
+      const signupTab = document.getElementById('tab-signup');
+      const submitBtn = document.getElementById('submit-btn');
+      const forgotWrapper = document.getElementById('forgot-pass-wrapper');
+      const nameWrapper = document.getElementById('name-field-wrapper');
 
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        window.location.href = "index.html";
+      if (mode === 'login') {
+        loginTab.className = "flex-1 py-2.5 rounded-full font-bold text-sm bg-[#00ff66] text-black transition-all";
+        signupTab.className = "flex-1 py-2.5 rounded-full font-semibold text-sm text-gray-400 hover:text-white transition-all";
+        submitBtn.innerText = "LOG IN";
+        forgotWrapper.classList.remove('hidden');
+        nameWrapper.classList.add('hidden');
+      } else {
+        signupTab.className = "flex-1 py-2.5 rounded-full font-bold text-sm bg-[#00ff66] text-black transition-all";
+        loginTab.className = "flex-1 py-2.5 rounded-full font-semibold text-sm text-gray-400 hover:text-white transition-all";
+        submitBtn.innerText = "CREATE ACCOUNT";
+        forgotWrapper.classList.add('hidden');
+        nameWrapper.classList.remove('hidden');
       }
-    });
-
-    function switchAuth(type) {
-      currentMode = type;
-      document.getElementById('tab-login').classList.toggle('active', type === 'login');
-      document.getElementById('tab-signup').classList.toggle('active', type === 'signup');
-      document.getElementById('submit-btn').textContent = type === 'signup' ? 'CREATE ACCOUNT' : 'LOG IN';
     }
 
-    async function handleEmailAuth(e) {
+    async function handleAuth(e) {
       e.preventDefault();
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
+      const submitBtn = document.getElementById('submit-btn');
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "PROCESSING...";
 
       try {
-        if (currentMode === 'signup') {
-          await auth.createUserWithEmailAndPassword(email, password);
-        } else {
+        if (currentMode === 'login') {
+          // Firebase Sign In
           await auth.signInWithEmailAndPassword(email, password);
+          window.location.href = 'index.html';
+        } else {
+          // Firebase Sign Up
+          const displayName = document.getElementById('display-name').value.trim() || 'Miner';
+          const res = await auth.createUserWithEmailAndPassword(email, password);
+          
+          // Set display name in auth & initialize database profile
+          await res.user.updateProfile({ displayName: displayName });
+          await db.ref('users/' + res.user.uid).set({
+            uid: res.user.uid,
+            name: displayName,
+            balance: 50.00,
+            streakDays: 0,
+            lastCheckIn: 0,
+            createdAt: Date.now()
+          });
+
+          window.location.href = 'index.html';
         }
-        window.location.href = "index.html";
-      } catch (error) {
-        alert(error.message);
+      } catch (err) {
+        alert("Authentication Error: " + err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerText = currentMode === 'login' ? "LOG IN" : "CREATE ACCOUNT";
       }
     }
 
-    async function loginWithGoogle() {
+    // GOOGLE SIGN IN
+    async function handleGoogleSignIn() {
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
-        await auth.signInWithPopup(provider);
-        window.location.href = "index.html";
-      } catch (error) {
-        alert(error.message);
+        const res = await auth.signInWithPopup(provider);
+        const userRef = db.ref('users/' + res.user.uid);
+        
+        // Ensure database record exists
+        const snap = await userRef.once('value');
+        if (!snap.exists()) {
+          await userRef.set({
+            uid: res.user.uid,
+            name: res.user.displayName || 'Miner',
+            balance: 50.00,
+            streakDays: 0,
+            lastCheckIn: 0,
+            createdAt: Date.now()
+          });
+        }
+        
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert("Google Sign-In Error: " + err.message);
       }
     }
 
-    async function loginWithTwitter() {
-      const provider = new firebase.auth.TwitterAuthProvider();
+    // FORGOT PASSWORD MODAL LOGIC
+    function openForgotModal() {
+      document.getElementById('forgot-modal').classList.remove('hidden');
+    }
+
+    function closeForgotModal() {
+      document.getElementById('forgot-modal').classList.add('hidden');
+    }
+
+    async function sendPasswordReset() {
+      const email = document.getElementById('reset-email').value.trim();
+      const resetBtn = document.getElementById('reset-btn');
+
+      if (!email) {
+        alert("Please enter your email address.");
+        return;
+      }
+
+      resetBtn.disabled = true;
+      resetBtn.innerText = "SENDING...";
+
       try {
-        await auth.signInWithPopup(provider);
-        window.location.href = "index.html";
-      } catch (error) {
-        alert(error.message);
+        await auth.sendPasswordResetEmail(email);
+        alert("Password reset link sent! Check your inbox.");
+        closeForgotModal();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        resetBtn.disabled = false;
+        resetBtn.innerText = "Send Reset Link";
       }
     }
   </script>

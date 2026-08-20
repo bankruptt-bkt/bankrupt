@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BANKRUPT Mining App</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script><script>eruda.init();</script>
   
+  <!-- Eruda Mobile Console for Debugging -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -71,7 +75,7 @@
         <!-- Project Info -->
         <div class="space-y-2">
           <p class="text-[11px] font-bold text-[#00ff66] tracking-wider uppercase">PROJECT INFO</p>
-          <a href="javascript:void(0)" onclick="openComingSoon('don\'t hurry, coming soon')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
+          <a href="javascript:void(0)" onclick="openComingSoon('Whitepaper')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span>📄</span> <span>Whitepaper & Roadmap</span>
           </a>
           <a href="javascript:void(0)" onclick="openComingSoon('How to Earn')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
@@ -96,7 +100,8 @@
           <a href="javascript:void(0)" onclick="openComingSoon('Settings')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span>⚙️</span> <span>Settings</span>
           </a>
-          <button class="flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors py-1 w-full text-left opacity-60 cursor-not-allowed">
+          <!-- FUNCTIONAL SIGN OUT BUTTON -->
+          <button id="menu-signout-btn" onclick="handleSignOut(event)" class="flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors py-1 w-full text-left font-semibold">
             <span>🚪</span> <span>Sign Out</span>
           </button>
         </div>
@@ -218,18 +223,18 @@
       </div>
 
       <div class="space-y-2">
-        <div class="card-inner p-3 rounded-xl flex items-center justify-between cursor-pointer hover:border-gray-700 transition-colors">
+        <a href="tasks.html" class="card-inner p-3 rounded-xl flex items-center justify-between cursor-pointer hover:border-gray-700 transition-colors block">
           <div class="flex items-center gap-3">
             <div class="bg-[#18221b] p-2.5 rounded-xl text-yellow-500 text-lg">📋</div>
             <div>
               <p class="text-sm font-semibold text-white">Daily Tasks</p>
-              <p class="text-xs text-[#00ff66]">Loading Tasks...</p>
+              <p class="text-xs text-[#00ff66]">Tasks Available</p>
             </div>
           </div>
           <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
-        </div>
+        </a>
 
-        <div class="card-inner p-3 rounded-xl flex items-center justify-between cursor-pointer hover:border-gray-700 transition-colors">
+        <a href="javascript:void(0)" onclick="openComingSoon('Invite & Earn')" class="card-inner p-3 rounded-xl flex items-center justify-between cursor-pointer hover:border-gray-700 transition-colors block">
           <div class="flex items-center gap-3">
             <div class="bg-[#18221b] p-2.5 rounded-xl text-blue-400 text-lg">👥</div>
             <div>
@@ -238,7 +243,7 @@
             </div>
           </div>
           <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
-        </div>
+        </a>
       </div>
     </div>
 
@@ -246,26 +251,26 @@
 
   <!-- BOTTOM NAVIGATION BAR -->
   <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0a0d0b] border-t border-[#1a241e] px-4 py-2 flex justify-between items-center text-xs text-gray-500 z-40">
-    <button class="flex flex-col items-center gap-1 text-[#00ff66]">
+    <a href="index.html" class="flex flex-col items-center gap-1 text-[#00ff66]">
       <i class="fa-solid fa-house text-base"></i>
       <span>Home</span>
-    </button>
-    <button class="flex flex-col items-center gap-1 hover:text-gray-300">
+    </a>
+    <a href="shop.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
       <i class="fa-solid fa-cart-shopping text-base"></i>
       <span>Shop</span>
-    </button>
-    <button class="flex flex-col items-center gap-1 hover:text-gray-300">
+    </a>
+    <a href="tasks.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
       <i class="fa-solid fa-clipboard-list text-base"></i>
       <span>Tasks</span>
-    </button>
-    <button class="flex flex-col items-center gap-1 hover:text-gray-300">
+    </a>
+    <a href="leaderboard.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
       <i class="fa-solid fa-trophy text-base"></i>
       <span>Leaderboard</span>
-    </button>
-    <button class="flex flex-col items-center gap-1 hover:text-gray-300">
+    </a>
+    <a href="profile.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
       <i class="fa-solid fa-user text-base"></i>
       <span>Profile</span>
-    </button>
+    </a>
   </nav>
 
   <!-- Menu & Popup Toggle Script -->
@@ -286,6 +291,19 @@
       const modal = document.getElementById('coming-soon-modal');
       modal.classList.add('hidden');
     }
+
+    async function handleSignOut(e) {
+      if (e) e.preventDefault();
+      try {
+        if (typeof auth !== 'undefined') {
+          await auth.signOut();
+        }
+        localStorage.clear();
+        window.location.href = 'login.html';
+      } catch (err) {
+        alert("Sign Out Error: " + err.message);
+      }
+    }
   </script>
 
   <!-- Firebase SDKs -->
@@ -293,8 +311,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
-  <!-- App Scripts (Includes cache-buster query parameter) -->
+  <!-- App Scripts -->
   <script src="firebase-config.js"></script>
-  <script src="app.js?v=3.0"></script>
+  <script src="app.js?v=4.0"></script>
 </body>
 </html>

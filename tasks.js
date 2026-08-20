@@ -3,14 +3,20 @@ import {
   getFirestore, 
   doc, 
   getDoc,
-  updateDoc, 
+  setDoc, 
   increment, 
   arrayUnion 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ================= FIREBASE CONFIG =================
 const firebaseConfig = {
-  // Insert your Firebase configuration object here
+  apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
+  authDomain: "bankrupt-9068b.firebaseapp.com",
+  databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
+  projectId: "bankrupt-9068b",
+  storageBucket: "bankrupt-9068b.firebasestorage.app",
+  messagingSenderId: "961644576786",
+  appId: "1:961644576786:web:65eff34df07a18067458cb"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -18,7 +24,7 @@ const db = getFirestore(app);
 
 // Current active user reference
 const currentUser = {
-  uid: "Probhat" // Matches the document ID in your 'users' collection
+  uid: localStorage.getItem("bkt_user_id") || "Probhat"
 };
 
 // Global state tracking
@@ -42,7 +48,7 @@ async function loadUserData() {
       // Update UI balance if element exists on page
       const balanceElem = document.getElementById("user-balance");
       if (balanceElem) {
-        balanceElem.innerText = (data.balance || 0).toFixed(4);
+        balanceElem.innerText = Number(data.balance || 0).toFixed(2);
       }
     }
   } catch (err) {
@@ -53,6 +59,7 @@ async function loadUserData() {
 // ================= TASK RENDER & CLICK HANDLERS =================
 function renderTaskCard(task) {
   const isCompleted = completedTasks.includes(task.id);
+  const rewardVal = parseFloat(task.reward) || 0;
 
   return `
     <div class="task-card">
@@ -60,8 +67,8 @@ function renderTaskCard(task) {
         <div class="task-icon-box">${task.icon || '⚡'}</div>
         <div>
           <div class="task-title">${task.title}</div>
-          <div class="task-desc">${task.desc}</div>
-          <div class="task-reward">+${task.reward} BKT</div>
+          <div class="task-desc">${task.desc || ''}</div>
+          <div class="task-reward">+${rewardVal} BKT</div>
         </div>
       </div>
       <div>
@@ -92,14 +99,24 @@ async function handleTaskClick(taskId, reward, link) {
     window.open(link, "_blank");
   }
 
+  // Ensure reward is strictly a numeric float/int
+  const numericReward = parseFloat(reward);
+  if (isNaN(numericReward) || numericReward <= 0) {
+    console.error("Invalid reward value:", reward);
+    return;
+  }
+
+  // Prevent double execution if already in memory array
+  if (completedTasks.includes(taskId)) return;
+
   const userRef = doc(db, "users", currentUser.uid);
 
   try {
-    // Atomically increments balance & saves completed task ID to Firestore
-    await updateDoc(userRef, {
-      balance: increment(reward),
+    // setDoc with { merge: true } safely creates the doc if missing, or updates if present
+    await setDoc(userRef, {
+      balance: increment(numericReward),
       completedTasks: arrayUnion(taskId)
-    });
+    }, { merge: true });
 
     completedTasks.push(taskId);
     await loadUserData();
@@ -111,7 +128,6 @@ async function handleTaskClick(taskId, reward, link) {
 
 // Filter tasks and load into DOM
 function loadTasks() {
-  // Sample task list (Replace/Expand as needed)
   const allTasks = [
     { id: "task_1", category: "social", title: "Follow on X", desc: "Join our official Twitter", reward: 25, link: "https://x.com", icon: "🐦" },
     { id: "task_2", category: "social", title: "Join Telegram", desc: "Stay updated on channel", reward: 30, link: "https://t.me", icon: "✈️" },

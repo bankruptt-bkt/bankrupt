@@ -18,6 +18,26 @@ let currentUser = null;
 let userStreak = 1;
 let lastCheckIn = null;
 
+// Rank Upgrade Checker Function
+async function checkRankUpgrade(userId, currentBalance) {
+  let newRank = "rookie";
+
+  if (currentBalance >= 10000) newRank = "bankruptking";
+  else if (currentBalance >= 5000) newRank = "tycoon";
+  else if (currentBalance >= 2000) newRank = "degenerate";
+  else if (currentBalance >= 1000) newRank = "hustler";
+  else if (currentBalance >= 200) newRank = "grinder";
+
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      rank: newRank
+    });
+  } catch (err) {
+    console.error("Failed to update rank:", err);
+  }
+}
+
 // 1. Auth Listener
 onAuthStateChanged(auth, async (user) => {
   if (user) {
@@ -40,6 +60,7 @@ async function initializeUserData(user) {
       email: user.email,
       balance: 0,
       streak: 1,
+      rank: "rookie",
       lastCheckIn: null
     };
     await setDoc(userRef, newData);
@@ -126,12 +147,16 @@ if (claimBtn) {
         lastCheckIn: new Date()
       });
 
-      // Update local state and refresh button UI
       userStreak += 1;
       lastCheckIn = new Date();
       
       const currentVal = parseFloat(balanceDisplay?.textContent) || 0;
-      if (balanceDisplay) balanceDisplay.textContent = `${(currentVal + reward).toFixed(4)} BKT`;
+      const updatedBalance = currentVal + reward;
+
+      if (balanceDisplay) balanceDisplay.textContent = `${updatedBalance.toFixed(4)} BKT`;
+
+      // Check and update user rank based on new balance
+      await checkRankUpgrade(currentUser.uid, updatedBalance);
 
       updateStreakDisplay();
       disableClaimButton(24);

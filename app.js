@@ -1,29 +1,13 @@
-// Initialize Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
-  authDomain: "bankrupt-9068b.firebaseapp.com",
-  databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
-  projectId: "bankrupt-9068b",
-  storageBucket: "bankrupt-9068b.firebasestorage.app",
-  messagingSenderId: "961644576786",
-  appId: "1:961644576786:web:65eff34df07a18067458cb"
-};
-
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-
-const db = firebase.database();
-const auth = firebase.auth();
-
-const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000; 
+// Constants
+const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 Hours
 const BASE_REWARD_INITIAL = 5.0; 
-const WELCOME_BONUS = 50.00; 
+const WELCOME_BONUS = 50.00; // 50 BKT Welcome Bonus
 
 let currentUser = null;
 let currentuserData = null;
 let countdownTimer = null;
 
+// Dynamic Base Rate Calculator based on total users
 function calculateBaseReward(totalUsers) {
   if (totalUsers <= 1000) return BASE_REWARD_INITIAL;
   if (totalUsers <= 10000) return BASE_REWARD_INITIAL * 0.75;
@@ -32,15 +16,16 @@ function calculateBaseReward(totalUsers) {
   return BASE_REWARD_INITIAL * 0.1;
 }
 
+// Multipliers based on streak days
 function getStreakMultiplier(streakDays) {
   const multipliers = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 1.6 };
   return streakDays >= 7 ? 1.6 : (multipliers[streakDays] || 1.0);
 }
 
-// Global Click Function bound directly to the HTML button
+// Global Check-In Click Function
 window.claimCheckIn = async function() {
   if (!currentUser || !currentuserData) {
-    alert("Authenticating... please try again in 2 seconds.");
+    alert("Authenticating user... Please try again in a few seconds.");
     return;
   }
 
@@ -61,9 +46,9 @@ window.claimCheckIn = async function() {
 
     let newStreak = currentuserData.streakDays || 0;
     if (now - (currentuserData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
-      newStreak = 1; 
+      newStreak = 1; // Streak broken
     } else {
-      newStreak += 1; 
+      newStreak += 1; // Streak continued
     }
 
     const baseRate = calculateBaseReward(totalUsers);
@@ -76,11 +61,12 @@ window.claimCheckIn = async function() {
     });
   } catch (err) {
     console.error("Check-in Error:", err);
-    alert("Error claiming reward: " + err.message);
+    alert("Check-in failed: " + err.message);
     if (claimBtn) claimBtn.disabled = false;
   }
 };
 
+// Auth Listener
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     currentUser = user;
@@ -91,6 +77,7 @@ auth.onAuthStateChanged(async (user) => {
   }
 });
 
+// Initialize User Profile
 function initUserData(user) {
   const userRef = db.ref('users/' + user.uid);
   
@@ -98,6 +85,7 @@ function initUserData(user) {
     let data = snapshot.val();
     
     if (!data) {
+      // New user registration with 50 BKT welcome bonus
       data = {
         uid: user.uid,
         name: user.displayName || 'Miner ' + user.uid.substring(0, 5),
@@ -117,8 +105,9 @@ function initUserData(user) {
   });
 }
 
+// UI Synchronization
 async function updateUI(userData) {
-  // Update Profile Names
+  // Update Profile Text
   const nameDisplay = document.getElementById('user-display-name');
   if (nameDisplay) nameDisplay.innerText = userData.name;
   
@@ -138,7 +127,7 @@ async function updateUI(userData) {
     streakTitle.innerText = userData.streakDays > 0 ? `DAY ${userData.streakDays} STREAK` : 'START STREAK';
   }
 
-  // Calculate Next Reward
+  // Next Reward Calculation
   const globalSnap = await db.ref('global/totalUsers').once('value');
   const totalUsers = globalSnap.val() || 1;
   const baseRate = calculateBaseReward(totalUsers);
@@ -159,7 +148,7 @@ async function updateUI(userData) {
     rewardLabel.innerText = `+${nextReward.toFixed(2)} BKT`;
   }
 
-  // Timer & Claim Button
+  // Button & Timer state
   const nextAvailableTime = (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS;
   const claimBtn = document.getElementById('claim-btn');
 
@@ -182,6 +171,7 @@ async function updateUI(userData) {
   }
 }
 
+// Countdown Timer
 function startCountdown(targetTime) {
   if (countdownTimer) clearInterval(countdownTimer);
 
@@ -217,6 +207,7 @@ function setTimerDisplay(text, isReady) {
   }
 }
 
+// Tasks Listener
 function listenToTasks() {
   db.ref('tasks').on('value', (snapshot) => {
     const tasks = snapshot.val();

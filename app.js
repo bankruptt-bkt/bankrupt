@@ -1,5 +1,5 @@
-import { db, auth, provider } from "./firebase-config.js";
-import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { db, auth } from "./conf.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, setDoc, updateDoc, increment, onSnapshot, getDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Multipliers & Base Rewards
@@ -15,7 +15,6 @@ const RANK_AVATARS = {
   tycoon: "./assets/images/profile/tycoon.jpg",
   bankruptking: "./assets/images/profile/bankruptking.jpg"
 };
-
 
 // UI Elements
 const balanceDisplay = document.querySelector(".balance-val");
@@ -66,7 +65,6 @@ async function checkRankUpgrade(userId, currentBalance) {
 onAuthStateChanged(auth, (user) => {
   if (user) {
     currentUser = user;
-    // Save UID to localStorage so tasks.js can read the exact same account
     localStorage.setItem("bkt_user_id", user.uid);
 
     if (headerUsername) headerUsername.textContent = user.displayName || "Degen";
@@ -75,13 +73,12 @@ onAuthStateChanged(auth, (user) => {
     
     listenToUserData(user);
   } else {
-    signInWithPopup(auth, provider).catch(() => {
-      window.location.href = "login.html";
-    });
+    // Redirect cleanly without trigger popups
+    window.location.href = "login.html";
   }
 });
 
-// 2. Real-time Firestore Sync (Balance + User Data)
+// 2. Real-time Firestore Sync
 function listenToUserData(user) {
   const userRef = doc(db, "users", user.uid);
 
@@ -91,7 +88,7 @@ function listenToUserData(user) {
     if (!userSnap.exists()) {
       const newData = {
         username: user.displayName || "Anonymous",
-        email: user.email,
+        email: user.email || "",
         balance: 0,
         streak: 1,
         rank: "rookie",
@@ -110,8 +107,6 @@ function listenToUserData(user) {
       
       updateUI(data.balance || 0, data.rank || "rookie");
       checkClaimStatus();
-      
-      // Listen to task count using completed array from this user
       listenToPendingTasks(data.completedTasks || []);
     }
   }, (err) => {
@@ -152,14 +147,14 @@ function updateUI(balance, rank) {
     menuAvatarImg.src = RANK_AVATARS[normalizedRank] || RANK_AVATARS["rookie"];
   }
 
-  const currentMultiplier = STREAK_MULTIPLIERS[Math.min(userStreak, 7)] || 1.0;
+  const effectiveStreak = Math.min(Math.max(userStreak, 1), 7);
+  const currentMultiplier = STREAK_MULTIPLIERS[effectiveStreak] || 1.0;
   const nextReward = BASE_REWARD * currentMultiplier;
 
   if (nextRewardText) {
     nextRewardText.textContent = `+${nextReward.toFixed(2)} BKT`;
   }
 
-  // Update streak indicators on screen
   const streakBoxes = document.querySelectorAll(".streak-days .day-box");
   streakBoxes.forEach((box, index) => {
     const lockIcon = box.querySelector(".lock-icon");
@@ -240,7 +235,8 @@ if (claimBtn) {
   claimBtn.addEventListener("click", async () => {
     if (!currentUser || claimBtn.disabled) return;
 
-    const multiplier = STREAK_MULTIPLIERS[Math.min(userStreak, 7)] || 1.0;
+    const effectiveStreak = Math.min(Math.max(userStreak, 1), 7);
+    const multiplier = STREAK_MULTIPLIERS[effectiveStreak] || 1.0;
     const reward = BASE_REWARD * multiplier;
     const userRef = doc(db, "users", currentUser.uid);
 
@@ -254,7 +250,7 @@ if (claimBtn) {
 
       await updateDoc(userRef, {
         balance: increment(reward),
-        streak: increment(1),
+        streak: userStreak >= 7 ? 7 : increment(1),
         lastCheckIn: new Date()
       });
 
@@ -267,7 +263,7 @@ if (claimBtn) {
   });
 }
 
-// Menu Handlers
+// Menu Controls
 const openMenuBtn = document.getElementById("open-menu-btn");
 const closeMenuBtn = document.getElementById("close-menu-btn");
 const menuOverlay = document.getElementById("menu-overlay");
@@ -287,7 +283,7 @@ if (menuOverlay) {
   });
 }
 
-// Custom Modal Controls
+// Info Modal Controls & Event Delegation
 function closeInfoModal() {
   if (infoModal) infoModal.classList.remove("active");
 }
@@ -295,9 +291,9 @@ function closeInfoModal() {
 if (closeInfoBtn) closeInfoBtn.addEventListener("click", closeInfoModal);
 if (okInfoBtn) okInfoBtn.addEventListener("click", closeInfoModal);
 
-// Replaced native alert() with custom modal trigger
-document.querySelectorAll(".menu-info-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".menu-info-btn");
+  if (btn) {
     if (menuOverlay) menuOverlay.classList.remove("active");
     
     const title = btn.getAttribute("data-title");
@@ -306,7 +302,7 @@ document.querySelectorAll(".menu-info-btn").forEach(btn => {
     if (infoTitle) infoTitle.textContent = title;
     if (infoContent) infoContent.textContent = content;
     if (infoModal) infoModal.classList.add("active");
-  });
+  }
 });
 
 if (signoutBtn) {

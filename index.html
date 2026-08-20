@@ -29,7 +29,7 @@
       <span class="text-2xl">👑</span>
       <h1 class="font-marker text-2xl neon-text tracking-wide">BANKRUPT</h1>
     </div>
-    <span id="user-display-name" class="text-gray-400 font-semibold text-sm">Probhat</span>
+    <span id="user-display-name" class="text-gray-400 font-semibold text-sm">Loading...</span>
   </header>
 
   <!-- SIDE MENU MODAL -->
@@ -47,8 +47,8 @@
           👑
         </div>
         <div>
-          <h3 id="menu-user-name" class="font-bold text-white text-base">Probhat Santra</h3>
-          <p id="menu-user-uid" class="text-xs text-gray-500 font-mono">UID: 0m6C1j7m...</p>
+          <h3 id="menu-user-name" class="font-bold text-white text-base">Loading...</h3>
+          <p id="menu-user-uid" class="text-xs text-gray-500 font-mono">UID: ...</p>
         </div>
       </div>
 
@@ -184,14 +184,13 @@
         </div>
       </div>
 
-      <!-- Action Button -->
-      <button id="claim-btn" onclick="claimCheckIn()" class="w-full py-3 bg-[#00ff66] text-black font-marker text-lg rounded-xl border border-[#00ff66]">
-  CHECK IN + CLAIM
-</button>
-
+      <!-- Action Button Starts Disabled -->
+      <button id="claim-btn" disabled class="w-full py-3 bg-[#1e2721] text-gray-400 font-marker text-lg rounded-xl border border-[#2a382f] cursor-not-allowed">
+        INITIALIZING...
+      </button>
 
       <div class="flex items-center justify-between text-xs pt-1">
-        <span class="text-gray-300">Next check-in reward: <b class="text-white">+5.00 BKT</b></span>
+        <span class="text-gray-300">Next check-in reward: <b id="next-reward-val" class="text-white">+5.00 BKT</b></span>
         <span id="countdown-badge" class="px-2.5 py-1 rounded-full bg-[#0d2216] text-[#00ff66] border border-[#144225] font-mono text-[11px] font-bold flex items-center gap-1">
           <i class="fa-regular fa-clock"></i> Ready
         </span>
@@ -287,7 +286,7 @@
     }
   </script>
 
-    <!-- Firebase SDKs -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>

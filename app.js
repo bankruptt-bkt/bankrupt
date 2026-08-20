@@ -211,3 +211,68 @@ async function handleSignOut(e) {
     alert("Failed to sign out: " + err.message);
   }
 }
+// ==========================================
+// 6. INTERACTIVE DRAG-TO-SLIDE DRAWER LOGIC
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+  const drawer = document.getElementById('drawer-sheet');
+  const handle = document.getElementById('drawer-handle');
+  const overlay = document.getElementById('side-menu-overlay');
+
+  if (!drawer || !handle) return;
+
+  let startY = 0;
+  let currentY = 0;
+  let isDragging = false;
+
+  // Touch Event Listeners
+  handle.addEventListener('touchstart', onDragStart, { passive: true });
+  window.addEventListener('touchmove', onDragMove, { passive: false });
+  window.addEventListener('touchend', onDragEnd);
+
+  // Mouse Event Listeners for Desktop Testing
+  handle.addEventListener('mousedown', onDragStart);
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('mouseup', onDragEnd);
+
+  function onDragStart(e) {
+    if (!drawer.classList.contains('open')) return;
+    isDragging = true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    drawer.classList.add('dragging');
+  }
+
+  function onDragMove(e) {
+    if (!isDragging) return;
+    
+    currentY = e.touches ? e.touches[0].clientY : e.clientY;
+    let deltaY = currentY - startY;
+
+    // Resistance when pulling upwards past standard top
+    if (deltaY < 0) {
+      deltaY = deltaY * 0.2; 
+    }
+
+    if (e.cancelable) e.preventDefault();
+    drawer.style.transform = `translateY(${deltaY}px)`;
+  }
+
+  function onDragEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    drawer.classList.remove('dragging');
+
+    let deltaY = currentY - startY;
+
+    // Dismiss drawer if pulled down over 120px
+    if (deltaY > 120) {
+      toggleMenu();
+    } else {
+      // Snap back to top position
+      drawer.style.transform = 'translateY(0)';
+    }
+
+    startY = 0;
+    currentY = 0;
+  }
+});

@@ -1,12 +1,11 @@
 import { db, auth } from "./conf.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, setDoc, updateDoc, increment, onSnapshot, getDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, setDoc, updateDoc, increment, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Multipliers & Base Rewards
+// Constants
 const STREAK_MULTIPLIERS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 2.0 };
 const BASE_REWARD = 2.5;
 
-// Rank Avatars Mapping
 const RANK_AVATARS = {
   rookie: "./assets/images/profile/rookie.jpg",
   grinder: "./assets/images/profile/grinder.jpg",
@@ -16,7 +15,7 @@ const RANK_AVATARS = {
   bankruptking: "./assets/images/profile/bankruptking.jpg"
 };
 
-// UI Elements
+// UI Cache
 const balanceDisplay = document.querySelector(".balance-val");
 const headerUsername = document.getElementById("header-username");
 const menuUsername = document.getElementById("menu-username-display");
@@ -28,63 +27,43 @@ const nextRewardText = document.querySelector(".streak-footer b");
 const menuAvatarImg = document.getElementById("menuUserAvatar");
 const pendingTasksBadge = document.getElementById("pending-tasks-count");
 
-// Custom Info Modal Elements
 const infoModal = document.getElementById("info-modal-overlay");
 const infoTitle = document.getElementById("info-modal-title");
 const infoContent = document.getElementById("info-modal-content");
-const closeInfoBtn = document.getElementById("close-info-btn");
-const okInfoBtn = document.getElementById("info-modal-ok-btn");
 
-// Global State
 let currentUser = null;
 let userStreak = 1;
 let lastCheckIn = null;
 let timerInterval = null;
-let unsubscribeUser = null;
-let unsubscribeTasks = null;
 
-// Rank Upgrade Evaluator
-async function checkRankUpgrade(userId, currentBalance) {
-  let newRank = "rookie";
+// Initialize UI listeners immediately so buttons NEVER freeze
+initUIEvents();
 
-  if (currentBalance >= 10000) newRank = "bankruptking";
-  else if (currentBalance >= 5000) newRank = "tycoon";
-  else if (currentBalance >= 2000) newRank = "degenerate";
-  else if (currentBalance >= 1000) newRank = "hustler";
-  else if (currentBalance >= 200) newRank = "grinder";
-
-  try {
-    const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, { rank: newRank });
-  } catch (err) {
-    console.error("Failed to update rank:", err);
-  }
-}
-
-// 1. Auth Listener
-onAuthStateChanged(auth, (user) => {
+// 1. Auth & Fast Initial Load
+onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
     localStorage.setItem("bkt_user_id", user.uid);
 
+    // Instant UI Fallback
     if (headerUsername) headerUsername.textContent = user.displayName || "Degen";
     if (menuUsername) menuUsername.textContent = user.displayName || "Degen User";
     if (menuUid) menuUid.textContent = `UID: ${user.uid.substring(0, 8)}...`;
-    
-    listenToUserData(user);
+
+    // Load Data non-blockingly
+    await fetchUserData(user);
+    fetchPendingTasks(user.uid);
   } else {
-    // Redirect cleanly without trigger popups
     window.location.href = "login.html";
   }
 });
 
-// 2. Real-time Firestore Sync
-function listenToUserData(user) {
-  const userRef = doc(db, "users", user.uid);
+// 2. Fast Data Fetching (Direct Read vs Snapshot Overload)
+async function fetchUserData(user) {
+  try {
+    const userRef = doc(db, "users", user.uid);
+    let userSnap = await getDoc(userRef);
 
-  if (unsubscribeUser) unsubscribeUser();
-
-  unsubscribeUser = onSnapshot(userRef, async (userSnap) => {
     if (!userSnap.exists()) {
       const newData = {
         username: user.displayName || "Anonymous",
@@ -96,64 +75,54 @@ function listenToUserData(user) {
         completedTasks: []
       };
       await setDoc(userRef, newData);
-      userStreak = 1;
-      lastCheckIn = null;
-      updateUI(0, "rookie");
-      listenToPendingTasks([]);
-    } else {
-      const data = userSnap.data();
-      userStreak = data.streak || 1;
-      lastCheckIn = data.lastCheckIn ? data.lastCheckIn.toDate() : null;
-      
-      updateUI(data.balance || 0, data.rank || "rookie");
-      checkClaimStatus();
-      listenToPendingTasks(data.completedTasks || []);
+      userSnap = await getDoc(userRef);
     }
-  }, (err) => {
-    console.error("Snapshot error:", err);
-  });
+
+    const data = userSnap.data();
+    userStreak = data.streak || 1;
+    lastCheckIn = data.lastCheckIn ? data.lastCheckIn.toDate() : null;
+
+    updateUI(data.balance || 0, data.rank || "rookie");
+    checkClaimStatus();
+  } catch (err) {
+    console.error("User data fetch error:", err);
+  }
 }
 
-// 3. Real-time Pending Task Counter Sync
-function listenToPendingTasks(completedTaskIds) {
+// 3. Task Count Fetcher
+async function fetchPendingTasks(uid) {
   if (!pendingTasksBadge) return;
-  if (unsubscribeTasks) unsubscribeTasks();
-
-  const tasksRef = collection(db, "tasks");
-  unsubscribeTasks = onSnapshot(tasksRef, (querySnap) => {
-    let pendingCount = 0;
-    querySnap.forEach((taskDoc) => {
-      if (!completedTaskIds.includes(taskDoc.id)) {
-        pendingCount++;
-      }
+  try {
+    const userSnap = await getDoc(doc(db, "users", uid));
+    const completedTasks = userSnap.exists() ? (userSnap.data().completedTasks || []) : [];
+    
+    const tasksSnap = await getDocs(collection(db, "tasks"));
+    let count = 0;
+    tasksSnap.forEach(tDoc => {
+      if (!completedTasks.includes(tDoc.id)) count++;
     });
 
-    pendingTasksBadge.innerText = `${pendingCount} ${pendingCount === 1 ? 'Task' : 'Tasks'} Pending`;
-  });
+    pendingTasksBadge.innerText = `${count} ${count === 1 ? 'Task' : 'Tasks'} Pending`;
+  } catch (err) {
+    if (pendingTasksBadge) pendingTasksBadge.innerText = "0 Tasks Pending";
+  }
 }
 
-// 4. UI Update Engine
+// 4. UI Engine
 function updateUI(balance, rank) {
   if (balanceDisplay) {
     balanceDisplay.innerHTML = `${Number(balance).toFixed(4)} <span class="brand-font">BKT</span>`;
   }
-
-  if (streakText) {
-    streakText.textContent = `DAY ${userStreak} STREAK`;
-  }
+  if (streakText) streakText.textContent = `DAY ${userStreak} STREAK`;
 
   if (menuAvatarImg) {
-    const normalizedRank = rank.toLowerCase().replace(/\s+/g, '');
-    menuAvatarImg.src = RANK_AVATARS[normalizedRank] || RANK_AVATARS["rookie"];
+    const normRank = rank.toLowerCase().replace(/\s+/g, '');
+    menuAvatarImg.src = RANK_AVATARS[normRank] || RANK_AVATARS["rookie"];
   }
 
   const effectiveStreak = Math.min(Math.max(userStreak, 1), 7);
-  const currentMultiplier = STREAK_MULTIPLIERS[effectiveStreak] || 1.0;
-  const nextReward = BASE_REWARD * currentMultiplier;
-
-  if (nextRewardText) {
-    nextRewardText.textContent = `+${nextReward.toFixed(2)} BKT`;
-  }
+  const multiplier = STREAK_MULTIPLIERS[effectiveStreak] || 1.0;
+  if (nextRewardText) nextRewardText.textContent = `+${(BASE_REWARD * multiplier).toFixed(2)} BKT`;
 
   const streakBoxes = document.querySelectorAll(".streak-days .day-box");
   streakBoxes.forEach((box, index) => {
@@ -168,31 +137,28 @@ function updateUI(balance, rank) {
   });
 }
 
-// 5. Live Countdown Timer & Status
+// 5. Timer Controls
 function checkClaimStatus() {
   if (timerInterval) clearInterval(timerInterval);
-
   if (!lastCheckIn) {
     enableClaimButton();
     return;
   }
-
   updateLiveTimer();
   timerInterval = setInterval(updateLiveTimer, 1000);
 }
 
 function updateLiveTimer() {
   const now = new Date();
-  const nextCheckInTime = new Date(lastCheckIn.getTime() + 24 * 60 * 60 * 1000);
-  const timeRemaining = nextCheckInTime - now;
+  const nextTime = new Date(lastCheckIn.getTime() + 24 * 60 * 60 * 1000);
+  const diff = nextTime - now;
 
-  if (timeRemaining <= 0) {
+  if (diff <= 0) {
     clearInterval(timerInterval);
-    const hoursPassed = (now - lastCheckIn) / (1000 * 60 * 60);
-    if (hoursPassed >= 48) userStreak = 1;
+    if ((now - lastCheckIn) / (1000 * 60 * 60) >= 48) userStreak = 1;
     enableClaimButton();
   } else {
-    disableClaimButton(timeRemaining);
+    disableClaimButton(diff);
   }
 }
 
@@ -200,12 +166,9 @@ function enableClaimButton() {
   if (claimBtn) {
     claimBtn.disabled = false;
     claimBtn.textContent = "CHECK IN & CLAIM";
-    claimBtn.style.background = "#00ff88";
-    claimBtn.style.color = "#000000";
-    claimBtn.style.cursor = "pointer";
     claimBtn.style.opacity = "1";
+    claimBtn.style.cursor = "pointer";
   }
-
   if (timerBadge) timerBadge.textContent = "⚡ Ready";
 }
 
@@ -213,103 +176,86 @@ function disableClaimButton(msLeft) {
   if (claimBtn) {
     claimBtn.disabled = true;
     claimBtn.textContent = "CHECKED IN";
-    claimBtn.style.background = "#1d2a20";
-    claimBtn.style.color = "#556655";
+    claimBtn.style.opacity = "0.6";
     claimBtn.style.cursor = "not-allowed";
-    claimBtn.style.opacity = "0.7";
   }
-
   if (timerBadge) {
-    const totalSeconds = Math.floor(msLeft / 1000);
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
-
-    const pad = (num) => String(num).padStart(2, '0');
+    const sec = Math.floor(msLeft / 1000);
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    const pad = n => String(n).padStart(2, '0');
     timerBadge.textContent = `⏳ ${pad(h)}h ${pad(m)}m ${pad(s)}s`;
   }
 }
 
-// 6. Event Listeners
-if (claimBtn) {
-  claimBtn.addEventListener("click", async () => {
-    if (!currentUser || claimBtn.disabled) return;
+// 6. Direct & Immediate Event Setup
+function initUIEvents() {
+  const openMenuBtn = document.getElementById("open-menu-btn");
+  const closeMenuBtn = document.getElementById("close-menu-btn");
+  const menuOverlay = document.getElementById("menu-overlay");
+  const closeInfoBtn = document.getElementById("close-info-btn");
+  const okInfoBtn = document.getElementById("info-modal-ok-btn");
+  const signoutBtn = document.getElementById("signout-btn");
 
-    const effectiveStreak = Math.min(Math.max(userStreak, 1), 7);
-    const multiplier = STREAK_MULTIPLIERS[effectiveStreak] || 1.0;
-    const reward = BASE_REWARD * multiplier;
-    const userRef = doc(db, "users", currentUser.uid);
-
-    try {
-      claimBtn.disabled = true;
-      claimBtn.textContent = "CLAIMING...";
-
-      const snap = await getDoc(userRef);
-      const currentBalance = snap.exists() ? (snap.data().balance || 0) : 0;
-      const newTotalBalance = currentBalance + reward;
-
-      await updateDoc(userRef, {
-        balance: increment(reward),
-        streak: userStreak >= 7 ? 7 : increment(1),
-        lastCheckIn: new Date()
-      });
-
-      await checkRankUpgrade(currentUser.uid, newTotalBalance);
-
-    } catch (err) {
-      console.error("Failed to claim reward:", err);
-      enableClaimButton();
-    }
-  });
-}
-
-// Menu Controls
-const openMenuBtn = document.getElementById("open-menu-btn");
-const closeMenuBtn = document.getElementById("close-menu-btn");
-const menuOverlay = document.getElementById("menu-overlay");
-const signoutBtn = document.getElementById("signout-btn");
-
-if (openMenuBtn && menuOverlay) {
-  openMenuBtn.addEventListener("click", () => menuOverlay.classList.add("active"));
-}
-
-if (closeMenuBtn && menuOverlay) {
-  closeMenuBtn.addEventListener("click", () => menuOverlay.classList.remove("active"));
-}
-
-if (menuOverlay) {
-  menuOverlay.addEventListener("click", (e) => {
-    if (e.target === menuOverlay) menuOverlay.classList.remove("active");
-  });
-}
-
-// Info Modal Controls & Event Delegation
-function closeInfoModal() {
-  if (infoModal) infoModal.classList.remove("active");
-}
-
-if (closeInfoBtn) closeInfoBtn.addEventListener("click", closeInfoModal);
-if (okInfoBtn) okInfoBtn.addEventListener("click", closeInfoModal);
-
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".menu-info-btn");
-  if (btn) {
-    if (menuOverlay) menuOverlay.classList.remove("active");
-    
-    const title = btn.getAttribute("data-title");
-    const content = btn.getAttribute("data-content");
-    
-    if (infoTitle) infoTitle.textContent = title;
-    if (infoContent) infoContent.textContent = content;
-    if (infoModal) infoModal.classList.add("active");
+  if (openMenuBtn && menuOverlay) {
+    openMenuBtn.onclick = () => menuOverlay.classList.add("active");
   }
-});
+  if (closeMenuBtn && menuOverlay) {
+    closeMenuBtn.onclick = () => menuOverlay.classList.remove("active");
+  }
+  if (menuOverlay) {
+    menuOverlay.onclick = (e) => { if (e.target === menuOverlay) menuOverlay.classList.remove("active"); };
+  }
 
-if (signoutBtn) {
-  signoutBtn.addEventListener("click", () => {
-    signOut(auth).then(() => {
-      localStorage.removeItem("bkt_user_id");
-      window.location.href = "login.html";
-    });
-  });
+  const closeModal = () => { if (infoModal) infoModal.classList.remove("active"); };
+  if (closeInfoBtn) closeInfoBtn.onclick = closeModal;
+  if (okInfoBtn) okInfoBtn.onclick = closeModal;
+
+  // Info Modal Delegate
+  document.onclick = (e) => {
+    const btn = e.target.closest(".menu-info-btn");
+    if (btn) {
+      if (menuOverlay) menuOverlay.classList.remove("active");
+      if (infoTitle) infoTitle.textContent = btn.getAttribute("data-title");
+      if (infoContent) infoContent.textContent = btn.getAttribute("data-content");
+      if (infoModal) infoModal.classList.add("active");
+    }
+  };
+
+  // Check-In Claim Action
+  if (claimBtn) {
+    claimBtn.onclick = async () => {
+      if (!currentUser || claimBtn.disabled) return;
+      
+      const effectiveStreak = Math.min(Math.max(userStreak, 1), 7);
+      const reward = BASE_REWARD * (STREAK_MULTIPLIERS[effectiveStreak] || 1.0);
+      const userRef = doc(db, "users", currentUser.uid);
+
+      try {
+        claimBtn.disabled = true;
+        claimBtn.textContent = "CLAIMING...";
+
+        await updateDoc(userRef, {
+          balance: increment(reward),
+          streak: userStreak >= 7 ? 7 : increment(1),
+          lastCheckIn: new Date()
+        });
+
+        await fetchUserData(currentUser);
+      } catch (err) {
+        console.error("Claim failed:", err);
+        enableClaimButton();
+      }
+    };
+  }
+
+  if (signoutBtn) {
+    signoutBtn.onclick = () => {
+      signOut(auth).then(() => {
+        localStorage.removeItem("bkt_user_id");
+        window.location.href = "login.html";
+      });
+    };
+  }
 }

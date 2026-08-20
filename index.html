@@ -21,7 +21,7 @@
   <div class="hero-card">
     <div class="badge">🏹 Launching on Robinhood Chain</div>
     <div class="balance-title">TOTAL $BANKRUPT BALANCE</div>
-    <div class="balance-val">0.0000 <span class="brand-font">BKT</span></div>
+    <div class="balance-val"><span id="user-balance">0.0000</span> <span class="brand-font">BKT</span></div>
     <div class="sub-text">⚡ Genesis Phase Rewards Active</div>
   </div>
 
@@ -165,7 +165,7 @@
     </div>
   </div>
 
-  <!-- Firebase SDKs for Notification Badging -->
+  <!-- Firebase SDKs & Real-time Synchronization -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script>
@@ -178,12 +178,33 @@
       messagingSenderId: "961644576786",
       appId: "1:961644576786:web:65eff34df07a18067458cb"
     };
+
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const currentUserId = localStorage.getItem("bkt_user_id") || "guest_user";
+    const currentUserId = localStorage.getItem("bkt_user_id") || "Probhat";
 
-    // Track task notifications dynamically
+    // 1. Real-time Balance & Header Name Listener
+    db.collection("users").doc(currentUserId).onSnapshot((uDoc) => {
+      if (uDoc.exists) {
+        const data = uDoc.data();
+
+        // Update Total Balance display
+        const balanceElem = document.getElementById("user-balance");
+        if (balanceElem) {
+          const currentBal = parseFloat(data.balance || 0);
+          balanceElem.innerText = currentBal.toFixed(4);
+        }
+
+        // Sync Header Username if set
+        const headerName = document.getElementById("header-username");
+        if (headerName && data.username) {
+          headerName.innerText = data.username;
+        }
+      }
+    });
+
+    // 2. Real-time Pending Task Badge Counter
     db.collection("users").doc(currentUserId).onSnapshot((uDoc) => {
       const completed = uDoc.exists ? (uDoc.data().completedTasks || []) : [];
       

@@ -67,7 +67,7 @@
         <div class="quick-icon-wrapper">📋</div>
         <div class="quick-text-group">
           <span class="quick-title">Daily Tasks</span>
-          <span class="quick-sub">3 Tasks Pending</span>
+          <span class="quick-sub" id="pending-tasks-count">Calculating...</span>
         </div>
         <span class="quick-arrow">›</span>
       </a>
@@ -164,6 +164,42 @@
       </div>
     </div>
   </div>
+
+  <!-- Firebase SDKs for Notification Badging -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
+      authDomain: "bankrupt-9068b.firebaseapp.com",
+      databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
+      projectId: "bankrupt-9068b",
+      storageBucket: "bankrupt-9068b.firebasestorage.app",
+      messagingSenderId: "961644576786",
+      appId: "1:961644576786:web:65eff34df07a18067458cb"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const currentUserId = localStorage.getItem("bkt_user_id") || "guest_user";
+
+    // Track task notifications dynamically
+    db.collection("users").doc(currentUserId).onSnapshot((uDoc) => {
+      const completed = uDoc.exists ? (uDoc.data().completedTasks || []) : [];
+      
+      db.collection("tasks").onSnapshot((tSnap) => {
+        let pending = 0;
+        tSnap.forEach(doc => {
+          if (!completed.includes(doc.id)) pending++;
+        });
+
+        const badge = document.getElementById("pending-tasks-count");
+        if (badge) {
+          badge.innerText = `${pending} ${pending === 1 ? 'Task' : 'Tasks'} Pending`;
+        }
+      });
+    });
+  </script>
 
   <!-- Main App Module Execution -->
   <script type="module" src="app.js"></script>

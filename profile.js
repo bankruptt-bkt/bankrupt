@@ -2,31 +2,45 @@
 // PROFILE LOGIC & REALTIME ACHIEVEMENTS
 // ==========================================
 
-// Pre defined Badge catalogue linked to GitHub subfolder path: assets/images/profile/
+const FALLBACK_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=Bankrupt";
+
+// Corrected Catalogue matching exact GitHub filenames
 const MASTER_BADGES = [
   {
-    id: "early_bankrupt",
-    title: "Early Bankrupt",
-    icon: "assets/images/profile/early_bankrupt.jpg",
-    condition: (data) => true // Unlocked by default for Genesis Users
+    id: "rookie",
+    title: "Rookie",
+    icon: "assets/images/profile/rookie.jpg",
+    condition: (data) => true // Default unlocked profile logo
   },
   {
-    id: "streak_7",
-    title: "7 Day Streak",
-    icon: "assets/images/profile/streak_7.jpg",
-    condition: (data) => (data.longestStreak || data.streakDays || 0) >= 7
+    id: "grinder",
+    title: "Grinder",
+    icon: "assets/images/profile/grinder.jpg",
+    condition: (data) => (data.streakDays || 0) >= 3
   },
   {
-    id: "recruiter",
-    title: "Recruiter",
-    icon: "assets/images/profile/recruiter.jpg",
+    id: "hustler",
+    title: "Hustler",
+    icon: "assets/images/profile/hustler.jpg",
     condition: (data) => (data.referralsUsed || 0) >= 1
   },
   {
-    id: "top_miner",
-    title: "Top Miner",
-    icon: "assets/images/profile/top_miner.jpg",
+    id: "tycoon",
+    title: "Tycoon",
+    icon: "assets/images/profile/tycoon.jpg",
     condition: (data) => (data.balance || 0) >= 100.00
+  },
+  {
+    id: "bankruptking",
+    title: "Bankrupt King",
+    icon: "assets/images/profile/bankruptking.jpg",
+    condition: (data) => (data.balance || 0) >= 500.00
+  },
+  {
+    id: "degenerate",
+    title: "Degenerate",
+    icon: "assets/images/profile/degenerate.jpg",
+    condition: (data) => (data.longestStreak || 0) >= 7
   }
 ];
 
@@ -55,10 +69,13 @@ function listenToProfileRealtimeData(uid) {
     const streak = data.streakDays || 0;
     const longestStreak = data.longestStreak || streak;
     const referrals = data.referralsUsed || 0;
-    const activeLogo = data.activeProfileLogo || "assets/images/profile/early_bankrupt.jpg";
+    const activeLogo = data.activeProfileLogo || "assets/images/profile/rookie.jpg";
 
-    document.getElementById('profile-display-name').innerText = currentUser.displayName || ("Miner_" + uid.substring(0, 5));
-    document.getElementById('profile-uid').innerText = "UID: " + uid;
+    const nameElem = document.getElementById('profile-display-name');
+    if (nameElem) nameElem.innerText = (typeof currentUser !== 'undefined' && currentUser.displayName) ? currentUser.displayName : ("Miner_" + uid.substring(0, 5));
+    
+    const uidElem = document.getElementById('profile-uid');
+    if (uidElem) uidElem.innerText = "UID: " + uid;
     
     document.getElementById('stat-balance').innerText = balance.toFixed(2);
     document.getElementById('stat-streak').innerText = streak;
@@ -67,7 +84,13 @@ function listenToProfileRealtimeData(uid) {
 
     // Update main avatar photo
     const avatarImg = document.getElementById('user-avatar');
-    if (avatarImg) avatarImg.src = activeLogo;
+    if (avatarImg) {
+      avatarImg.src = activeLogo;
+      avatarImg.onerror = function() {
+        this.onerror = null;
+        this.src = FALLBACK_AVATAR;
+      };
+    }
 
     // Render unlocked badges in profile
     renderBadges(data);
@@ -88,7 +111,7 @@ function renderBadges(userData) {
 
     badgeCard.innerHTML = `
       <div class="w-12 h-12 rounded-full overflow-hidden border border-[#00ff66]/30 mb-1 flex items-center justify-center bg-[#121814]">
-        <img src="${badge.icon}" alt="${badge.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/100/0a0d0b/00ff66?text=👑'">
+        <img src="${badge.icon}" alt="${badge.title}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${FALLBACK_AVATAR}';">
       </div>
       <span class="text-[10px] font-semibold text-gray-200 text-center leading-tight truncate w-full">${badge.title}</span>
     `;
@@ -108,11 +131,11 @@ function openBadgeSelector() {
   grid.innerHTML = "";
 
   const dbInstance = getDb();
-  if (!currentUser || !dbInstance) return;
+  if (typeof currentUser === 'undefined' || !currentUser || !dbInstance) return;
 
   dbInstance.ref('users/' + currentUser.uid).once('value', (snap) => {
     const userData = snap.val() || {};
-    const currentActive = userData.activeProfileLogo || "assets/images/profile/early_bankrupt.jpg";
+    const currentActive = userData.activeProfileLogo || "assets/images/profile/rookie.jpg";
 
     MASTER_BADGES.forEach((badge) => {
       const isUnlocked = badge.condition(userData) || (userData.unlockedBadges && userData.unlockedBadges[badge.id]);
@@ -122,7 +145,7 @@ function openBadgeSelector() {
 
       item.innerHTML = `
         <div class="w-14 h-14 rounded-full overflow-hidden border border-[#00ff66]/30 bg-[#121814]">
-          <img src="${badge.icon}" alt="${badge.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/100/0a0d0b/00ff66?text=👑'">
+          <img src="${badge.icon}" alt="${badge.title}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${FALLBACK_AVATAR}';">
         </div>
         <span class="text-xs font-bold text-white">${badge.title}</span>
         <button class="w-full py-1 rounded-lg text-[10px] font-bold ${currentActive === badge.icon ? 'bg-[#00ff66] text-black' : 'bg-gray-800 text-gray-300'}">
@@ -147,7 +170,7 @@ function closeBadgeModal() {
 }
 
 async function selectProfileLogo(logoPath) {
-  if (!currentUser) return;
+  if (typeof currentUser === 'undefined' || !currentUser) return;
   const dbInstance = getDb();
   
   try {
@@ -174,7 +197,7 @@ function openHistoryModal(type) {
   modal.classList.remove('hidden');
 
   const dbInstance = getDb();
-  if (!currentUser || !dbInstance) return;
+  if (typeof currentUser === 'undefined' || !currentUser || !dbInstance) return;
 
   if (type === 'streak') {
     title.innerText = "Streak History";

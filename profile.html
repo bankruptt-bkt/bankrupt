@@ -49,7 +49,7 @@
     <div class="flex flex-col items-center justify-center text-center space-y-2 mt-2">
       <div class="relative">
         <div class="w-28 h-28 rounded-full border-2 border-[#00ff66] avatar-ring overflow-hidden bg-[#0a0d0b] flex items-center justify-center">
-          <img id="user-avatar" src="assets/images/logos/default.jpg" alt="Profile Logo" class="w-full h-full object-cover onerror-fallback" onerror="this.onerror=null; this.src='https://via.placeholder.com/150/0a0d0b/00ff66?text=👑';">
+          <img id="user-avatar" src="assets/images/profile/default.jpg" alt="Profile Logo" class="w-full h-full object-cover onerror-fallback" onerror="this.onerror=null; this.src='https://via.placeholder.com/150/0a0d0b/00ff66?text=👑';">
         </div>
         <button onclick="openBadgeSelector()" class="absolute bottom-0 right-0 bg-[#00ff66] text-black w-8 h-8 rounded-full flex items-center justify-center border-2 border-[#0b0f0c] shadow-lg hover:scale-105 transition-transform">
           <i class="fa-solid fa-pen text-xs"></i>
@@ -67,7 +67,7 @@
       <!-- Balance -->
       <div class="flex flex-col items-center justify-center">
         <div class="w-7 h-7 rounded-full bg-[#18261e] border border-[#00ff66]/40 flex items-center justify-center text-[#00ff66] text-xs mb-1">
-          <i class="fa-solid fa-[#]">S</i>
+          <i class="fa-solid fa-dollar-sign"></i>
         </div>
         <span id="stat-balance" class="font-bold text-white text-sm truncate max-w-full">0.0000</span>
         <span class="text-[10px] text-gray-500 font-medium">Balance</span>
@@ -208,6 +208,6 @@
   <!-- App Scripts -->
   <script src="firebase-config.js"></script>
   <script src="app.js?v=6.0"></script>
-  <script src="profile.js?v=1.0"></script>
+  <script src="profile.js?v=1.1"></script>
 </body>
 </html>

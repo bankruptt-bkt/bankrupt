@@ -14,5 +14,7 @@ if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
-const db = firebase.database();
+// Must be initialized like this at the bottom of firebase-config.js
+const app = firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db = firebase.database();

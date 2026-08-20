@@ -1,3 +1,21 @@
+// Maintenance Check
+db.ref("system/maintenance").on("value", (snap) => {
+  if (snap.val() === true && !window.location.pathname.includes("admin.html")) {
+    document.body.innerHTML = `<div class="flex flex-col items-center justify-center min-h-screen text-center p-6"><h1 class="font-marker text-3xl text-yellow-400 mb-2">UNDER MAINTENANCE</h1><p class="text-gray-400 text-sm">Will be back soon! Upgrade in progress...</p></div>`;
+  }
+});
+
+// Ban Check
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    db.ref(`users/${user.uid}/isBanned`).on("value", (snap) => {
+      if (snap.val() === true) {
+        document.body.innerHTML = `<div class="flex flex-col items-center justify-center min-h-screen text-center p-6"><h1 class="font-marker text-3xl text-red-500 mb-2">ACCOUNT BANNED</h1><p class="text-gray-400 text-sm">Your account has been suspended for violating terms.</p></div>`;
+      }
+    });
+  }
+});
+
 // ==========================================
 // CONFIGURATION & GLOBAL STATES
 // ==========================================

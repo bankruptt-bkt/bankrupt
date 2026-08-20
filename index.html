@@ -117,7 +117,7 @@
       
       <!-- Profile Info Block -->
       <a href="profile.html" class="menu-user-card" style="text-decoration: none;">
-        <img src="avatar.png" alt="Avatar" class="menu-avatar" onerror="this.src='https://via.placeholder.com/60/000/00ff88?text=BKT'">
+        <img id="menuUserAvatar" src="./assets/images/profile/rookie.png" alt="Avatar" class="menu-avatar" onerror="this.src='https://via.placeholder.com/60/000/00ff88?text=BKT'">
         <div class="menu-user-details">
           <h4 class="menu-user-name">Probhat Santra</h4>
           <span class="menu-user-uid">UID: 0m6C1j7m...</span>
@@ -192,14 +192,40 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // 2. Auth State Guard (Redirects to login drawer if user is not signed in)
+    // 2. Rank Avatar Image Mapping
+    const RANK_AVATARS = {
+      rookie: "./assets/images/profile/rookie.png",
+      grinder: "./assets/images/profile/grinder.png",
+      hustler: "./assets/images/profile/hustler.png",
+      degenerate: "./assets/images/profile/degenerate.png",
+      tycoon: "./assets/images/profile/tycoon.png",
+      bankruptking: "./assets/images/profile/bankruptking.png"
+    };
+
+    function renderProfileAvatar(userRank) {
+      const avatarImg = document.getElementById("menuUserAvatar");
+      if (!avatarImg) return;
+
+      const normalizedRank = (userRank || "rookie").toLowerCase().replace(/\s+/g, '');
+      avatarImg.src = RANK_AVATARS[normalizedRank] || RANK_AVATARS["rookie"];
+    }
+
+    // 3. Auth State Guard & Realtime Rank Listener
     auth.onAuthStateChanged((user) => {
       if (!user) {
         window.location.href = "login.html";
+      } else {
+        // Fetch user rank from Firestore and listen for changes
+        db.collection("users").doc(user.uid).onSnapshot((doc) => {
+          if (doc.exists) {
+            const userData = doc.data();
+            renderProfileAvatar(userData.rank);
+          }
+        });
       }
     });
 
-    // 3. Menu Controls
+    // 4. Menu Controls
     function openMenu() {
       document.getElementById('menu-overlay').classList.add('active');
     }
@@ -226,7 +252,7 @@
       }, 200);
     }
 
-    // 4. Sign Out Function
+    // 5. Sign Out Function
     function handleSignOut() {
       auth.signOut().then(() => {
         window.location.href = "login.html";

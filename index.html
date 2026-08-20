@@ -23,16 +23,15 @@
     .neon-text { color: #00ff66; text-shadow: 0 0 10px rgba(0, 255, 102, 0.6); }
     .card-bg { background-color: #121814; border: 1px solid #1c2620; }
     .card-inner { background-color: #0a0d0b; border: 1px solid #162019; }
-  </style>
-  <style>
-  #drawer-sheet.dragging {
-    transition: none !important;
-  }
-  #drawer-sheet.open {
-    transform: translateY(0%) !important;
-  }
-</style>
 
+    /* Drag Engine State Rules */
+    #drawer-sheet.dragging {
+      transition: none !important;
+    }
+    #drawer-sheet.open {
+      transform: translateY(0%) !important;
+    }
+  </style>
 </head>
 <body class="pb-28 max-w-md mx-auto relative min-h-screen border-x border-gray-900">
 
@@ -49,17 +48,18 @@
   </header>
 
   <!-- INTERACTIVE DRAWER OVERLAY & SHEET -->
-  <div id="side-menu-overlay" onclick="toggleMenu()" class="bottom-sheet-overlay"></div>
+  <div id="drawer-overlay" onclick="toggleMenu()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-300"></div>
   
-  <div id="drawer-sheet" class="bottom-sheet">
+  <div id="drawer-sheet" class="fixed left-0 right-0 bottom-0 z-50 bg-[#0c120e] border-t border-[#1a261f] rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out translate-y-full max-w-md mx-auto h-[85vh] flex flex-col">
     
     <!-- Drag Handle Bar for Pulling Up/Down -->
-    <div id="drawer-handle" class="sheet-drag-handle">
-      <div class="sheet-drag-pill"></div>
+    <div id="drawer-handle" class="w-full py-4 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none">
+      <div class="w-12 h-1.5 bg-gray-600 rounded-full"></div>
+      <span class="text-[10px] text-gray-500 font-semibold tracking-widest uppercase mt-1">Drag to Move</span>
     </div>
 
     <!-- Scrollable Drawer Body -->
-    <div class="sheet-content space-y-4">
+    <div class="p-6 overflow-y-auto flex-1 space-y-6">
       
       <!-- User Profile Card -->
       <div class="flex items-center justify-between pb-4 border-b border-[#1c2620]">
@@ -291,23 +291,8 @@
     </a>
   </nav>
 
-  <!-- Menu Toggle & Modal Helper Scripts -->
+  <!-- Modal Helpers -->
   <script>
-    function toggleMenu() {
-      const overlay = document.getElementById('side-menu-overlay');
-      const sheet = document.getElementById('drawer-sheet');
-      
-      const isOpen = sheet.classList.contains('open');
-      if (isOpen) {
-        sheet.classList.remove('open');
-        overlay.classList.remove('active');
-        sheet.style.transform = '';
-      } else {
-        sheet.classList.add('open');
-        overlay.classList.add('active');
-      }
-    }
-
     function openComingSoon(msg) {
       const modal = document.getElementById('coming-soon-modal');
       const text = document.getElementById('coming-soon-text');

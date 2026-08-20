@@ -1,7 +1,7 @@
 // ==========================================
 // CONFIGURATION & GLOBAL STATES
 // ==========================================
-const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 Hours in ms
+const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 Hours
 let currentUser = null;
 let userData = {
   balance: 0.00,
@@ -20,7 +20,7 @@ function getDb() {
 }
 
 // ==========================================
-// 1. AUTHENTICATION & SESSION GUARD
+// 1. AUTHENTICATION SESSION GUARD
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
   const authInstance = getAuth();
@@ -32,16 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
         updateUserProfileUI(user);
         listenToUserData(user.uid);
       } else {
-        // Redirect to login if unauthenticated
         window.location.href = 'login.html';
       }
     });
-  } else {
-    console.error("Firebase Auth SDK not found.");
   }
 });
 
-// Update Menu & Header Profile Information
 function updateUserProfileUI(user) {
   const headerName = document.getElementById('user-display-name');
   const menuName = document.getElementById('menu-user-name');
@@ -73,10 +69,7 @@ function listenToUserData(uid) {
     } else {
       userRef.set(userData);
     }
-
     renderUI();
-  }, (error) => {
-    console.error("Database read failed:", error);
   });
 }
 
@@ -85,9 +78,7 @@ function listenToUserData(uid) {
 // ==========================================
 function renderUI() {
   const balanceEl = document.getElementById('balance-display');
-  if (balanceEl) {
-    balanceEl.innerText = userData.balance.toFixed(4);
-  }
+  if (balanceEl) balanceEl.innerText = userData.balance.toFixed(4);
 
   const streakTitle = document.getElementById('streak-title');
   if (streakTitle) {
@@ -114,7 +105,7 @@ function renderButtonAndTimer() {
     claimBtn.innerText = "CHECK IN + CLAIM";
     claimBtn.disabled = false;
     claimBtn.onclick = handleClaim;
-    claimBtn.className = "w-full py-3 bg-[#00ff66] text-black font-marker text-lg rounded-xl border border-[#00ff66] shadow-lg shadow-[#00ff66]/30 cursor-pointer hover:bg-[#00e65c] transition-all";
+    claimBtn.className = "w-full py-3 bg-[#00ff66] text-black font-marker text-lg rounded-xl shadow-lg shadow-[#00ff66]/30 cursor-pointer hover:bg-[#00e65c] transition-all";
 
     if (badge) {
       badge.innerHTML = `<i class="fa-regular fa-clock"></i> Ready`;
@@ -165,7 +156,7 @@ function padZero(num) {
 }
 
 // ==========================================
-// 4. CHECK-IN ACTION & DATABASE UPDATE
+// 4. CHECK-IN ACTION & SIGN OUT
 // ==========================================
 async function handleClaim() {
   const claimBtn = document.getElementById('claim-btn');
@@ -174,8 +165,7 @@ async function handleClaim() {
     claimBtn.disabled = true;
   }
 
-  const rewardAmount = 5.00;
-  userData.balance += rewardAmount;
+  userData.balance += 5.00;
   userData.streakDays += 1;
   userData.lastCheckIn = Date.now();
 
@@ -190,83 +180,94 @@ async function handleClaim() {
         lastCheckIn: userData.lastCheckIn
       });
     } catch (e) {
-      console.error("Failed to commit claim to database:", e.message);
+      console.error("Failed to commit claim:", e.message);
     }
   }
 }
 
-// ==========================================
-// 5. SIGN OUT HANDLER
-// ==========================================
 async function handleSignOut(e) {
   if (e) e.preventDefault();
-
   try {
     const authInstance = getAuth();
-    if (authInstance) {
-      await authInstance.signOut();
-    }
+    if (authInstance) await authInstance.signOut();
     localStorage.clear();
     window.location.href = 'login.html';
   } catch (err) {
-    console.error("Sign Out Error:", err);
-    alert("Failed to sign out: " + err.message);
+    alert("Sign Out Error: " + err.message);
   }
 }
 
 // ==========================================
-// 6. INTERACTIVE DRAG-TO-SLIDE DRAWER LOGIC
+// 5. DRAWER TOGGLE & REAL-TIME DRAG ENGINE
 // ==========================================
+function toggleMenu() {
+  const drawer = document.getElementById('drawer-sheet');
+  const overlay = document.getElementById('drawer-overlay');
+  if (!drawer) return;
+
+  const isOpen = drawer.classList.contains('open');
+
+  if (isOpen) {
+    drawer.classList.remove('open');
+    drawer.style.transform = 'translateY(100%)';
+    if (overlay) overlay.classList.add('opacity-0', 'pointer-events-none');
+  } else {
+    drawer.classList.add('open');
+    drawer.style.transform = 'translateY(0%)';
+    if (overlay) overlay.classList.remove('opacity-0', 'pointer-events-none');
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const drawer = document.getElementById('drawer-sheet');
   const handle = document.getElementById('drawer-handle');
-
   if (!drawer || !handle) return;
 
   let startY = 0;
   let currentY = 0;
   let isDragging = false;
 
-  handle.addEventListener('touchstart', onDragStart, { passive: true });
-  window.addEventListener('touchmove', onDragMove, { passive: false });
-  window.addEventListener('touchend', onDragEnd);
+  // Touch Events
+  handle.addEventListener('touchstart', onStart, { passive: true });
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onEnd);
 
-  handle.addEventListener('mousedown', onDragStart);
-  window.addEventListener('mousemove', onDragMove);
-  window.addEventListener('mouseup', onDragEnd);
+  // Mouse Events
+  handle.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onEnd);
 
-  function onDragStart(e) {
+  function onStart(e) {
     if (!drawer.classList.contains('open')) return;
     isDragging = true;
     startY = e.touches ? e.touches[0].clientY : e.clientY;
     drawer.classList.add('dragging');
   }
 
-  function onDragMove(e) {
+  function onMove(e) {
     if (!isDragging) return;
-    
     currentY = e.touches ? e.touches[0].clientY : e.clientY;
     let deltaY = currentY - startY;
 
-    if (deltaY < 0) {
-      deltaY = deltaY * 0.2; 
-    }
+    // Resistance when dragging upward
+    if (deltaY < 0) deltaY = deltaY * 0.25;
 
     if (e.cancelable) e.preventDefault();
     drawer.style.transform = `translateY(${deltaY}px)`;
   }
 
-  function onDragEnd() {
+  function onEnd() {
     if (!isDragging) return;
     isDragging = false;
     drawer.classList.remove('dragging');
 
     let deltaY = currentY - startY;
 
-    if (deltaY > 120) {
-      if (typeof toggleMenu === 'function') toggleMenu();
+    // Pulling down more than 100px closes drawer
+    if (deltaY > 100) {
+      toggleMenu();
     } else {
-      drawer.style.transform = 'translateY(0)';
+      drawer.style.transform = 'translateY(0%)';
     }
 
     startY = 0;

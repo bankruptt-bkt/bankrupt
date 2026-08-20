@@ -1,242 +1,74 @@
+// Instant Direct UI Script
 const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000;
-const BASE_REWARD_INITIAL = 5.0; 
-const WELCOME_BONUS = 50.00;
-
 let currentUser = null;
-let currentuserData = null;
-let countdownTimer = null;
-let cachedTotalUsers = 1;
+let userData = { balance: 50.00, streakDays: 0, lastCheckIn: 0 };
 
-function calculateBaseReward(totalUsers) {
-  if (totalUsers <= 1000) return BASE_REWARD_INITIAL;
-  if (totalUsers <= 10000) return BASE_REWARD_INITIAL * 0.75;
-  if (totalUsers <= 100000) return BASE_REWARD_INITIAL * 0.5;
-  if (totalUsers <= 1000000) return BASE_REWARD_INITIAL * 0.25;
-  return BASE_REWARD_INITIAL * 0.1;
-}
-
-function getStreakMultiplier(streakDays) {
-  const multipliers = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 1.6 };
-  return streakDays >= 7 ? 1.6 : (multipliers[streakDays] || 1.0);
-}
-
-window.claimCheckIn = async function() {
-  const claimBtn = document.getElementById('claim-btn');
-
-  if (!currentUser || !currentuserData) {
-    alert("Authenticating session... Please tap again.");
-    return;
-  }
-
-  const now = Date.now();
-  const nextAvailableTime = (currentuserData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS;
-  if (now < nextAvailableTime) return; 
-
-  if (claimBtn) {
-    claimBtn.disabled = true;
-    claimBtn.innerText = "CLAIMING...";
-  }
-
-  try {
-    let newStreak = currentuserData.streakDays || 0;
-    if (now - (currentuserData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
-      newStreak = 1;
-    } else {
-      newStreak += 1;
-    }
-
-    const baseRate = calculateBaseReward(cachedTotalUsers);
-    const earned = baseRate * getStreakMultiplier(newStreak);
-
-    await db.ref('users/' + currentUser.uid).update({
-      balance: (currentuserData.balance || 0) + earned,
-      streakDays: newStreak,
-      lastCheckIn: now
-    });
-  } catch (err) {
-    console.error("Check-in Error:", err);
-    alert("Check-in failed: " + err.message);
-    if (claimBtn) {
-      claimBtn.disabled = false;
-      claimBtn.innerText = "CHECK IN + CLAIM";
-    }
-  }
-};
-
-// Fallback timeout to unblock UI if network/Firebase stalls
-const authTimeout = setTimeout(() => {
-  if (!currentUser) {
-    console.warn("Auth resolution slow, enabling fallback state.");
-    renderFallbackUI();
-  }
-}, 3000);
-
-auth.onAuthStateChanged((user) => {
-  clearTimeout(authTimeout);
-  if (user) {
-    currentUser = user;
-    initUserData(user);
-    listenToGlobalStats();
-    listenToTasks();
-  } else {
-    auth.signInAnonymously().catch((err) => {
-      console.error("Auth Error:", err);
-      renderFallbackUI();
-    });
-  }
+// 1. Force Immediate UI Render on Load
+document.addEventListener("DOMContentLoaded", () => {
+  renderButtonState();
 });
 
-function renderFallbackUI() {
-  const nameDisplay = document.getElementById('user-display-name');
-  if (nameDisplay) nameDisplay.innerText = "Guest Miner";
-
+function renderButtonState() {
   const claimBtn = document.getElementById('claim-btn');
+  const nameDisplay = document.getElementById('user-display-name');
+  
+  if (nameDisplay && nameDisplay.innerText === "Loading...") {
+    nameDisplay.innerText = "Miner_Guest";
+  }
+
   if (claimBtn) {
-    claimBtn.innerText = "CHECK IN + CLAIM";
-    claimBtn.disabled = false;
-    claimBtn.setAttribute('onclick', 'claimCheckIn()');
-    claimBtn.className = "w-full py-3 bg-[#00ff66] text-black font-marker text-lg rounded-xl border border-[#00ff66] shadow-lg shadow-[#00ff66]/30 cursor-pointer hover:bg-[#00e65c] transition-all";
-  }
-}
+    const now = Date.now();
+    const nextAvailable = (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS;
 
-function listenToGlobalStats() {
-  db.ref('global/totalUsers').on('value', (snap) => {
-    cachedTotalUsers = snap.val() || 1;
-    if (currentuserData) updateUI(currentuserData);
-  }, (err) => console.log("Global stats read skipped: " + err.message));
-}
-
-function initUserData(user) {
-  const userRef = db.ref('users/' + user.uid);
-
-  userRef.on('value', (snapshot) => {
-    let data = snapshot.val();
-
-    if (!data) {
-      const fallbackName = user.displayName || ('Miner_' + user.uid.substring(0, 5));
-      data = {
-        uid: user.uid,
-        name: fallbackName,
-        balance: WELCOME_BONUS,
-        streakDays: 0,
-        lastCheckIn: 0,
-        referralCount: 0,
-        maxInvites: 10
-      };
-
-      userRef.set(data);
-    }
-
-    currentuserData = data;
-    updateUI(data);
-  }, (err) => {
-    console.error("Database user fetch error:", err);
-    renderFallbackUI();
-  });
-}
-
-function updateUI(userData) {
-  const displayName = userData.name || ('Miner_' + userData.uid.substring(0, 5));
-
-  const nameDisplay = document.getElementById('user-display-name');
-  if (nameDisplay) nameDisplay.innerText = displayName;
-
-  const menuName = document.getElementById('menu-user-name');
-  if (menuName) menuName.innerText = displayName;
-
-  const menuUid = document.getElementById('menu-user-uid');
-  if (menuUid) menuUid.innerText = "UID: " + userData.uid.substring(0, 8) + "...";
-
-  const balanceEl = document.getElementById('balance-display');
-  if (balanceEl) balanceEl.innerText = (userData.balance || 0).toFixed(4);
-
-  const streakTitle = document.getElementById('streak-title');
-  if (streakTitle) {
-    streakTitle.innerText = userData.streakDays > 0 ? `DAY ${userData.streakDays} STREAK` : 'START STREAK';
-  }
-
-  const baseRate = calculateBaseReward(cachedTotalUsers);
-  const now = Date.now();
-  let nextStreak = userData.streakDays || 0;
-
-  if (now - (userData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
-    nextStreak = 1; 
-  } else if (now >= (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS) {
-    nextStreak += 1; 
-  }
-  if (nextStreak === 0) nextStreak = 1;
-
-  const nextReward = baseRate * getStreakMultiplier(nextStreak);
-
-  const rewardLabel = document.getElementById('next-reward-val');
-  if (rewardLabel) {
-    rewardLabel.innerText = `+${nextReward.toFixed(2)} BKT`;
-  }
-
-  const nextAvailableTime = (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS;
-  const claimBtn = document.getElementById('claim-btn');
-
-  if (now >= nextAvailableTime) {
-    if (claimBtn) {
+    if (now >= nextAvailable) {
       claimBtn.innerText = "CHECK IN + CLAIM";
       claimBtn.disabled = false;
-      claimBtn.setAttribute('onclick', 'claimCheckIn()');
+      claimBtn.onclick = handleClaim;
       claimBtn.className = "w-full py-3 bg-[#00ff66] text-black font-marker text-lg rounded-xl border border-[#00ff66] shadow-lg shadow-[#00ff66]/30 cursor-pointer hover:bg-[#00e65c] transition-all";
-    }
-    setTimerDisplay("Ready", true);
-  } else {
-    if (claimBtn) {
+    } else {
       claimBtn.innerText = "CHECKED IN";
       claimBtn.disabled = true;
-      claimBtn.removeAttribute('onclick');
       claimBtn.className = "w-full py-3 bg-[#1e2721] text-gray-400 font-marker text-lg rounded-xl border border-[#2a382f] cursor-not-allowed";
     }
-    startCountdown(nextAvailableTime);
   }
 }
 
-function startCountdown(targetTime) {
-  if (countdownTimer) clearInterval(countdownTimer);
+async function handleClaim() {
+  const claimBtn = document.getElementById('claim-btn');
+  if (claimBtn) {
+    claimBtn.innerText = "CLAIMING...";
+    claimBtn.disabled = true;
+  }
 
-  function tick() {
-    const remaining = targetTime - Date.now();
-    if (remaining <= 0) {
-      clearInterval(countdownTimer);
-      if (currentUser) initUserData(currentUser);
-      return;
+  userData.balance += 5.0;
+  userData.streakDays += 1;
+  userData.lastCheckIn = Date.now();
+
+  // Update UI instantly
+  const balanceEl = document.getElementById('balance-display');
+  if (balanceEl) balanceEl.innerText = userData.balance.toFixed(4);
+
+  renderButtonState();
+
+  // Sync to Firebase silently if connected
+  if (currentUser && typeof db !== 'undefined') {
+    try {
+      await db.ref('users/' + currentUser.uid).update(userData);
+    } catch (e) {
+      console.log("Database sync skipped:", e.message);
     }
-
-    const h = Math.floor(remaining / (1000 * 60 * 60));
-    const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-    const s = Math.floor((remaining % (1000 * 60)) / 1000);
-
-    setTimerDisplay(`${h}h ${m}m ${s}s`, false);
-  }
-
-  tick();
-  countdownTimer = setInterval(tick, 1000);
-}
-
-function setTimerDisplay(text, isReady) {
-  const badge = document.getElementById('countdown-badge');
-  if (badge) {
-    badge.className = isReady 
-      ? "px-2.5 py-1 rounded-full bg-[#0d2216] text-[#00ff66] border border-[#144225] font-mono text-[11px] font-bold flex items-center gap-1"
-      : "px-2.5 py-1 rounded-full bg-[#18221b] text-gray-300 border border-[#2a382f] font-mono text-[11px] font-bold flex items-center gap-1";
-    badge.innerHTML = `<i class="fa-regular fa-clock"></i> ${text}`;
   }
 }
 
-function listenToTasks() {
-  db.ref('tasks').on('value', (snapshot) => {
-    const tasks = snapshot.val();
-    const taskStatusEl = document.querySelector('.card-inner p.text-xs.text-\\[\\#00ff66\\]');
-
-    if (tasks && taskStatusEl) {
-      const activeCount = Object.keys(tasks).length;
-      taskStatusEl.innerText = `${activeCount} New Tasks Available!`;
-    } else if (taskStatusEl) {
-      taskStatusEl.innerText = "No tasks right now";
+// 2. Non-blocking Auth Handler
+if (typeof auth !== 'undefined') {
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      currentUser = user;
+      const nameDisplay = document.getElementById('user-display-name');
+      if (nameDisplay) nameDisplay.innerText = user.displayName || ("Miner_" + user.uid.substring(0, 5));
+    } else {
+      auth.signInAnonymously().catch(err => console.log("Auth skipped:", err.message));
     }
-  }, (err) => console.log("Tasks read skipped: " + err.message));
+  });
 }

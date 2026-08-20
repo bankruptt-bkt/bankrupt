@@ -133,6 +133,57 @@
       <span>Profile</span>
     </a>
   </nav>
+    
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <!-- Profile Script -->
+  <script>
+    // Initialize Firebase if not done elsewhere
+    // firebase.initializeApp(firebaseConfig);
+    // const db = firebase.firestore();
+    // const auth = firebase.auth();
+
+    const RANK_AVATARS = {
+      rookie: "./assets/images/profile/rookie.png",
+      grinder: "./assets/images/profile/grinder.png",
+      hustler: "./assets/images/profile/hustler.png",
+      degenerate: "./assets/images/profile/degenerate.png",
+      tycoon: "./assets/images/profile/tycoon.png",
+      bankruptking: "./assets/images/profile/bankruptking.png"
+    };
+
+    function updateProfileUI(userData) {
+      const nameEl = document.querySelector(".user-display-name");
+      const uidEl = document.querySelector(".user-uid-label");
+      
+      if (nameEl && userData.displayName) nameEl.textContent = userData.displayName;
+      if (uidEl && userData.uid) uidEl.textContent = `UID: ${userData.uid.substring(0, 8)}...`;
+
+      const avatarImg = document.querySelector(".avatar-glow-wrapper img");
+      if (avatarImg) {
+        const normalizedRank = (userData.rank || "rookie").toLowerCase().replace(/\s+/g, '');
+        avatarImg.src = RANK_AVATARS[normalizedRank] || RANK_AVATARS["rookie"];
+      }
+    }
+
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
+        db.collection("users").doc(user.uid).onSnapshot((doc) => {
+          if (doc.exists) {
+            const userData = doc.data();
+            userData.uid = user.uid;
+            updateProfileUI(userData);
+          }
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>

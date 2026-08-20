@@ -1,21 +1,3 @@
-// Maintenance Check
-db.ref("system/maintenance").on("value", (snap) => {
-  if (snap.val() === true && !window.location.pathname.includes("admin.html")) {
-    document.body.innerHTML = `<div class="flex flex-col items-center justify-center min-h-screen text-center p-6"><h1 class="font-marker text-3xl text-yellow-400 mb-2">UNDER MAINTENANCE</h1><p class="text-gray-400 text-sm">Will be back soon! Upgrade in progress...</p></div>`;
-  }
-});
-
-// Ban Check
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    db.ref(`users/${user.uid}/isBanned`).on("value", (snap) => {
-      if (snap.val() === true) {
-        document.body.innerHTML = `<div class="flex flex-col items-center justify-center min-h-screen text-center p-6"><h1 class="font-marker text-3xl text-red-500 mb-2">ACCOUNT BANNED</h1><p class="text-gray-400 text-sm">Your account has been suspended for violating terms.</p></div>`;
-      }
-    });
-  }
-});
-
 // ==========================================
 // CONFIGURATION & GLOBAL STATES
 // ==========================================
@@ -38,19 +20,49 @@ function getDb() {
 }
 
 // ==========================================
-// 1. AUTHENTICATION SESSION GUARD
+// 1. GLOBAL SYSTEM LISTENERS & AUTH GUARD
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
   const authInstance = getAuth();
+  const dbInstance = getDb();
 
+  // Global Maintenance Mode Check
+  if (dbInstance) {
+    dbInstance.ref("system/maintenance").on("value", (snap) => {
+      if (snap.val() === true && !window.location.pathname.includes("admin.html")) {
+        document.body.innerHTML = `
+          <div class="flex flex-col items-center justify-center min-h-screen text-center p-6 bg-[#0b0f0c]">
+            <h1 class="font-marker text-3xl text-yellow-400 mb-2">UNDER MAINTENANCE</h1>
+            <p class="text-gray-400 text-sm">Will be back soon! Upgrade in progress...</p>
+          </div>`;
+      }
+    });
+  }
+
+  // Auth Guard & User Initialization
   if (authInstance) {
     authInstance.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
         updateUserProfileUI(user);
         listenToUserData(user.uid);
+
+        // Global Ban Check
+        if (dbInstance) {
+          dbInstance.ref(`users/${user.uid}/isBanned`).on("value", (snap) => {
+            if (snap.val() === true) {
+              document.body.innerHTML = `
+                <div class="flex flex-col items-center justify-center min-h-screen text-center p-6 bg-[#0b0f0c]">
+                  <h1 class="font-marker text-3xl text-red-500 mb-2">ACCOUNT BANNED</h1>
+                  <p class="text-gray-400 text-sm">Your account has been suspended for violating terms.</p>
+                </div>`;
+            }
+          });
+        }
       } else {
-        window.location.href = 'login.html';
+        if (!window.location.pathname.includes("login.html") && !window.location.pathname.includes("admin.html")) {
+          window.location.href = 'login.html';
+        }
       }
     });
   }
@@ -245,12 +257,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentY = 0;
   let isDragging = false;
 
-  // Touch Events
   handle.addEventListener('touchstart', onStart, { passive: true });
   window.addEventListener('touchmove', onMove, { passive: false });
   window.addEventListener('touchend', onEnd);
 
-  // Mouse Events
   handle.addEventListener('mousedown', onStart);
   window.addEventListener('mousemove', onMove);
   window.addEventListener('mouseup', onEnd);
@@ -267,7 +277,6 @@ document.addEventListener("DOMContentLoaded", () => {
     currentY = e.touches ? e.touches[0].clientY : e.clientY;
     let deltaY = currentY - startY;
 
-    // Resistance when dragging upward
     if (deltaY < 0) deltaY = deltaY * 0.25;
 
     if (e.cancelable) e.preventDefault();
@@ -281,7 +290,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let deltaY = currentY - startY;
 
-    // Pulling down more than 100px closes drawer
     if (deltaY > 100) {
       toggleMenu();
     } else {

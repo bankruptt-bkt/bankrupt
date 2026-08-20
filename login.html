@@ -15,10 +15,12 @@
     .input-field:focus { outline: none; border-color: #00ff66; }
   </style>
 
-  <!-- Firebase Web SDK v8 -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <!-- Firebase Web SDK v10 Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <!-- App Config -->
   <script src="firebase-config.js"></script>
 </head>
 <body class="min-h-screen flex flex-col justify-end max-w-md mx-auto relative overflow-hidden">
@@ -90,7 +92,7 @@
         Google
       </button>
 
-      <button onclick="alert('Twitter (X) Sign-In requires a custom developer OAuth setup in Firebase.')" type="button" class="w-full py-3 bg-[#131b15] border border-[#212f25] rounded-xl flex items-center justify-center gap-2.5 text-sm font-semibold text-white hover:bg-[#1a251d] transition-all">
+      <button onclick="alert('Twitter (X) Sign-In requires custom developer OAuth setup in Firebase.')" type="button" class="w-full py-3 bg-[#131b15] border border-[#212f25] rounded-xl flex items-center justify-center gap-2.5 text-sm font-semibold text-white hover:bg-[#1a251d] transition-all">
         <i class="fa-brands fa-x-twitter text-base"></i>
         Twitter (X)
       </button>
@@ -150,18 +152,18 @@
       submitBtn.innerText = "PROCESSING...";
 
       try {
+        const activeAuth = window.auth || firebase.auth();
+        const activeDb = window.db || firebase.database();
+
         if (currentMode === 'login') {
-          // Firebase Sign In
-          await auth.signInWithEmailAndPassword(email, password);
+          await activeAuth.signInWithEmailAndPassword(email, password);
           window.location.href = 'index.html';
         } else {
-          // Firebase Sign Up
           const displayName = document.getElementById('display-name').value.trim() || 'Miner';
-          const res = await auth.createUserWithEmailAndPassword(email, password);
+          const res = await activeAuth.createUserWithEmailAndPassword(email, password);
           
-          // Set display name in auth & initialize database profile
           await res.user.updateProfile({ displayName: displayName });
-          await db.ref('users/' + res.user.uid).set({
+          await activeDb.ref('users/' + res.user.uid).set({
             uid: res.user.uid,
             name: displayName,
             balance: 50.00,
@@ -179,14 +181,16 @@
       }
     }
 
-    // GOOGLE SIGN IN
+    // GOOGLE SIGN IN (SAFELY RESOLVED)
     async function handleGoogleSignIn() {
-      const provider = new firebase.auth.GoogleAuthProvider();
       try {
-        const res = await auth.signInWithPopup(provider);
-        const userRef = db.ref('users/' + res.user.uid);
+        const activeAuth = window.auth || firebase.auth();
+        const activeDb = window.db || firebase.database();
+
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const res = await activeAuth.signInWithPopup(provider);
+        const userRef = activeDb.ref('users/' + res.user.uid);
         
-        // Ensure database record exists
         const snap = await userRef.once('value');
         if (!snap.exists()) {
           await userRef.set({
@@ -205,7 +209,6 @@
       }
     }
 
-    // FORGOT PASSWORD MODAL LOGIC
     function openForgotModal() {
       document.getElementById('forgot-modal').classList.remove('hidden');
     }
@@ -227,7 +230,8 @@
       resetBtn.innerText = "SENDING...";
 
       try {
-        await auth.sendPasswordResetEmail(email);
+        const activeAuth = window.auth || firebase.auth();
+        await activeAuth.sendPasswordResetEmail(email);
         alert("Password reset link sent! Check your inbox.");
         closeForgotModal();
       } catch (err) {

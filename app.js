@@ -24,8 +24,10 @@ function getStreakMultiplier(streakDays) {
 
 // Global Check-In Click Function
 window.claimCheckIn = async function() {
+  const claimBtn = document.getElementById('claim-btn');
+
   if (!currentUser || !currentuserData) {
-    alert("Authenticating user... Please try again in a few seconds.");
+    alert("Authenticating session... Please try again in a moment.");
     return;
   }
 
@@ -34,50 +36,59 @@ window.claimCheckIn = async function() {
 
   if (now < nextAvailableTime) return; 
 
-  const claimBtn = document.getElementById('claim-btn');
   if (claimBtn) {
     claimBtn.disabled = true;
     claimBtn.innerText = "CLAIMING...";
   }
 
   try {
+    // 1. Fetch current live global total users
     const globalSnap = await db.ref('global/totalUsers').once('value');
     const totalUsers = globalSnap.val() || 1;
 
+    // 2. Calculate streak logic
     let newStreak = currentuserData.streakDays || 0;
     if (now - (currentuserData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
-      newStreak = 1; // Streak broken
+      newStreak = 1; // Streak broken (>48 hrs missed)
     } else {
       newStreak += 1; // Streak continued
     }
 
+    // 3. Compute earnings
     const baseRate = calculateBaseReward(totalUsers);
     const earned = baseRate * getStreakMultiplier(newStreak);
 
+    // 4. Update user profile in Firebase Realtime Database
     await db.ref('users/' + currentUser.uid).update({
       balance: (currentuserData.balance || 0) + earned,
       streakDays: newStreak,
       lastCheckIn: now
     });
+
   } catch (err) {
     console.error("Check-in Error:", err);
     alert("Check-in failed: " + err.message);
-    if (claimBtn) claimBtn.disabled = false;
+    if (claimBtn) {
+      claimBtn.disabled = false;
+      claimBtn.innerText = "CHECK IN + CLAIM";
+    }
   }
 };
 
 // Auth Listener
-auth.onAuthStateChanged(async (user) => {
+auth.onAuthStateChanged((user) => {
   if (user) {
     currentUser = user;
     initUserData(user);
     listenToTasks();
   } else {
-    auth.signInAnonymously().catch(console.error);
+    auth.signInAnonymously().catch((err) => {
+      console.error("Anonymous Auth Failed:", err);
+    });
   }
 });
 
-// Initialize User Profile
+// Initialize User Profile Realtime Listener
 function initUserData(user) {
   const userRef = db.ref('users/' + user.uid);
   
@@ -85,7 +96,7 @@ function initUserData(user) {
     let data = snapshot.val();
     
     if (!data) {
-      // New user registration with 50 BKT welcome bonus
+      // New user registration flow
       data = {
         uid: user.uid,
         name: user.displayName || 'Miner ' + user.uid.substring(0, 5),
@@ -96,6 +107,8 @@ function initUserData(user) {
         maxInvites: 10,
         createdAt: firebase.database.ServerValue.TIMESTAMP
       };
+
+      // Atomic batch save for user creation and global counter increment
       userRef.set(data);
       db.ref('global/totalUsers').transaction(current => (current || 0) + 1);
     }
@@ -109,13 +122,13 @@ function initUserData(user) {
 async function updateUI(userData) {
   // Update Profile Text
   const nameDisplay = document.getElementById('user-display-name');
-  if (nameDisplay) nameDisplay.innerText = userData.name || 'Miner';
+  if (nameDisplay) nameDisplay.innerText = userData.name;
   
   const menuName = document.getElementById('menu-user-name');
-  if (menuName) menuName.innerText = userData.name || 'Miner';
+  if (menuName) menuName.innerText = userData.name;
 
   const menuUid = document.getElementById('menu-user-uid');
-  if (menuUid) menuUid.innerText = "UID: " + (userData.uid ? userData.uid.substring(0, 8) : '000000') + "...";
+  if (menuUid) menuUid.innerText = "UID: " + userData.uid.substring(0, 8) + "...";
 
   // Balance
   const balanceEl = document.getElementById('balance-display');
@@ -127,34 +140,33 @@ async function updateUI(userData) {
     streakTitle.innerText = userData.streakDays > 0 ? `DAY ${userData.streakDays} STREAK` : 'START STREAK';
   }
 
-  // Next Reward Calculation
-  let totalUsers = 1;
+  // Next Reward Calculation from live database state
   try {
     const globalSnap = await db.ref('global/totalUsers').once('value');
-    totalUsers = globalSnap.val() || 1;
-  } catch(e) {
-    console.warn("Could not fetch global total user count:", e);
+    const totalUsers = globalSnap.val() || 1;
+    const baseRate = calculateBaseReward(totalUsers);
+    
+    const now = Date.now();
+    let nextStreak = userData.streakDays || 0;
+    if (now - (userData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
+      nextStreak = 1; 
+    } else if (now >= (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS) {
+      nextStreak += 1; 
+    }
+    if (nextStreak === 0) nextStreak = 1;
+
+    const nextReward = baseRate * getStreakMultiplier(nextStreak);
+    
+    const rewardLabel = document.getElementById('next-reward-val');
+    if (rewardLabel) {
+      rewardLabel.innerText = `+${nextReward.toFixed(2)} BKT`;
+    }
+  } catch (err) {
+    console.error("Error computing reward rate:", err);
   }
 
-  const baseRate = calculateBaseReward(totalUsers);
-  
+  // Button & Timer state synchronization
   const now = Date.now();
-  let nextStreak = userData.streakDays || 0;
-  if (now - (userData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
-    nextStreak = 1; 
-  } else if (now >= (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS) {
-    nextStreak += 1; 
-  }
-  if (nextStreak === 0) nextStreak = 1;
-
-  const nextReward = baseRate * getStreakMultiplier(nextStreak);
-  
-  const rewardLabel = document.getElementById('next-reward-val');
-  if (rewardLabel) {
-    rewardLabel.innerText = `+${nextReward.toFixed(2)} BKT`;
-  }
-
-  // Button & Timer state
   const nextAvailableTime = (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS;
   const claimBtn = document.getElementById('claim-btn');
 
@@ -213,7 +225,7 @@ function setTimerDisplay(text, isReady) {
   }
 }
 
-// Tasks Listener
+// Realtime Tasks Listener
 function listenToTasks() {
   db.ref('tasks').on('value', (snapshot) => {
     const tasks = snapshot.val();

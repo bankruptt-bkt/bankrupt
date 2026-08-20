@@ -17,7 +17,7 @@
   <header class="header">
     <button class="icon-btn" id="open-menu-btn">☰</button>
     <span class="brand-font logo">👑 BANKRUPT</span>
-    <span class="username" id="header-username">Loading...</span>
+    <span class="username" id="header-username">Degen</span>
   </header>
 
   <!-- Total Balance Hero Card -->
@@ -31,7 +31,7 @@
   <!-- Daily Streak Card -->
   <div class="streak-card">
     <div class="streak-header">
-      <h3 class="brand-font">STREAK</h3>
+      <h3 class="brand-font">DAY 1 STREAK</h3>
       <span class="sub-label">Streak multipliers cap at Day 7 (2.0x)</span>
     </div>
 
@@ -70,7 +70,7 @@
         <div class="quick-icon-wrapper">📋</div>
         <div class="quick-text-group">
           <span class="quick-title">Daily Tasks</span>
-          <span class="quick-sub" id="pending-tasks-count">Calculating...</span>
+          <span class="quick-sub" id="pending-tasks-count">Loading Tasks...</span>
         </div>
         <span class="quick-arrow">›</span>
       </a>
@@ -118,9 +118,9 @@
       
       <!-- Profile Info Block -->
       <a href="profile.html" class="menu-user-card" style="text-decoration: none;">
-        <img id="menuUserAvatar" src="./assets/images/profile/rookie.jpg" alt="Avatar" class="menu-avatar" onerror="this.src='https://via.placeholder.com/60/000/00ff88?text=BKT'">
+        <img id="menuUserAvatar" src="https://via.placeholder.com/60/000/00ff88?text=BKT" alt="Avatar" class="menu-avatar">
         <div class="menu-user-details">
-          <h4 class="menu-user-name" id="menu-username-display">Loading...</h4>
+          <h4 class="menu-user-name" id="menu-username-display">Degen User</h4>
           <span class="menu-user-uid" id="menu-uid-display">UID: Connecting...</span>
         </div>
       </a>
@@ -158,7 +158,7 @@
       </div>
       
       <!-- Sign Out Button -->
-      <div class="menu-item" id="signout-btn" style="color: #ff4d4d; cursor: pointer;">
+      <div class="menu-item danger" id="signout-btn" style="cursor: pointer;">
         <span class="menu-item-icon">🚪</span> Sign Out
       </div>
 
@@ -180,7 +180,7 @@
     </div>
   </div>
 
-  <!-- Single Entry Point: All logic executes inside modular app.js -->
+  <!-- JavaScript Entry Point -->
   <script type="module" src="app.js"></script>
 </body>
 </html>

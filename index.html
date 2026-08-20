@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-      <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-     <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <title>BANKRUPT - Meme Mining App</title>
   <!-- Custom Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -119,7 +118,7 @@
       
       <!-- Profile Info Block -->
       <a href="profile.html" class="menu-user-card" style="text-decoration: none;">
-        <img id="menuUserAvatar" src="./assets/images/profile/rookie.png" alt="Avatar" class="menu-avatar" onerror="this.src='https://via.placeholder.com/60/000/00ff88?text=BKT'">
+        <img id="menuUserAvatar" src="./assets/images/profile/rookie.jpg" alt="Avatar" class="menu-avatar" onerror="this.src='https://via.placeholder.com/60/000/00ff88?text=BKT'">
         <div class="menu-user-details">
           <h4 class="menu-user-name" id="menu-username-display">Loading...</h4>
           <span class="menu-user-uid" id="menu-uid-display">UID: Connecting...</span>
@@ -138,7 +137,7 @@
       </a>
 
       <div class="menu-section-label">PROJECT INFO</div>
-      <div class="menu-item menu-info-btn" data-title="Whitepaper & Roadmap" data-content="🚀 Phase 1: Mini-App Launch&#10;⚡ Phase 2: Staking & Daily Rewards&#10;💎 Phase 3: Token Generation Event (TGE) on Robinhood Chain.">
+      <div class="menu-item menu-info-btn" data-title="Whitepaper & Roadmap" data-content="Stay tuned, coming soon! 🚀">
         <span class="menu-item-icon">📄</span> Whitepaper & Roadmap
       </div>
       <div class="menu-item menu-info-btn" data-title="How to Earn" data-content="1. Check in daily for streak multipliers.&#10;2. Complete social tasks.&#10;3. Invite friends to earn +5.00 BKT per referral!">
@@ -169,19 +168,19 @@
     </div>
   </div>
 
+  <!-- Custom Info Modal -->
+  <div id="info-modal-overlay" class="info-modal-overlay">
+    <div class="info-modal-box">
+      <button class="close-info-btn" id="close-info-btn">✕</button>
+      <h3 id="info-modal-title" class="brand-font">WHITEPAPER & ROADMAP</h3>
+      <div id="info-modal-content" class="info-modal-body">
+        Stay tuned, coming soon! 🚀
+      </div>
+      <button class="btn-claim brand-font" id="info-modal-ok-btn" style="margin-top: 15px; width: 100%;">OK</button>
+    </div>
+  </div>
+
   <!-- Single Entry Point: All logic executes inside modular app.js -->
   <script type="module" src="app.js"></script>
-  <!-- Custom Info Modal -->
-<div id="info-modal-overlay" class="info-modal-overlay">
-  <div class="info-modal-box">
-    <button class="close-info-btn" id="close-info-btn">✕</button>
-    <h3 id="info-modal-title" class="brand-font">WHITEPAPER & ROADMAP</h3>
-    <div id="info-modal-content" class="info-modal-body">
-      Stay tuned, coming soon! 🚀
-    </div>
-    <button class="btn-claim brand-font" id="info-modal-ok-btn" style="margin-top: 15px; width: 100%;">OK</button>
-  </div>
-</div>
-
 </body>
 </html>

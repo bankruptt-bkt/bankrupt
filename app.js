@@ -6,7 +6,9 @@ let currentUser = null;
 let userData = {
   balance: 0.00,
   streakDays: 0,
-  lastCheckIn: 0
+  lastCheckIn: 0,
+  referralsUsed: 0,
+  referralsAllowed: 10
 };
 let countdownInterval = null;
 
@@ -95,12 +97,22 @@ function listenToUserData(uid) {
       userData = {
         balance: data.balance || 0.00,
         streakDays: data.streakDays || 0,
-        lastCheckIn: data.lastCheckIn || 0
+        lastCheckIn: data.lastCheckIn || 0,
+        referralsUsed: data.referralsUsed || 0,
+        // Default base limit is 10 plus extra granted by admin in referralsCount
+        referralsAllowed: 10 + (data.referralsCount || 0)
       };
     } else {
-      userRef.set(userData);
+      userRef.set({
+        balance: 0.00,
+        streakDays: 0,
+        lastCheckIn: 0,
+        referralsUsed: 0,
+        referralsCount: 0
+      });
     }
     renderUI();
+    updateReferralModalUI();
   });
 }
 
@@ -278,7 +290,67 @@ async function handleSignOut(e) {
 }
 
 // ==========================================
-// 5. DRAWER TOGGLE & REAL-TIME DRAG ENGINE
+// 5. REFERRAL MODAL & LOGIC
+// ==========================================
+function openReferralModal() {
+  if (!currentUser) {
+    alert("Please log in to view your referral link.");
+    return;
+  }
+
+  const modal = document.getElementById('referral-modal');
+  if (modal) modal.classList.remove('hidden');
+
+  updateReferralModalUI();
+}
+
+function closeReferralModal() {
+  const modal = document.getElementById('referral-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function updateReferralModalUI() {
+  if (!currentUser) return;
+
+  const linkInput = document.getElementById('ref-modal-link');
+  const counterEl = document.getElementById('ref-modal-counter');
+  const warningEl = document.getElementById('ref-limit-warning');
+
+  // Build full unique URL with user UID parameter
+  const uniqueLink = `${window.location.origin}${window.location.pathname}?ref=${currentUser.uid}`;
+
+  if (linkInput) linkInput.value = uniqueLink;
+  if (counterEl) counterEl.innerText = `${userData.referralsUsed} / ${userData.referralsAllowed}`;
+
+  if (warningEl) {
+    if (userData.referralsUsed >= userData.referralsAllowed) {
+      warningEl.classList.remove('hidden');
+    } else {
+      warningEl.classList.add('hidden');
+    }
+  }
+}
+
+function copyReferralLink() {
+  const linkInput = document.getElementById('ref-modal-link');
+  if (!linkInput || !linkInput.value) return;
+
+  if (userData.referralsUsed >= userData.referralsAllowed) {
+    alert("You have reached your invite limit. Extra invites must be granted by admin.");
+    return;
+  }
+
+  navigator.clipboard.writeText(linkInput.value).then(() => {
+    alert("Referral link copied to clipboard!");
+  }).catch(() => {
+    linkInput.select();
+    document.execCommand('copy');
+    alert("Referral link copied!");
+  });
+}
+
+// ==========================================
+// 6. DRAWER TOGGLE & REAL-TIME DRAG ENGINE
 // ==========================================
 function toggleMenu() {
   const drawer = document.getElementById('drawer-sheet');

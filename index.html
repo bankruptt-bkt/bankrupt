@@ -29,7 +29,7 @@
       <span class="text-2xl">👑</span>
       <h1 class="font-marker text-2xl neon-text tracking-wide">BANKRUPT</h1>
     </div>
-    <span class="text-gray-400 font-semibold text-sm">Probhat</span>
+    <span id="user-display-name" class="text-gray-400 font-semibold text-sm">Probhat</span>
   </header>
 
   <!-- SIDE MENU MODAL -->
@@ -47,8 +47,8 @@
           👑
         </div>
         <div>
-          <h3 class="font-bold text-white text-base">Probhat Santra</h3>
-          <p class="text-xs text-gray-500 font-mono">UID: 0m6C1j7m...</p>
+          <h3 id="menu-user-name" class="font-bold text-white text-base">Probhat Santra</h3>
+          <p id="menu-user-uid" class="text-xs text-gray-500 font-mono">UID: 0m6C1j7m...</p>
         </div>
       </div>
 
@@ -58,10 +58,10 @@
         <!-- Community -->
         <div class="space-y-2">
           <p class="text-[11px] font-bold text-[#00ff66] tracking-wider uppercase">COMMUNITY</p>
-          <a href="#" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
+          <a href="javascript:void(0)" onclick="openComingSoon('Telegram Channel')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span>✈️</span> <span>Telegram Channel</span>
           </a>
-          <a href="#" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
+          <a href="javascript:void(0)" onclick="openComingSoon('X (Twitter)')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span class="font-bold">𝕏</span> <span>X (Twitter)</span>
           </a>
         </div>
@@ -69,10 +69,10 @@
         <!-- Project Info -->
         <div class="space-y-2">
           <p class="text-[11px] font-bold text-[#00ff66] tracking-wider uppercase">PROJECT INFO</p>
-          <a href="#" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
+          <a href="javascript:void(0)" onclick="openComingSoon('don\'t hurry, coming soon')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span>📄</span> <span>Whitepaper & Roadmap</span>
           </a>
-          <a href="#" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
+          <a href="javascript:void(0)" onclick="openComingSoon('How to Earn')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span>ℹ️</span> <span>How to Earn</span>
           </a>
         </div>
@@ -80,10 +80,10 @@
         <!-- More -->
         <div class="space-y-2">
           <p class="text-[11px] font-bold text-[#00ff66] tracking-wider uppercase">MORE</p>
-          <a href="#" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
+          <a href="javascript:void(0)" onclick="openComingSoon('Achievements')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span>🐇</span> <span>Achievements</span>
           </a>
-          <a href="#" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
+          <a href="javascript:void(0)" onclick="openComingSoon('Announcements')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span>📢</span> <span>Announcements</span>
           </a>
         </div>
@@ -91,10 +91,10 @@
         <!-- System -->
         <div class="space-y-2">
           <p class="text-[11px] font-bold text-[#00ff66] tracking-wider uppercase">SYSTEM</p>
-          <a href="#" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
+          <a href="javascript:void(0)" onclick="openComingSoon('Settings')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span>⚙️</span> <span>Settings</span>
           </a>
-          <button class="flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors py-1 w-full text-left">
+          <button class="flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors py-1 w-full text-left opacity-60 cursor-not-allowed">
             <span>🚪</span> <span>Sign Out</span>
           </button>
         </div>
@@ -107,6 +107,17 @@
         <span class="font-marker neon-text text-lg">BANKRUPT</span>
       </div>
 
+    </div>
+  </div>
+
+  <!-- TRANSPARENT POPUP MODAL -->
+  <div id="coming-soon-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] hidden flex items-center justify-center p-4">
+    <div class="card-bg/90 rounded-2xl p-6 border border-[#00ff66]/40 shadow-2xl text-center space-y-3 max-w-xs w-full">
+      <div class="text-3xl">🚀</div>
+      <p id="coming-soon-text" class="text-white font-bold text-base">don't hurry, coming soon</p>
+      <button onclick="closeComingSoon()" class="mt-2 px-6 py-2 bg-[#00ff66] text-black font-semibold text-xs rounded-xl hover:bg-[#00e65c] transition-all">
+        OK
+      </button>
     </div>
   </div>
 
@@ -137,7 +148,7 @@
     <!-- STREAK CARD -->
     <div class="card-bg rounded-2xl p-4 space-y-3">
       <div class="flex items-baseline justify-between">
-        <h2 id="streak-title" class="font-marker text-xl neon-text">UNDEFINED</h2>
+        <h2 id="streak-title" class="font-marker text-xl neon-text">START STREAK</h2>
         <div class="text-right">
           <p class="text-white text-xs font-bold">Keep your streak alive!</p>
           <p class="text-gray-400 text-[10px]">Streak multipliers cap at Day 7 (1.6x)</p>
@@ -174,14 +185,14 @@
       </div>
 
       <!-- Action Button -->
-      <button id="claim-btn" class="w-full py-3 bg-[#1e2721] text-gray-400 font-marker text-lg rounded-xl border border-[#2a382f]">
-        CHECKED IN
+      <button id="claim-btn" class="w-full py-3 bg-[#00ff66] text-black font-marker text-lg rounded-xl border border-[#00ff66]">
+        CHECK IN + CLAIM
       </button>
 
       <div class="flex items-center justify-between text-xs pt-1">
-        <span class="text-gray-300">Next check-in reward: <b class="text-white">+3.50 BKT</b></span>
+        <span class="text-gray-300">Next check-in reward: <b class="text-white">+5.00 BKT</b></span>
         <span id="countdown-badge" class="px-2.5 py-1 rounded-full bg-[#0d2216] text-[#00ff66] border border-[#144225] font-mono text-[11px] font-bold flex items-center gap-1">
-          <i class="fa-regular fa-clock"></i> 11h 1m 40s
+          <i class="fa-regular fa-clock"></i> Ready
         </span>
       </div>
     </div>
@@ -255,11 +266,23 @@
     </button>
   </nav>
 
-  <!-- Menu Toggle Script -->
+  <!-- Menu & Popup Toggle Script -->
   <script>
     function toggleMenu() {
       const menu = document.getElementById('side-menu-overlay');
       menu.classList.toggle('hidden');
+    }
+
+    function openComingSoon(msg) {
+      const modal = document.getElementById('coming-soon-modal');
+      const text = document.getElementById('coming-soon-text');
+      text.innerText = msg === "don't hurry, coming soon" ? "don't hurry, coming soon" : `${msg} - coming soon!`;
+      modal.classList.remove('hidden');
+    }
+
+    function closeComingSoon() {
+      const modal = document.getElementById('coming-soon-modal');
+      modal.classList.add('hidden');
     }
   </script>
 

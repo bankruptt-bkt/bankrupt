@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, TwitterAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
@@ -12,8 +12,8 @@ const firebaseConfig = {
   appId: "1:961644576786:web:65eff34df07a18067458cb"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const provider = new GoogleAuthProvider();
+export const googleProvider = new GoogleAuthProvider();
+export const twitterProvider = new TwitterAuthProvider();

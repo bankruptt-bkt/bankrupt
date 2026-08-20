@@ -1,42 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BANKRUPT - Tasks</title>
-  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasks - BANKRUPT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #0b0f0c; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+    .font-marker { font-family: 'Permanent Marker', cursive; }
+    .neon-text { color: #00ff66; text-shadow: 0 0 10px rgba(0, 255, 102, 0.6); }
+    .card-bg { background-color: #121814; border: 1px solid #1c2620; }
+    .tab-btn.active { background-color: #00ff66; color: #000; font-weight: 700; }
+  </style>
 </head>
-<body>
+<body class="pb-28 max-w-md mx-auto relative min-h-screen border-x border-gray-900 px-4 pt-6">
 
-  <header class="header">
-    <button class="icon-btn" onclick="history.back()">‹</button>
-    <span class="brand-font page-title">Tasks</span>
-    <div style="width:24px;"></div>
+  <!-- HEADER -->
+  <header class="flex items-center gap-4 mb-6">
+    <a href="index.html" class="p-2 bg-[#121814] rounded-lg border border-[#1c2620] text-gray-300">
+      <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    <h1 class="font-marker text-2xl neon-text">TASKS</h1>
   </header>
 
-  <!-- Category Selection -->
-  <div class="tab-container">
-    <button class="tab-btn active" onclick="filterTasks('Daily', this)">Daily</button>
-    <button class="tab-btn" onclick="filterTasks('Social', this)">Social</button>
-    <button class="tab-btn" onclick="filterTasks('Community', this)">Community</button>
-    <button class="tab-btn" onclick="filterTasks('Extra', this)">Extra</button>
+  <!-- CATEGORY TABS -->
+  <div class="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-none">
+    <button onclick="switchTab('Daily')" id="tab-Daily" class="tab-btn active px-4 py-1.5 rounded-xl bg-[#121814] text-gray-400 text-xs font-semibold whitespace-nowrap border border-[#1c2620]">Daily</button>
+    <button onclick="switchTab('Social')" id="tab-Social" class="tab-btn px-4 py-1.5 rounded-xl bg-[#121814] text-gray-400 text-xs font-semibold whitespace-nowrap border border-[#1c2620]">Social</button>
+    <button onclick="switchTab('Community')" id="tab-Community" class="tab-btn px-4 py-1.5 rounded-xl bg-[#121814] text-gray-400 text-xs font-semibold whitespace-nowrap border border-[#1c2620]">Community</button>
+    <button onclick="switchTab('Extra')" id="tab-Extra" class="tab-btn px-4 py-1.5 rounded-xl bg-[#121814] text-gray-400 text-xs font-semibold whitespace-nowrap border border-[#1c2620]">Extra</button>
   </div>
 
-  <!-- Dynamic Tasks List -->
-  <div class="tasks-container" id="tasks-list">
-    <div style="text-align: center; color: var(--text-gray);">Loading tasks...</div>
+  <!-- TASKS CONTAINER -->
+  <div id="tasks-list" class="space-y-3">
+    <p class="text-center text-gray-500 text-sm py-8">Loading tasks...</p>
   </div>
 
-  <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
-    <a href="index.html" class="nav-item"><span>🏠</span><span>Home</span></a>
-    <a href="shop.html" class="nav-item"><span>🛒</span><span>Shop</span></a>
-    <a href="tasks.html" class="nav-item active"><span>📋</span><span>Tasks</span></a>
-    <a href="leaderboard.html" class="nav-item"><span>🏆</span><span>Leaderboard</span></a>
-    <a href="profile.html" class="nav-item"><span>👤</span><span>Profile</span></a>
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0a0d0b] border-t border-[#1a241e] px-4 py-2 flex justify-between items-center text-xs text-gray-500 z-40">
+    <a href="index.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-house text-base"></i>
+      <span>Home</span>
+    </a>
+    <a href="shop.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-cart-shopping text-base"></i>
+      <span>Shop</span>
+    </a>
+    <a href="tasks.html" class="flex flex-col items-center gap-1 text-[#00ff66]">
+      <i class="fa-solid fa-clipboard-list text-base"></i>
+      <span>Tasks</span>
+    </a>
+    <a href="leaderboard.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-trophy text-base"></i>
+      <span>Leaderboard</span>
+    </a>
+    <a href="profile.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-user text-base"></i>
+      <span>Profile</span>
+    </a>
   </nav>
 
-  <script type="module" src="tasks.js"></script>
+  <!-- Firebase & Logic -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+
+  <script>
+    let activeCategory = 'Daily';
+    let allTasks = {};
+    let userCompletedTasks = {};
+
+    auth.onAuthStateChanged((user) => {
+      if (!user) return (window.location.href = "login.html");
+      
+      // Listen to Maintenance
+      db.ref("system/maintenance").on("value", (snap) => {
+        if (snap.val() === true) {
+          document.body.innerHTML = `<div class="flex flex-col items-center justify-center min-h-screen text-center p-6"><h1 class="font-marker text-3xl text-yellow-400 mb-2">UNDER MAINTENANCE</h1><p class="text-gray-400 text-sm">Will be back soon! Upgrade in progress...</p></div>`;
+        }
+      });
+
+      // Load user completed tasks
+      db.ref(`users/${user.uid}/completedTasks`).on("value", (snap) => {
+        userCompletedTasks = snap.val() || {};
+        renderTasks();
+      });
+
+      // Load all tasks from DB
+      db.ref("tasks").on("value", (snap) => {
+        allTasks = snap.val() || {};
+        renderTasks();
+      });
+    });
+
+    function switchTab(category) {
+      activeCategory = category;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`tab-${category}`).classList.add('active');
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const listEl = document.getElementById("tasks-list");
+      listEl.innerHTML = "";
+
+      const filtered = Object.entries(allTasks).filter(([id, task]) => task.category === activeCategory);
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<p class="text-center text-gray-500 text-xs py-8">No tasks in this category yet.</p>`;
+        return;
+      }
+
+      filtered.forEach(([taskId, task]) => {
+        const isDone = !!userCompletedTasks[taskId];
+        const taskCard = document.createElement("div");
+        taskCard.className = "card-bg rounded-xl p-3 flex items-center justify-between";
+        taskCard.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-[#0a0d0b] border border-[#162019] flex items-center justify-center text-lg">
+              ${task.icon || '📌'}
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-white">${task.title}</p>
+              <p class="text-xs text-[#00ff66] font-bold">+${task.reward} BKT</p>
+            </div>
+          </div>
+          <button id="btn-${taskId}" onclick="handleTask('${taskId}', '${task.link}', ${task.reward})" 
+            class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              isDone 
+                ? 'border border-[#00ff66] text-[#00ff66] bg-transparent cursor-default' 
+                : 'bg-[#00ff66] text-black hover:bg-[#00e65c]'
+            }">
+            ${isDone ? 'Completed' : 'Start'}
+          </button>
+        `;
+        listEl.appendChild(taskCard);
+      });
+    }
+
+    function handleTask(taskId, link, reward) {
+      const user = auth.currentUser;
+      if (!user || userCompletedTasks[taskId]) return;
+
+      if (link && link !== "#") {
+        window.open(link, "_blank");
+      }
+
+      const btn = document.getElementById(`btn-${taskId}`);
+      btn.innerText = "Claiming...";
+      btn.disabled = true;
+
+      // Add reward to main balance and mark task completed
+      setTimeout(() => {
+        const userRef = db.ref(`users/${user.uid}`);
+        userRef.child("balance").transaction((curr) => (curr || 0) + parseFloat(reward));
+        userRef.child(`completedTasks/${taskId}`).set(true);
+      }, 2000);
+    }
+  </script>
 </body>
 </html>

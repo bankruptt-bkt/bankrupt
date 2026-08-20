@@ -20,33 +20,33 @@
     <!-- Centered Avatar & Identity Header -->
     <div class="profile-avatar-section">
       <div class="avatar-glow-wrapper">
-        <img src="avatar.png" alt="Avatar" id="user-avatar" onerror="this.src='https://via.placeholder.com/100/000/00ff88?text=Degen'">
+        <img src="./assets/images/profile/rookie.png" alt="Avatar" id="user-avatar" onerror="this.src='https://via.placeholder.com/100/000/00ff88?text=Degen'">
         <button class="edit-avatar-btn">✏️</button>
       </div>
-      <h2 class="user-display-name" id="profile-name">Probhat Santra</h2>
-      <p class="user-uid-label">UID: <span id="bankrupt-id">0m6C1j7m5...</span></p>
+      <h2 class="user-display-name" id="profile-name">Loading...</h2>
+      <p class="user-uid-label">UID: <span id="bankrupt-id">Connecting...</span></p>
     </div>
 
     <!-- 4-Column Core Stats Box -->
     <div class="stats-card-grid">
       <div class="stat-box">
         <span class="stat-icon">💲</span>
-        <span class="stat-number highlight" id="profile-balance">336.9600</span>
+        <span class="stat-number highlight" id="profile-balance">0.0000</span>
         <span class="stat-title">Balance</span>
       </div>
       <div class="stat-box">
         <span class="stat-icon">🔥</span>
-        <span class="stat-number" id="current-streak">23</span>
+        <span class="stat-number" id="current-streak">0</span>
         <span class="stat-title">Streak</span>
       </div>
       <div class="stat-box">
         <span class="stat-icon">🏆</span>
-        <span class="stat-number" id="longest-streak">31</span>
+        <span class="stat-number" id="longest-streak">0</span>
         <span class="stat-title">Longest</span>
       </div>
       <div class="stat-box">
         <span class="stat-icon">👥</span>
-        <span class="stat-number" id="total-referrals">5</span>
+        <span class="stat-number" id="total-referrals">0</span>
         <span class="stat-title">Referrals</span>
       </div>
     </div>
@@ -133,7 +133,6 @@
       <span>Profile</span>
     </a>
   </nav>
-    
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -142,11 +141,6 @@
 
   <!-- Profile Script -->
   <script>
-    // Initialize Firebase if not done elsewhere
-    // firebase.initializeApp(firebaseConfig);
-    // const db = firebase.firestore();
-    // const auth = firebase.auth();
-
     const RANK_AVATARS = {
       rookie: "./assets/images/profile/rookie.png",
       grinder: "./assets/images/profile/grinder.png",
@@ -157,13 +151,33 @@
     };
 
     function updateProfileUI(userData) {
-      const nameEl = document.querySelector(".user-display-name");
-      const uidEl = document.querySelector(".user-uid-label");
-      
-      if (nameEl && userData.displayName) nameEl.textContent = userData.displayName;
-      if (uidEl && userData.uid) uidEl.textContent = `UID: ${userData.uid.substring(0, 8)}...`;
+      const nameEl = document.getElementById("profile-name");
+      const uidEl = document.getElementById("bankrupt-id");
+      const balanceEl = document.getElementById("profile-balance");
+      const streakEl = document.getElementById("current-streak");
+      const longestStreakEl = document.getElementById("longest-streak");
+      const referralsEl = document.getElementById("total-referrals");
 
-      const avatarImg = document.querySelector(".avatar-glow-wrapper img");
+      if (nameEl && (userData.username || userData.displayName)) {
+        nameEl.textContent = userData.username || userData.displayName;
+      }
+      if (uidEl && userData.uid) {
+        uidEl.textContent = `${userData.uid.substring(0, 8)}...`;
+      }
+      if (balanceEl && userData.balance !== undefined) {
+        balanceEl.textContent = Number(userData.balance).toFixed(4);
+      }
+      if (streakEl && userData.streak !== undefined) {
+        streakEl.textContent = userData.streak;
+      }
+      if (longestStreakEl && userData.longestStreak !== undefined) {
+        longestStreakEl.textContent = userData.longestStreak;
+      }
+      if (referralsEl && userData.referrals !== undefined) {
+        referralsEl.textContent = userData.referrals;
+      }
+
+      const avatarImg = document.getElementById("user-avatar");
       if (avatarImg) {
         const normalizedRank = (userData.rank || "rookie").toLowerCase().replace(/\s+/g, '');
         avatarImg.src = RANK_AVATARS[normalizedRank] || RANK_AVATARS["rookie"];

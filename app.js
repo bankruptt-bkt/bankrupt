@@ -8,7 +8,7 @@ let currentuserData = null;
 let countdownTimer = null;
 let cachedTotalUsers = 1;
 
-// Base Rate Calculator based on total global users
+// Base Rate Calculator
 function calculateBaseReward(totalUsers) {
   if (totalUsers <= 1000) return BASE_REWARD_INITIAL;
   if (totalUsers <= 10000) return BASE_REWARD_INITIAL * 0.75;
@@ -75,7 +75,16 @@ auth.onAuthStateChanged((user) => {
     listenToGlobalStats();
     listenToTasks();
   } else {
-    auth.signInAnonymously().catch(console.error);
+    auth.signInAnonymously().catch((err) => {
+      console.error("Auth Error:", err);
+      // Fallback UI display if auth fails completely
+      document.getElementById('user-display-name').innerText = "Guest";
+      const claimBtn = document.getElementById('claim-btn');
+      if (claimBtn) {
+        claimBtn.innerText = "CHECK IN + CLAIM";
+        claimBtn.disabled = false;
+      }
+    });
   }
 });
 
@@ -95,9 +104,10 @@ function initUserData(user) {
     let data = snapshot.val();
     
     if (!data) {
+      const fallbackName = user.displayName || ('Miner_' + user.uid.substring(0, 5));
       data = {
         uid: user.uid,
-        name: user.displayName || 'Miner ' + user.uid.substring(0, 5),
+        name: fallbackName,
         balance: WELCOME_BONUS,
         streakDays: 0,
         lastCheckIn: 0,
@@ -117,12 +127,14 @@ function initUserData(user) {
 
 // Synchronous Instant UI Updates
 function updateUI(userData) {
-  // Update Profile Info
+  // Update Profile Info with Safe Fallbacks
+  const displayName = userData.name || ('Miner_' + userData.uid.substring(0, 5));
+  
   const nameDisplay = document.getElementById('user-display-name');
-  if (nameDisplay) nameDisplay.innerText = userData.name;
+  if (nameDisplay) nameDisplay.innerText = displayName;
   
   const menuName = document.getElementById('menu-user-name');
-  if (menuName) menuName.innerText = userData.name;
+  if (menuName) menuName.innerText = displayName;
 
   const menuUid = document.getElementById('menu-user-uid');
   if (menuUid) menuUid.innerText = "UID: " + userData.uid.substring(0, 8) + "...";

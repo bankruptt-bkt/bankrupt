@@ -10,13 +10,23 @@ let userData = {
 };
 let countdownInterval = null;
 
+// Safe accessor helpers
+function getAuth() {
+  return window.auth || (typeof firebase !== 'undefined' ? firebase.auth() : null);
+}
+
+function getDb() {
+  return window.db || (typeof firebase !== 'undefined' ? firebase.database() : null);
+}
+
 // ==========================================
 // 1. AUTHENTICATION & SESSION GUARD
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-  // Check if Firebase Auth is initialized
-  if (typeof auth !== 'undefined') {
-    auth.onAuthStateChanged((user) => {
+  const authInstance = getAuth();
+
+  if (authInstance) {
+    authInstance.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
         updateUserProfileUI(user);
@@ -48,9 +58,10 @@ function updateUserProfileUI(user) {
 // 2. REAL-TIME FIREBASE DATABASE SYNC
 // ==========================================
 function listenToUserData(uid) {
-  if (typeof db === 'undefined') return;
+  const dbInstance = getDb();
+  if (!dbInstance) return;
 
-  const userRef = db.ref('users/' + uid);
+  const userRef = dbInstance.ref('users/' + uid);
   userRef.on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
@@ -60,7 +71,6 @@ function listenToUserData(uid) {
         lastCheckIn: data.lastCheckIn || 0
       };
     } else {
-      // Initialize new user record in Realtime Database
       userRef.set(userData);
     }
 
@@ -74,13 +84,11 @@ function listenToUserData(uid) {
 // 3. UI RENDER & COUNTDOWN TIMER LOGIC
 // ==========================================
 function renderUI() {
-  // Update Total Balance Display
   const balanceEl = document.getElementById('balance-display');
   if (balanceEl) {
     balanceEl.innerText = userData.balance.toFixed(4);
   }
 
-  // Update Streak Multiplier Title
   const streakTitle = document.getElementById('streak-title');
   if (streakTitle) {
     streakTitle.innerText = userData.streakDays > 0 
@@ -88,7 +96,6 @@ function renderUI() {
       : "START STREAK";
   }
 
-  // Update Check-in Button State & Countdown Badge
   renderButtonAndTimer();
 }
 
@@ -102,7 +109,6 @@ function renderButtonAndTimer() {
   const timeRemaining = nextAvailable - now;
 
   if (timeRemaining <= 0) {
-    // Claim Available State
     if (countdownInterval) clearInterval(countdownInterval);
 
     claimBtn.innerText = "CHECK IN + CLAIM";
@@ -115,13 +121,11 @@ function renderButtonAndTimer() {
       badge.className = "px-2.5 py-1 rounded-full bg-[#0d2216] text-[#00ff66] border border-[#144225] font-mono text-[11px] font-bold flex items-center gap-1";
     }
   } else {
-    // Cooldown State
     claimBtn.innerText = "CHECKED IN";
     claimBtn.disabled = true;
     claimBtn.onclick = null;
     claimBtn.className = "w-full py-3 bg-[#1e2721] text-gray-400 font-marker text-lg rounded-xl border border-[#2a382f] cursor-not-allowed";
 
-    // Run active countdown timer
     startCountdown(nextAvailable);
   }
 }
@@ -132,7 +136,6 @@ function startCountdown(nextAvailableTime) {
   const updateTimer = () => {
     const now = Date.now();
     const diff = nextAvailableTime - now;
-
     const badge = document.getElementById('countdown-badge');
 
     if (diff <= 0) {
@@ -171,19 +174,17 @@ async function handleClaim() {
     claimBtn.disabled = true;
   }
 
-  // Update optimistic local data
   const rewardAmount = 5.00;
   userData.balance += rewardAmount;
   userData.streakDays += 1;
   userData.lastCheckIn = Date.now();
 
-  // Instantly re-render local UI
   renderUI();
 
-  // Commit updates to Firebase Realtime Database
-  if (currentUser && typeof db !== 'undefined') {
+  const dbInstance = getDb();
+  if (currentUser && dbInstance) {
     try {
-      await db.ref('users/' + currentUser.uid).update({
+      await dbInstance.ref('users/' + currentUser.uid).update({
         balance: userData.balance,
         streakDays: userData.streakDays,
         lastCheckIn: userData.lastCheckIn
@@ -201,8 +202,9 @@ async function handleSignOut(e) {
   if (e) e.preventDefault();
 
   try {
-    if (typeof auth !== 'undefined') {
-      await auth.signOut();
+    const authInstance = getAuth();
+    if (authInstance) {
+      await authInstance.signOut();
     }
     localStorage.clear();
     window.location.href = 'login.html';
@@ -211,13 +213,13 @@ async function handleSignOut(e) {
     alert("Failed to sign out: " + err.message);
   }
 }
+
 // ==========================================
 // 6. INTERACTIVE DRAG-TO-SLIDE DRAWER LOGIC
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
   const drawer = document.getElementById('drawer-sheet');
   const handle = document.getElementById('drawer-handle');
-  const overlay = document.getElementById('side-menu-overlay');
 
   if (!drawer || !handle) return;
 
@@ -225,12 +227,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentY = 0;
   let isDragging = false;
 
-  // Touch Event Listeners
   handle.addEventListener('touchstart', onDragStart, { passive: true });
   window.addEventListener('touchmove', onDragMove, { passive: false });
   window.addEventListener('touchend', onDragEnd);
 
-  // Mouse Event Listeners for Desktop Testing
   handle.addEventListener('mousedown', onDragStart);
   window.addEventListener('mousemove', onDragMove);
   window.addEventListener('mouseup', onDragEnd);
@@ -248,7 +248,6 @@ document.addEventListener("DOMContentLoaded", () => {
     currentY = e.touches ? e.touches[0].clientY : e.clientY;
     let deltaY = currentY - startY;
 
-    // Resistance when pulling upwards past standard top
     if (deltaY < 0) {
       deltaY = deltaY * 0.2; 
     }
@@ -264,11 +263,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let deltaY = currentY - startY;
 
-    // Dismiss drawer if pulled down over 120px
     if (deltaY > 120) {
-      toggleMenu();
+      if (typeof toggleMenu === 'function') toggleMenu();
     } else {
-      // Snap back to top position
       drawer.style.transform = 'translateY(0)';
     }
 

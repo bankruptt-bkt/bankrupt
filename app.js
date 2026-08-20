@@ -8,13 +8,14 @@ const BASE_REWARD = 2.5;
 
 // Rank Avatars Mapping
 const RANK_AVATARS = {
-  rookie: "./assets/images/profile/rookie.png",
-  grinder: "./assets/images/profile/grinder.png",
-  hustler: "./assets/images/profile/hustler.png",
-  degenerate: "./assets/images/profile/degenerate.png",
-  tycoon: "./assets/images/profile/tycoon.png",
-  bankruptking: "./assets/images/profile/bankruptking.png"
+  rookie: "./assets/images/profile/rookie.jpg",
+  grinder: "./assets/images/profile/grinder.jpg",
+  hustler: "./assets/images/profile/hustler.jpg",
+  degenerate: "./assets/images/profile/degenerate.jpg",
+  tycoon: "./assets/images/profile/tycoon.jpg",
+  bankruptking: "./assets/images/profile/bankruptking.jpg"
 };
+
 
 // UI Elements
 const balanceDisplay = document.querySelector(".balance-val");

@@ -9,8 +9,9 @@
   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script>eruda.init();</script>
   
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS & External App Styles -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
   
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
@@ -38,24 +39,33 @@
     <span id="user-display-name" class="text-gray-400 font-semibold text-sm">Loading...</span>
   </header>
 
-  <!-- SIDE MENU MODAL -->
-  <div id="side-menu-overlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="w-full max-w-sm card-bg rounded-2xl p-5 border border-[#1c2620] shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
-      
-      <!-- Close Button -->
-      <button onclick="toggleMenu()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+  <!-- INTERACTIVE DRAWER OVERLAY & SHEET -->
+  <div id="side-menu-overlay" onclick="toggleMenu()" class="bottom-sheet-overlay"></div>
+  
+  <div id="drawer-sheet" class="bottom-sheet">
+    
+    <!-- Drag Handle Bar for Pulling Up/Down -->
+    <div id="drawer-handle" class="sheet-drag-handle">
+      <div class="sheet-drag-pill"></div>
+    </div>
 
+    <!-- Scrollable Drawer Body -->
+    <div class="sheet-content space-y-4">
+      
       <!-- User Profile Card -->
-      <div class="flex items-center gap-3 pb-3 border-b border-[#1c2620]">
-        <div class="w-12 h-12 rounded-full border-2 border-[#00ff66] bg-[#0a0d0b] flex items-center justify-center text-xl">
-          👑
+      <div class="flex items-center justify-between pb-4 border-b border-[#1c2620]">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full border-2 border-[#00ff66] bg-[#0a0d0b] flex items-center justify-center text-xl shrink-0">
+            👑
+          </div>
+          <div class="overflow-hidden">
+            <h3 id="menu-user-name" class="font-bold text-white text-base truncate">Loading...</h3>
+            <p id="menu-user-uid" class="text-xs text-gray-500 font-mono truncate">UID: ...</p>
+          </div>
         </div>
-        <div>
-          <h3 id="menu-user-name" class="font-bold text-white text-base">Loading...</h3>
-          <p id="menu-user-uid" class="text-xs text-gray-500 font-mono">UID: ...</p>
-        </div>
+        <button onclick="toggleMenu()" class="text-gray-400 hover:text-white text-xl p-2">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <!-- Navigation Sections -->
@@ -100,7 +110,6 @@
           <a href="javascript:void(0)" onclick="openComingSoon('Settings')" class="flex items-center gap-3 text-gray-200 hover:text-[#00ff66] transition-colors py-1">
             <span>⚙️</span> <span>Settings</span>
           </a>
-          <!-- FUNCTIONAL SIGN OUT BUTTON -->
           <button id="menu-signout-btn" onclick="handleSignOut(event)" class="flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors py-1 w-full text-left font-semibold">
             <span>🚪</span> <span>Sign Out</span>
           </button>
@@ -109,7 +118,7 @@
       </div>
 
       <!-- Menu Footer -->
-      <div class="pt-3 border-t border-[#1c2620] text-center flex items-center justify-center gap-2">
+      <div class="pt-4 border-t border-[#1c2620] text-center flex items-center justify-center gap-2">
         <span class="text-lg">💀</span>
         <span class="font-marker neon-text text-lg">BANKRUPT</span>
       </div>
@@ -273,11 +282,21 @@
     </a>
   </nav>
 
-  <!-- Menu & Popup Toggle Script -->
+  <!-- Menu Toggle & Modal Helper Scripts -->
   <script>
     function toggleMenu() {
-      const menu = document.getElementById('side-menu-overlay');
-      menu.classList.toggle('hidden');
+      const overlay = document.getElementById('side-menu-overlay');
+      const sheet = document.getElementById('drawer-sheet');
+      
+      const isOpen = sheet.classList.contains('open');
+      if (isOpen) {
+        sheet.classList.remove('open');
+        overlay.classList.remove('active');
+        sheet.style.transform = '';
+      } else {
+        sheet.classList.add('open');
+        overlay.classList.add('active');
+      }
     }
 
     function openComingSoon(msg) {
@@ -291,19 +310,6 @@
       const modal = document.getElementById('coming-soon-modal');
       modal.classList.add('hidden');
     }
-
-    async function handleSignOut(e) {
-      if (e) e.preventDefault();
-      try {
-        if (typeof auth !== 'undefined') {
-          await auth.signOut();
-        }
-        localStorage.clear();
-        window.location.href = 'login.html';
-      } catch (err) {
-        alert("Sign Out Error: " + err.message);
-      }
-    }
   </script>
 
   <!-- Firebase SDKs -->
@@ -313,6 +319,6 @@
 
   <!-- App Scripts -->
   <script src="firebase-config.js"></script>
-  <script src="app.js?v=4.0"></script>
+  <script src="app.js?v=5.0"></script>
 </body>
 </html>

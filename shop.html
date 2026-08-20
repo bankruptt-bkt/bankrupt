@@ -3,117 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bankrupt - Shop</title>
+  <title>Shop & Claims - BANKRUPT Mining App</title>
+  
+  <!-- Eruda Mobile Console for Debugging -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+  
+  <!-- Tailwind CSS & App Styles -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
+  
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { background-color: #0b0f0c; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+    .card-bg { background-color: #121814; border: 1px solid #1c2620; }
+    .card-inner { background-color: #0a0d0b; border: 1px solid #162019; }
+    .neon-text { color: #00ff66; text-shadow: 0 0 10px rgba(0, 255, 102, 0.5); }
+    
+    /* Tab Active Glow */
+    .tab-active {
+      background-color: #00ff66;
+      color: #000000;
+      font-weight: 700;
+      box-shadow: 0 0 12px rgba(0, 255, 102, 0.4);
+    }
 
-  <!-- Shop Top Header -->
-  <header class="shop-header">
-    <button class="icon-btn">⚙️</button>
-    <h1 class="shop-title">Shop</h1>
+    /* Pulse animation for ready-to-claim items */
+    @keyframes claimPulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 102, 0.4); }
+      50% { box-shadow: 0 0 18px rgba(0, 255, 102, 0.9); }
+    }
+    .pulse-claim {
+      animation: claimPulse 1.8s infinite;
+    }
+  </style>
+</head>
+<body class="pb-28 max-w-md mx-auto relative min-h-screen border-x border-gray-900">
+
+  <!-- TOP HEADER & REALTIME BALANCE -->
+  <header class="flex items-center justify-between p-4 pt-6">
+    <a href="index.html" class="text-gray-300 text-lg p-2 bg-[#121814] rounded-lg border border-[#1c2620] hover:border-[#00ff66] transition-colors">
+      <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    <h1 class="font-bold text-lg text-white tracking-wide">Shop & Claims</h1>
+    
+    <!-- User Live Balance Badge -->
+    <div class="px-3 py-1.5 bg-[#121814] rounded-full border border-[#00ff66]/40 flex items-center gap-1.5 shadow-sm">
+      <div class="w-4 h-4 rounded-full bg-[#00ff66] text-black font-black text-[10px] flex items-center justify-center">B</div>
+      <span id="shop-user-balance" class="font-bold text-xs text-[#00ff66] font-mono">0.0000</span>
+      <span class="text-[10px] text-gray-400 font-bold">BKT</span>
+    </div>
   </header>
 
-  <!-- Filter Categories -->
-  <div class="filter-categories">
-    <button class="filter-btn active">All</button>
-    <button class="filter-btn">Badges</button>
-    <button class="filter-btn">Boosts</button>
-    <button class="filter-btn">Titles</button>
-    <button class="filter-btn">Special</button>
-  </div>
+  <main class="px-4 space-y-4">
 
-  <!-- Horizontal Scrolling Product Cards -->
-  <div class="shop-carousel">
-
-    <!-- Card 1 -->
-    <div class="shop-card">
-      <div class="card-img-box">
-        <span class="placeholder-icon">💀</span>
-      </div>
-      <div class="card-info">
-        <h3 class="item-title">Broke Badge</h3>
-        <p class="item-desc">Increase flex.</p>
-      </div>
-      <div class="item-price">
-        <span class="coin-icon">🟡</span>
-        <span>500 BKT</span>
-      </div>
+    <!-- CATEGORY FILTER TABS -->
+    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+      <button id="shop-tab-all" onclick="filterShopCategory('all')" class="px-4 py-2 text-xs rounded-xl whitespace-nowrap transition-all tab-active">
+        All Items
+      </button>
+      <button id="shop-tab-milestone" onclick="filterShopCategory('milestone')" class="px-4 py-2 text-xs rounded-xl whitespace-nowrap text-gray-400 hover:text-white transition-all font-medium bg-[#121814] border border-[#1c2620]">
+        🎯 Claims / Milestones
+      </button>
+      <button id="shop-tab-badge" onclick="filterShopCategory('badge')" class="px-4 py-2 text-xs rounded-xl whitespace-nowrap text-gray-400 hover:text-white transition-all font-medium bg-[#121814] border border-[#1c2620]">
+        🏅 Badges
+      </button>
+      <button id="shop-tab-boost" onclick="filterShopCategory('boost')" class="px-4 py-2 text-xs rounded-xl whitespace-nowrap text-gray-400 hover:text-white transition-all font-medium bg-[#121814] border border-[#1c2620]">
+        ⚡ Boosts
+      </button>
+      <button id="shop-tab-title" onclick="filterShopCategory('title')" class="px-4 py-2 text-xs rounded-xl whitespace-nowrap text-gray-400 hover:text-white transition-all font-medium bg-[#121814] border border-[#1c2620]">
+        👑 Titles
+      </button>
     </div>
 
-    <!-- Card 2 -->
-    <div class="shop-card">
-      <div class="card-img-box">
-        <span class="placeholder-icon">📅</span>
-      </div>
-      <div class="card-info">
-        <h3 class="item-title">7-Day Streak Badge</h3>
-        <p class="item-desc">Show your pain.</p>
-      </div>
-      <div class="item-price">
-        <span class="coin-icon">🟡</span>
-        <span>2,000 BKT</span>
-      </div>
+    <!-- CATALOG GRID -->
+    <div id="shop-catalog-grid" class="grid grid-cols-2 gap-3 pt-1">
+      <!-- Dynamic Item Cards Render Here -->
     </div>
 
-    <!-- Card 3 -->
-    <div class="shop-card">
-      <div class="card-img-box">
-        <span class="placeholder-icon">👑</span>
-      </div>
-      <div class="card-info">
-        <h3 class="item-title">Bankrupt King</h3>
-        <span class="item-type">Title</span>
-        <p class="item-desc">Wear the crown.</p>
-      </div>
-      <div class="item-price">
-        <span class="coin-icon">🟡</span>
-        <span>25,000 BKT</span>
-      </div>
-    </div>
+  </main>
 
-    <!-- Card 4 -->
-    <div class="shop-card">
-      <div class="card-img-box">
-        <span class="placeholder-icon">🔥</span>
-      </div>
-      <div class="card-info">
-        <h3 class="item-title">Financial Ruin</h3>
-        <span class="item-type">Special</span>
-        <p class="item-desc">Limited Edition.</p>
-      </div>
-      <div class="item-price">
-        <span class="coin-icon">🟡</span>
-        <span>100,000 BKT</span>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Bottom Nav -->
-  <nav class="bottom-nav">
-    <a href="index.html" class="nav-item">
-      <span>🏠</span>
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0a0d0b] border-t border-[#1a241e] px-4 py-2 flex justify-between items-center text-xs text-gray-500 z-40">
+    <a href="index.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-house text-base"></i>
       <span>Home</span>
     </a>
-    <a href="shop.html" class="nav-item active">
-      <span>🛒</span>
+    <a href="shop.html" class="flex flex-col items-center gap-1 text-[#00ff66]">
+      <i class="fa-solid fa-cart-shopping text-base"></i>
       <span>Shop</span>
     </a>
-    <a href="tasks.html" class="nav-item">
-      <span>📋</span>
+    <a href="tasks.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-clipboard-list text-base"></i>
       <span>Tasks</span>
     </a>
-    <a href="leaderboard.html" class="nav-item">
-      <span>🏆</span>
+    <a href="leaderboard.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-trophy text-base"></i>
       <span>Leaderboard</span>
     </a>
-    <a href="profile.html" class="nav-item">
-      <span>👤</span>
+    <a href="profile.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-user text-base"></i>
       <span>Profile</span>
     </a>
   </nav>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="firebase-config.js"></script>
+  <script src="app.js?v=6.0"></script>
+  <script src="shop.js?v=1.0"></script>
 </body>
 </html>

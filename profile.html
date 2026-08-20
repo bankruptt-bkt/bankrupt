@@ -1,237 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BANKRUPT - Profile</title>
-  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - BANKRUPT Mining App</title>
+  
+  <!-- Eruda Mobile Console for Debugging -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+  
+  <!-- Tailwind CSS & App Styles -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { background-color: #0b0f0c; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+    .font-marker { font-family: 'Permanent Marker', cursive; }
+    .neon-text { color: #00ff66; text-shadow: 0 0 10px rgba(0, 255, 102, 0.6); }
+    .card-bg { background-color: #121814; border: 1px solid #1c2620; }
+    .card-inner { background-color: #0a0d0b; border: 1px solid #162019; }
+    
+    /* Glowing Avatar Ring */
+    .avatar-ring {
+      box-shadow: 0 0 20px rgba(0, 255, 102, 0.35);
+    }
+  </style>
 </head>
-<body>
+<body class="pb-28 max-w-md mx-auto relative min-h-screen border-x border-gray-900">
 
-  <!-- Top Header Navigation -->
-  <header class="header">
-    <button class="icon-btn" onclick="history.back()">‹</button>
-    <span class="brand-font page-title">Profile</span>
-    <button class="icon-btn">⚙️</button>
+  <!-- TOP HEADER -->
+  <header class="flex items-center justify-between p-4 pt-6">
+    <a href="index.html" class="text-gray-300 text-lg p-2 bg-[#121814] rounded-lg border border-[#1c2620] hover:border-[#00ff66] transition-colors">
+      <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    <h1 class="font-bold text-lg text-white">Profile</h1>
+    <button onclick="openComingSoon('Settings')" class="text-gray-300 text-lg p-2 bg-[#121814] rounded-lg border border-[#1c2620] hover:border-[#00ff66] transition-colors">
+      <i class="fa-solid fa-gear"></i>
+    </button>
   </header>
 
-  <div class="profile-container">
-    <!-- Centered Avatar & Identity Header -->
-    <div class="profile-avatar-section">
-      <div class="avatar-glow-wrapper">
-        <img src="./assets/images/profile/rookie.png" alt="Avatar" id="user-avatar" onerror="this.src='https://via.placeholder.com/100/000/00ff88?text=Degen'">
-        <button class="edit-avatar-btn">✏️</button>
-      </div>
-      <h2 class="user-display-name" id="profile-name">Loading...</h2>
-      <p class="user-uid-label">UID: <span id="bankrupt-id">Connecting...</span></p>
-    </div>
+  <main class="px-4 space-y-5">
 
-    <!-- 4-Column Core Stats Box -->
-    <div class="stats-card-grid">
-      <div class="stat-box">
-        <span class="stat-icon">💲</span>
-        <span class="stat-number highlight" id="profile-balance">0.0000</span>
-        <span class="stat-title">Balance</span>
+    <!-- USER PROFILE IDENTIFIER SECTION -->
+    <div class="flex flex-col items-center justify-center text-center space-y-2 mt-2">
+      <div class="relative">
+        <div class="w-28 h-28 rounded-full border-2 border-[#00ff66] avatar-ring overflow-hidden bg-[#0a0d0b] flex items-center justify-center">
+          <img id="user-avatar" src="assets/images/logos/default.jpg" alt="Profile Logo" class="w-full h-full object-cover onerror-fallback" onerror="this.onerror=null; this.src='https://via.placeholder.com/150/0a0d0b/00ff66?text=👑';">
+        </div>
+        <button onclick="openBadgeSelector()" class="absolute bottom-0 right-0 bg-[#00ff66] text-black w-8 h-8 rounded-full flex items-center justify-center border-2 border-[#0b0f0c] shadow-lg hover:scale-105 transition-transform">
+          <i class="fa-solid fa-pen text-xs"></i>
+        </button>
       </div>
-      <div class="stat-box">
-        <span class="stat-icon">🔥</span>
-        <span class="stat-number" id="current-streak">0</span>
-        <span class="stat-title">Streak</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-icon">🏆</span>
-        <span class="stat-number" id="longest-streak">0</span>
-        <span class="stat-title">Longest</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-icon">👥</span>
-        <span class="stat-number" id="total-referrals">0</span>
-        <span class="stat-title">Referrals</span>
+
+      <div>
+        <h2 id="profile-display-name" class="text-xl font-bold text-white tracking-wide">Loading...</h2>
+        <p id="profile-uid" class="text-xs text-gray-500 font-mono mt-0.5">UID: ...</p>
       </div>
     </div>
 
-    <!-- Circular Badges Grid -->
-    <div class="badges-card">
-      <div class="badges-card-header">
-        <h3>BADGES</h3>
-        <a href="shop.html" class="view-all-link">View all ›</a>
+    <!-- STATS OVERVIEW GRID -->
+    <div class="card-bg rounded-2xl p-3.5 grid grid-cols-4 gap-2 text-center">
+      <!-- Balance -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-7 h-7 rounded-full bg-[#18261e] border border-[#00ff66]/40 flex items-center justify-center text-[#00ff66] text-xs mb-1">
+          <i class="fa-solid fa-[#]">S</i>
+        </div>
+        <span id="stat-balance" class="font-bold text-white text-sm truncate max-w-full">0.0000</span>
+        <span class="text-[10px] text-gray-500 font-medium">Balance</span>
       </div>
-      <div class="badges-grid">
-        <div class="badge-item">
-          <div class="badge-img-circle">
-            <img src="badge1.png" alt="Badge" onerror="this.src='https://via.placeholder.com/60/111/00ff88?text=💀'">
-          </div>
-          <span>Early Bankrupt</span>
+
+      <!-- Current Streak -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-7 h-7 rounded-full bg-[#201c18] border border-orange-500/40 flex items-center justify-center text-orange-400 text-xs mb-1">
+          <i class="fa-solid fa-fire"></i>
         </div>
-        <div class="badge-item">
-          <div class="badge-img-circle">
-            <img src="badge2.png" alt="Badge" onerror="this.src='https://via.placeholder.com/60/111/00ff88?text=📅'">
-          </div>
-          <span>7 Day Streak</span>
+        <span id="stat-streak" class="font-bold text-white text-sm">0</span>
+        <span class="text-[10px] text-gray-500 font-medium">Streak</span>
+      </div>
+
+      <!-- Longest Streak -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-7 h-7 rounded-full bg-[#201d24] border border-purple-500/40 flex items-center justify-center text-purple-400 text-xs mb-1">
+          <i class="fa-solid fa-trophy"></i>
         </div>
-        <div class="badge-item">
-          <div class="badge-img-circle">
-            <img src="badge3.png" alt="Badge" onerror="this.src='https://via.placeholder.com/60/111/00ff88?text=👑'">
-          </div>
-          <span>Recruiter</span>
+        <span id="stat-longest" class="font-bold text-white text-sm">0</span>
+        <span class="text-[10px] text-gray-500 font-medium">Longest</span>
+      </div>
+
+      <!-- Total Referrals -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-7 h-7 rounded-full bg-[#182026] border border-blue-500/40 flex items-center justify-center text-blue-400 text-xs mb-1">
+          <i class="fa-solid fa-users"></i>
         </div>
-        <div class="badge-item">
-          <div class="badge-img-circle">
-            <img src="badge4.png" alt="Badge" onerror="this.src='https://via.placeholder.com/60/111/00ff88?text=⚡'">
-          </div>
-          <span>Top Miner</span>
-        </div>
+        <span id="stat-referrals" class="font-bold text-white text-sm">0</span>
+        <span class="text-[10px] text-gray-500 font-medium">Referrals</span>
       </div>
     </div>
 
-    <!-- Action List Options -->
-    <div class="action-list-card">
-      <div class="action-item">
-        <div class="action-left"><span class="action-icon">🐰</span> Streak History</div>
-        <span class="action-arrow">›</span>
+    <!-- BADGES SECTION -->
+    <div class="card-bg rounded-2xl p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-xs text-gray-300 tracking-wider">BADGES</span>
+        <a href="javascript:void(0)" onclick="openBadgeSelector()" class="text-xs text-gray-500 hover:text-[#00ff66] transition-colors flex items-center gap-1">
+          View all <i class="fa-solid fa-chevron-right text-[10px]"></i>
+        </a>
       </div>
-      <div class="action-item">
-        <div class="action-left"><span class="action-icon">🎯</span> Transaction History</div>
-        <span class="action-arrow">›</span>
+
+      <div id="badges-container" class="grid grid-cols-4 gap-2">
+        <!-- Rendered dynamically via profile.js -->
+        <div class="text-center text-xs text-gray-500 col-span-4 py-4">Loading achievements...</div>
       </div>
-      <div class="action-item">
-        <div class="action-left"><span class="action-icon">🪪</span> Referral History</div>
-        <span class="action-arrow">›</span>
+    </div>
+
+    <!-- QUICK HISTORY & LOGS LINKS -->
+    <div class="card-bg rounded-2xl overflow-hidden divide-y divide-[#1c2620]">
+      <button onclick="openHistoryModal('streak')" class="w-full p-4 flex items-center justify-between hover:bg-[#18221b] transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="text-lg">🐰</span>
+          <span class="text-xs font-semibold text-gray-200">Streak History</span>
+        </div>
+        <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
+      </button>
+
+      <button onclick="openHistoryModal('transaction')" class="w-full p-4 flex items-center justify-between hover:bg-[#18221b] transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="text-lg">🎯</span>
+          <span class="text-xs font-semibold text-gray-200">Transaction History</span>
+        </div>
+        <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
+      </button>
+
+      <button onclick="openHistoryModal('referral')" class="w-full p-4 flex items-center justify-between hover:bg-[#18221b] transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="text-lg">📇</span>
+          <span class="text-xs font-semibold text-gray-200">Referral History</span>
+        </div>
+        <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- HISTORY MODAL -->
+  <div id="history-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="card-bg rounded-2xl p-5 border border-[#1c2620] max-w-sm w-full space-y-4 relative max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-[#1c2620] pb-3">
+        <h3 id="history-modal-title" class="text-white font-bold text-sm">History</h3>
+        <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-white text-base">✕</button>
       </div>
-      <div class="action-item">
-        <div class="action-left"><span class="action-icon">💎</span> Connect Web3 Wallet</div>
-        <span class="action-arrow">›</span>
-      </div>
-      <div class="action-item">
-        <div class="action-left"><span class="action-icon">🎧</span> Support & FAQ</div>
-        <span class="action-arrow">›</span>
+
+      <div id="history-modal-list" class="overflow-y-auto space-y-2 flex-1 pr-1 text-xs">
+        <!-- Rendered dynamically -->
       </div>
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
-    <a href="index.html" class="nav-item">
-      <span>🏠</span>
+  <!-- BADGE & LOGO SELECTOR MODAL -->
+  <div id="badge-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="card-bg rounded-2xl p-5 border border-[#1c2620] max-w-sm w-full space-y-4 relative max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-[#1c2620] pb-3">
+        <div>
+          <h3 class="text-white font-bold text-sm">Select Profile Badge Logo</h3>
+          <p class="text-[10px] text-gray-500">Choose an unlocked logo from your achievements</p>
+        </div>
+        <button onclick="closeBadgeModal()" class="text-gray-400 hover:text-white text-base">✕</button>
+      </div>
+
+      <div id="badge-selector-grid" class="grid grid-cols-2 gap-3 overflow-y-auto flex-1 pr-1">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0a0d0b] border-t border-[#1a241e] px-4 py-2 flex justify-between items-center text-xs text-gray-500 z-40">
+    <a href="index.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-house text-base"></i>
       <span>Home</span>
     </a>
-    <a href="shop.html" class="nav-item">
-      <span>🛒</span>
+    <a href="shop.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-cart-shopping text-base"></i>
       <span>Shop</span>
     </a>
-    <a href="tasks.html" class="nav-item">
-      <span>📋</span>
+    <a href="tasks.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-clipboard-list text-base"></i>
       <span>Tasks</span>
     </a>
-    <a href="leaderboard.html" class="nav-item">
-      <span>🏆</span>
+    <a href="leaderboard.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-trophy text-base"></i>
       <span>Leaderboard</span>
     </a>
-    <a href="profile.html" class="nav-item active">
-      <span>👤</span>
+    <a href="profile.html" class="flex flex-col items-center gap-1 text-[#00ff66]">
+      <i class="fa-solid fa-user text-base"></i>
       <span>Profile</span>
     </a>
   </nav>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-  <!-- Profile Script -->
-  <script>
-    // 1. YOUR FIREBASE CONFIG (REPLACE WITH YOUR ACTUAL KEYS FROM FIREBASE CONSOLE)
-    const firebaseConfig = {
-  apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
-  authDomain: "bankrupt-9068b.firebaseapp.com",
-  databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
-  projectId: "bankrupt-9068b",
-  storageBucket: "bankrupt-9068b.firebasestorage.app",
-  messagingSenderId: "961644576786",
-  appId: "1:961644576786:web:65eff34df07a18067458cb"
-};
-
-    // 2. Safe Firebase Initialization
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-
-    const RANK_AVATARS = {
-      rookie: "./assets/images/profile/rookie.png",
-      grinder: "./assets/images/profile/grinder.png",
-      hustler: "./assets/images/profile/hustler.png",
-      degenerate: "./assets/images/profile/degenerate.png",
-      tycoon: "./assets/images/profile/tycoon.png",
-      bankruptking: "./assets/images/profile/bankruptking.png"
-    };
-
-    function updateProfileUI(userData) {
-      const nameEl = document.getElementById("profile-name");
-      const uidEl = document.getElementById("bankrupt-id");
-      const balanceEl = document.getElementById("profile-balance");
-      const streakEl = document.getElementById("current-streak");
-      const longestStreakEl = document.getElementById("longest-streak");
-      const referralsEl = document.getElementById("total-referrals");
-
-      if (nameEl && (userData.username || userData.displayName)) {
-        nameEl.textContent = userData.username || userData.displayName;
-      }
-      if (uidEl && userData.uid) {
-        uidEl.textContent = `${userData.uid.substring(0, 8)}...`;
-      }
-      if (balanceEl && userData.balance !== undefined) {
-        balanceEl.textContent = Number(userData.balance).toFixed(4);
-      }
-      if (streakEl && userData.streak !== undefined) {
-        streakEl.textContent = userData.streak;
-      }
-      if (longestStreakEl && userData.longestStreak !== undefined) {
-        longestStreakEl.textContent = userData.longestStreak;
-      }
-      if (referralsEl && userData.referrals !== undefined) {
-        referralsEl.textContent = userData.referrals;
-      }
-
-      const avatarImg = document.getElementById("user-avatar");
-      if (avatarImg) {
-        const normalizedRank = (userData.rank || "rookie").toLowerCase().replace(/\s+/g, '');
-        avatarImg.src = RANK_AVATARS[normalizedRank] || RANK_AVATARS["rookie"];
-      }
-    }
-
-    // 3. Persistent Auth Listener (Prevents False Redirects)
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        // Active session confirmed, listen for Firestore updates
-        db.collection("users").doc(user.uid).onSnapshot((doc) => {
-          if (doc.exists) {
-            const userData = doc.data();
-            userData.uid = user.uid;
-            updateProfileUI(userData);
-          } else {
-            // Fallback display if user doc doesn't exist yet
-            updateProfileUI({
-              username: user.displayName || "Degen User",
-              uid: user.uid,
-              balance: 0,
-              streak: 0,
-              longestStreak: 0,
-              referrals: 0,
-              rank: "rookie"
-            });
-          }
-        }, (error) => {
-          console.error("Firestore error:", error);
-        });
-      } else {
-        // Only redirect if auth status check finishes and confirm no session exists
-        window.location.href = "login.html";
-      }
-    });
-  </script>
-
+  <!-- App Scripts -->
+  <script src="firebase-config.js"></script>
+  <script src="app.js?v=6.0"></script>
+  <script src="profile.js?v=1.0"></script>
 </body>
 </html>

@@ -1,245 +1,213 @@
-// ==========================================
-// PROFILE LOGIC & REALTIME ACHIEVEMENTS
-// ==========================================
-
-// Pre defined Badge catalogue linked to GitHub subfolder assets
-const MASTER_BADGES = [
-  {
-    id: "early_bankrupt",
-    title: "Early Bankrupt",
-    icon: "assets/images/logos/early_bankrupt.jpg",
-    condition: (data) => true // Unlocked by default for Genesis Users
-  },
-  {
-    id: "streak_7",
-    title: "7 Day Streak",
-    icon: "assets/images/logos/streak_7.jpg",
-    condition: (data) => (data.longestStreak || data.streakDays || 0) >= 7
-  },
-  {
-    id: "recruiter",
-    title: "Recruiter",
-    icon: "assets/images/logos/recruiter.jpg",
-    condition: (data) => (data.referralsUsed || 0) >= 1
-  },
-  {
-    id: "top_miner",
-    title: "Top Miner",
-    icon: "assets/images/logos/top_miner.jpg",
-    condition: (data) => (data.balance || 0) >= 100.00
-  }
-];
-
-document.addEventListener("DOMContentLoaded", () => {
-  const authInstance = getAuth();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - BANKRUPT Mining App</title>
   
-  if (authInstance) {
-    authInstance.onAuthStateChanged((user) => {
-      if (user) {
-        listenToProfileRealtimeData(user.uid);
-      }
-    });
-  }
-});
-
-// Real-time synchronization
-function listenToProfileRealtimeData(uid) {
-  const dbInstance = getDb();
-  if (!dbInstance) return;
-
-  dbInstance.ref('users/' + uid).on('value', (snapshot) => {
-    const data = snapshot.val() || {};
+  <!-- Eruda Mobile Console for Debugging -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+  
+  <!-- Tailwind CSS & App Styles -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { background-color: #0b0f0c; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+    .font-marker { font-family: 'Permanent Marker', cursive; }
+    .neon-text { color: #00ff66; text-shadow: 0 0 10px rgba(0, 255, 102, 0.6); }
+    .card-bg { background-color: #121814; border: 1px solid #1c2620; }
+    .card-inner { background-color: #0a0d0b; border: 1px solid #162019; }
     
-    // Update basic stats
-    const balance = data.balance || 0.0;
-    const streak = data.streakDays || 0;
-    const longestStreak = data.longestStreak || streak;
-    const referrals = data.referralsUsed || 0;
-    const activeLogo = data.activeProfileLogo || "assets/images/logos/early_bankrupt.jpg";
+    /* Glowing Avatar Ring */
+    .avatar-ring {
+      box-shadow: 0 0 20px rgba(0, 255, 102, 0.35);
+    }
+  </style>
+</head>
+<body class="pb-28 max-w-md mx-auto relative min-h-screen border-x border-gray-900">
 
-    document.getElementById('profile-display-name').innerText = currentUser.displayName || ("Miner_" + uid.substring(0, 5));
-    document.getElementById('profile-uid').innerText = "UID: " + uid;
-    
-    document.getElementById('stat-balance').innerText = balance.toFixed(2);
-    document.getElementById('stat-streak').innerText = streak;
-    document.getElementById('stat-longest').innerText = longestStreak;
-    document.getElementById('stat-referrals').innerText = referrals;
+  <!-- TOP HEADER -->
+  <header class="flex items-center justify-between p-4 pt-6">
+    <a href="index.html" class="text-gray-300 text-lg p-2 bg-[#121814] rounded-lg border border-[#1c2620] hover:border-[#00ff66] transition-colors">
+      <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    <h1 class="font-bold text-lg text-white">Profile</h1>
+    <button onclick="openComingSoon('Settings')" class="text-gray-300 text-lg p-2 bg-[#121814] rounded-lg border border-[#1c2620] hover:border-[#00ff66] transition-colors">
+      <i class="fa-solid fa-gear"></i>
+    </button>
+  </header>
 
-    // Update main avatar photo
-    const avatarImg = document.getElementById('user-avatar');
-    if (avatarImg) avatarImg.src = activeLogo;
+  <main class="px-4 space-y-5">
 
-    // Render unlocked badges in profile
-    renderBadges(data);
-  });
-}
-
-function renderBadges(userData) {
-  const container = document.getElementById('badges-container');
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  MASTER_BADGES.forEach((badge) => {
-    const isUnlocked = badge.condition(userData) || (userData.unlockedBadges && userData.unlockedBadges[badge.id]);
-
-    const badgeCard = document.createElement('div');
-    badgeCard.className = `flex flex-col items-center justify-center p-2 rounded-xl bg-[#0a0d0b] border ${isUnlocked ? 'border-[#00ff66]/50' : 'border-[#1a221d] opacity-40'}`;
-
-    badgeCard.innerHTML = `
-      <div class="w-12 h-12 rounded-full overflow-hidden border border-[#00ff66]/30 mb-1 flex items-center justify-center bg-[#121814]">
-        <img src="${badge.icon}" alt="${badge.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/100/0a0d0b/00ff66?text=👑'">
-      </div>
-      <span class="text-[10px] font-semibold text-gray-200 text-center leading-tight truncate w-full">${badge.title}</span>
-    `;
-
-    container.appendChild(badgeCard);
-  });
-}
-
-// ==========================================
-// BADGE / PROFILE LOGO SELECTOR MODAL
-// ==========================================
-function openBadgeSelector() {
-  const modal = document.getElementById('badge-modal');
-  const grid = document.getElementById('badge-selector-grid');
-  if (!modal || !grid) return;
-
-  grid.innerHTML = "";
-
-  const dbInstance = getDb();
-  if (!currentUser || !dbInstance) return;
-
-  dbInstance.ref('users/' + currentUser.uid).once('value', (snap) => {
-    const userData = snap.val() || {};
-    const currentActive = userData.activeProfileLogo || "assets/images/logos/early_bankrupt.jpg";
-
-    MASTER_BADGES.forEach((badge) => {
-      const isUnlocked = badge.condition(userData) || (userData.unlockedBadges && userData.unlockedBadges[badge.id]);
-
-      const item = document.createElement('div');
-      item.className = `p-3 rounded-xl card-inner border flex flex-col items-center text-center space-y-2 ${isUnlocked ? 'border-[#00ff66]/40 cursor-pointer hover:border-[#00ff66]' : 'border-gray-800 opacity-40 cursor-not-allowed'}`;
-
-      item.innerHTML = `
-        <div class="w-14 h-14 rounded-full overflow-hidden border border-[#00ff66]/30 bg-[#121814]">
-          <img src="${badge.icon}" alt="${badge.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/100/0a0d0b/00ff66?text=👑'">
+    <!-- USER PROFILE IDENTIFIER SECTION -->
+    <div class="flex flex-col items-center justify-center text-center space-y-2 mt-2">
+      <div class="relative">
+        <div class="w-28 h-28 rounded-full border-2 border-[#00ff66] avatar-ring overflow-hidden bg-[#0a0d0b] flex items-center justify-center">
+          <img id="user-avatar" src="assets/images/profile/default.jpg" alt="Profile Logo" class="w-full h-full object-cover onerror-fallback" onerror="this.onerror=null; this.src='https://via.placeholder.com/150/0a0d0b/00ff66?text=👑';">
         </div>
-        <span class="text-xs font-bold text-white">${badge.title}</span>
-        <button class="w-full py-1 rounded-lg text-[10px] font-bold ${currentActive === badge.icon ? 'bg-[#00ff66] text-black' : 'bg-gray-800 text-gray-300'}">
-          ${!isUnlocked ? 'Locked' : (currentActive === badge.icon ? 'Active' : 'Equip')}
+        <button onclick="openBadgeSelector()" class="absolute bottom-0 right-0 bg-[#00ff66] text-black w-8 h-8 rounded-full flex items-center justify-center border-2 border-[#0b0f0c] shadow-lg hover:scale-105 transition-transform">
+          <i class="fa-solid fa-pen text-xs"></i>
         </button>
-      `;
+      </div>
 
-      if (isUnlocked) {
-        item.onclick = () => selectProfileLogo(badge.icon);
-      }
+      <div>
+        <h2 id="profile-display-name" class="text-xl font-bold text-white tracking-wide">Loading...</h2>
+        <p id="profile-uid" class="text-xs text-gray-500 font-mono mt-0.5">UID: ...</p>
+      </div>
+    </div>
 
-      grid.appendChild(item);
-    });
-
-    modal.classList.remove('hidden');
-  });
-}
-
-function closeBadgeModal() {
-  const modal = document.getElementById('badge-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-async function selectProfileLogo(logoPath) {
-  if (!currentUser) return;
-  const dbInstance = getDb();
-  
-  try {
-    await dbInstance.ref('users/' + currentUser.uid).update({
-      activeProfileLogo: logoPath
-    });
-    closeBadgeModal();
-  } catch (err) {
-    alert("Failed to change logo: " + err.message);
-  }
-}
-
-// ==========================================
-// HISTORY MODALS
-// ==========================================
-function openHistoryModal(type) {
-  const modal = document.getElementById('history-modal');
-  const title = document.getElementById('history-modal-title');
-  const list = document.getElementById('history-modal-list');
-
-  if (!modal || !list) return;
-
-  list.innerHTML = `<p class="text-gray-500 text-center py-4">Fetching records...</p>`;
-  modal.classList.remove('hidden');
-
-  const dbInstance = getDb();
-  if (!currentUser || !dbInstance) return;
-
-  if (type === 'streak') {
-    title.innerText = "Streak History";
-    dbInstance.ref('users/' + currentUser.uid).once('value', (snap) => {
-      const data = snap.val() || {};
-      const lastCheck = data.lastCheckIn ? new Date(data.lastCheckIn).toLocaleString() : 'Never';
-      
-      list.innerHTML = `
-        <div class="card-inner p-3 rounded-xl flex justify-between items-center">
-          <div>
-            <p class="font-bold text-white">Current Streak</p>
-            <p class="text-[10px] text-gray-500">Last Claim: ${lastCheck}</p>
-          </div>
-          <span class="text-[#00ff66] font-mono font-bold">${data.streakDays || 0} Days</span>
+    <!-- STATS OVERVIEW GRID -->
+    <div class="card-bg rounded-2xl p-3.5 grid grid-cols-4 gap-2 text-center">
+      <!-- Balance -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-7 h-7 rounded-full bg-[#18261e] border border-[#00ff66]/40 flex items-center justify-center text-[#00ff66] text-xs mb-1">
+          <i class="fa-solid fa-dollar-sign"></i>
         </div>
-        <div class="card-inner p-3 rounded-xl flex justify-between items-center">
-          <div>
-            <p class="font-bold text-white">Best Record</p>
-          </div>
-          <span class="text-orange-400 font-mono font-bold">${data.longestStreak || data.streakDays || 0} Days</span>
+        <span id="stat-balance" class="font-bold text-white text-sm truncate max-w-full">0.0000</span>
+        <span class="text-[10px] text-gray-500 font-medium">Balance</span>
+      </div>
+
+      <!-- Current Streak -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-7 h-7 rounded-full bg-[#201c18] border border-orange-500/40 flex items-center justify-center text-orange-400 text-xs mb-1">
+          <i class="fa-solid fa-fire"></i>
         </div>
-      `;
-    });
-  } else if (type === 'transaction') {
-    title.innerText = "Transaction History";
-    dbInstance.ref('users/' + currentUser.uid + '/completedTasks').once('value', (snap) => {
-      const tasks = snap.val() || {};
-      const keys = Object.keys(tasks);
+        <span id="stat-streak" class="font-bold text-white text-sm">0</span>
+        <span class="text-[10px] text-gray-500 font-medium">Streak</span>
+      </div>
 
-      if (keys.length === 0) {
-        list.innerHTML = `<p class="text-gray-500 text-center py-4">No completed transactions yet.</p>`;
-        return;
-      }
-
-      list.innerHTML = "";
-      keys.forEach((k) => {
-        list.innerHTML += `
-          <div class="card-inner p-3 rounded-xl flex justify-between items-center">
-            <div>
-              <p class="font-bold text-white">Task Reward: ${k}</p>
-              <p class="text-[10px] text-gray-500">Completed</p>
-            </div>
-            <span class="text-[#00ff66] font-mono font-bold">+Reward</span>
-          </div>
-        `;
-      });
-    });
-  } else if (type === 'referral') {
-    title.innerText = "Referral History";
-    dbInstance.ref('users/' + currentUser.uid).once('value', (snap) => {
-      const data = snap.val() || {};
-      list.innerHTML = `
-        <div class="card-inner p-3 rounded-xl flex justify-between items-center">
-          <div>
-            <p class="font-bold text-white">Successful Invites</p>
-            <p class="text-[10px] text-gray-500">Earned +5.00 BKT per referral</p>
-          </div>
-          <span class="text-blue-400 font-mono font-bold">${data.referralsUsed || 0} Joined</span>
+      <!-- Longest Streak -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-7 h-7 rounded-full bg-[#201d24] border border-purple-500/40 flex items-center justify-center text-purple-400 text-xs mb-1">
+          <i class="fa-solid fa-trophy"></i>
         </div>
-      `;
-    });
-  }
-}
+        <span id="stat-longest" class="font-bold text-white text-sm">0</span>
+        <span class="text-[10px] text-gray-500 font-medium">Longest</span>
+      </div>
 
-function closeHistoryModal() {
-  const modal = document.getElementById('history-modal');
-  if (modal) modal.classList.add('hidden');
-}
+      <!-- Total Referrals -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-7 h-7 rounded-full bg-[#182026] border border-blue-500/40 flex items-center justify-center text-blue-400 text-xs mb-1">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <span id="stat-referrals" class="font-bold text-white text-sm">0</span>
+        <span class="text-[10px] text-gray-500 font-medium">Referrals</span>
+      </div>
+    </div>
+
+    <!-- BADGES SECTION -->
+    <div class="card-bg rounded-2xl p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-xs text-gray-300 tracking-wider">BADGES</span>
+        <a href="javascript:void(0)" onclick="openBadgeSelector()" class="text-xs text-gray-500 hover:text-[#00ff66] transition-colors flex items-center gap-1">
+          View all <i class="fa-solid fa-chevron-right text-[10px]"></i>
+        </a>
+      </div>
+
+      <div id="badges-container" class="grid grid-cols-4 gap-2">
+        <!-- Rendered dynamically via profile.js -->
+        <div class="text-center text-xs text-gray-500 col-span-4 py-4">Loading achievements...</div>
+      </div>
+    </div>
+
+    <!-- QUICK HISTORY & LOGS LINKS -->
+    <div class="card-bg rounded-2xl overflow-hidden divide-y divide-[#1c2620]">
+      <button onclick="openHistoryModal('streak')" class="w-full p-4 flex items-center justify-between hover:bg-[#18221b] transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="text-lg">🐰</span>
+          <span class="text-xs font-semibold text-gray-200">Streak History</span>
+        </div>
+        <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
+      </button>
+
+      <button onclick="openHistoryModal('transaction')" class="w-full p-4 flex items-center justify-between hover:bg-[#18221b] transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="text-lg">🎯</span>
+          <span class="text-xs font-semibold text-gray-200">Transaction History</span>
+        </div>
+        <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
+      </button>
+
+      <button onclick="openHistoryModal('referral')" class="w-full p-4 flex items-center justify-between hover:bg-[#18221b] transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="text-lg">📇</span>
+          <span class="text-xs font-semibold text-gray-200">Referral History</span>
+        </div>
+        <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- HISTORY MODAL -->
+  <div id="history-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="card-bg rounded-2xl p-5 border border-[#1c2620] max-w-sm w-full space-y-4 relative max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-[#1c2620] pb-3">
+        <h3 id="history-modal-title" class="text-white font-bold text-sm">History</h3>
+        <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-white text-base">✕</button>
+      </div>
+
+      <div id="history-modal-list" class="overflow-y-auto space-y-2 flex-1 pr-1 text-xs">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- BADGE & LOGO SELECTOR MODAL -->
+  <div id="badge-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="card-bg rounded-2xl p-5 border border-[#1c2620] max-w-sm w-full space-y-4 relative max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-[#1c2620] pb-3">
+        <div>
+          <h3 class="text-white font-bold text-sm">Select Profile Badge Logo</h3>
+          <p class="text-[10px] text-gray-500">Choose an unlocked logo from your achievements</p>
+        </div>
+        <button onclick="closeBadgeModal()" class="text-gray-400 hover:text-white text-base">✕</button>
+      </div>
+
+      <div id="badge-selector-grid" class="grid grid-cols-2 gap-3 overflow-y-auto flex-1 pr-1">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0a0d0b] border-t border-[#1a241e] px-4 py-2 flex justify-between items-center text-xs text-gray-500 z-40">
+    <a href="index.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-house text-base"></i>
+      <span>Home</span>
+    </a>
+    <a href="shop.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-cart-shopping text-base"></i>
+      <span>Shop</span>
+    </a>
+    <a href="tasks.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-clipboard-list text-base"></i>
+      <span>Tasks</span>
+    </a>
+    <a href="leaderboard.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-trophy text-base"></i>
+      <span>Leaderboard</span>
+    </a>
+    <a href="profile.html" class="flex flex-col items-center gap-1 text-[#00ff66]">
+      <i class="fa-solid fa-user text-base"></i>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="firebase-config.js"></script>
+  <script src="app.js?v=6.0"></script>
+  <script src="profile.js?v=1.1"></script>
+</body>
+</html>

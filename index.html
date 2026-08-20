@@ -246,10 +246,13 @@
             <div class="bg-[#18221b] p-2.5 rounded-xl text-yellow-500 text-lg">📋</div>
             <div>
               <p class="text-sm font-semibold text-white">Daily Tasks</p>
-              <p class="text-xs text-[#00ff66]">Tasks Available</p>
+              <p id="task-hub-subtitle" class="text-xs text-[#00ff66]">Checking tasks...</p>
             </div>
           </div>
-          <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
+          <div class="flex items-center gap-2">
+            <span id="task-hub-badge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#00ff66] text-black">0</span>
+            <i class="fa-solid fa-chevron-right text-xs text-gray-600"></i>
+          </div>
         </a>
 
         <a href="javascript:void(0)" onclick="openComingSoon('Invite & Earn')" class="card-inner p-3 rounded-xl flex items-center justify-between cursor-pointer hover:border-gray-700 transition-colors block">

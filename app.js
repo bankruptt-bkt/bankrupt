@@ -28,6 +28,13 @@ const nextRewardText = document.querySelector(".streak-footer b");
 const menuAvatarImg = document.getElementById("menuUserAvatar");
 const pendingTasksBadge = document.getElementById("pending-tasks-count");
 
+// Custom Info Modal Elements
+const infoModal = document.getElementById("info-modal-overlay");
+const infoTitle = document.getElementById("info-modal-title");
+const infoContent = document.getElementById("info-modal-content");
+const closeInfoBtn = document.getElementById("close-info-btn");
+const okInfoBtn = document.getElementById("info-modal-ok-btn");
+
 // Global State
 let currentUser = null;
 let userStreak = 1;
@@ -279,12 +286,25 @@ if (menuOverlay) {
   });
 }
 
+// Custom Modal Controls
+function closeInfoModal() {
+  if (infoModal) infoModal.classList.remove("active");
+}
+
+if (closeInfoBtn) closeInfoBtn.addEventListener("click", closeInfoModal);
+if (okInfoBtn) okInfoBtn.addEventListener("click", closeInfoModal);
+
+// Replaced native alert() with custom modal trigger
 document.querySelectorAll(".menu-info-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     if (menuOverlay) menuOverlay.classList.remove("active");
+    
     const title = btn.getAttribute("data-title");
     const content = btn.getAttribute("data-content");
-    setTimeout(() => alert(`${title.toUpperCase()}\n\n${content}`), 200);
+    
+    if (infoTitle) infoTitle.textContent = title;
+    if (infoContent) infoContent.textContent = content;
+    if (infoModal) infoModal.classList.add("active");
   });
 });
 

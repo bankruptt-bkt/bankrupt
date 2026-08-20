@@ -15,9 +15,9 @@ if (typeof firebase !== 'undefined') {
     firebase.initializeApp(firebaseConfig);
   }
   
-  // Expose auth & db globally
+  // Attach auth & db globally
   window.auth = firebase.auth();
   window.db = firebase.database();
 } else {
-  console.error("Firebase SDK script tags are missing before firebase-config.js");
+  console.error("Firebase SDK missing! Ensure Firebase Compat scripts are loaded before firebase-config.js");
 }

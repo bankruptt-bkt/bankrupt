@@ -65,9 +65,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Dynamically retrieve user ID or fallback
     let currentUserId = localStorage.getItem("bkt_user_id") || "guest_user";
-
     let currentCategory = "Daily";
     let allTasks = [];
     let completedTasks = [];
@@ -111,51 +109,53 @@
 
       filtered.forEach((task) => {
         const isDone = completedTasks.includes(task.id);
+        const taskReward = parseFloat(task.reward) || 0;
+        
         listContainer.innerHTML += `
           <div class="task-card">
             <div class="task-left">
               <div class="task-icon-box">${task.icon || '📋'}</div>
               <div>
                 <div class="task-title">${task.title}</div>
-                <div class="task-reward">+${task.reward} BKT</div>
+                <div class="task-reward">+${taskReward} BKT</div>
               </div>
             </div>
             ${isDone 
               ? `<button class="task-btn completed" disabled>Completed</button>` 
-              : `<button class="task-btn" onclick="startAndCompleteTask('${task.id}', '${task.link || '#'}', '${task.reward}')">Start</button>`
+              : `<button class="task-btn" onclick="startAndCompleteTask('${task.id}', '${task.link || '#'}', ${taskReward})">Start</button>`
             }
           </div>
         `;
       });
     }
 
-    async function startAndCompleteTask(taskId, link, rewardStr) {
+    async function startAndCompleteTask(taskId, link, reward) {
       if (link && link !== "#") {
         window.open(link, "_blank");
       }
 
-      const rewardVal = parseFloat(rewardStr.toString().replace(/[^0-9.]/g, '')) || 0;
+      const rewardVal = parseFloat(reward);
+      if (isNaN(rewardVal) || rewardVal <= 0) {
+        console.error("Invalid task reward value:", reward);
+        return;
+      }
+
       const userRef = db.collection("users").doc(currentUserId);
 
       try {
         await db.runTransaction(async (transaction) => {
           const userDoc = await transaction.get(userRef);
-          let currentBal = 0;
           let doneList = [];
 
           if (userDoc.exists) {
-            currentBal = userDoc.data().balance || 0;
             doneList = userDoc.data().completedTasks || [];
           }
 
           if (doneList.includes(taskId)) return;
 
-          doneList.push(taskId);
-          const newBal = currentBal + rewardVal;
-
           transaction.set(userRef, {
-            balance: newBal,
-            completedTasks: doneList
+            balance: firebase.firestore.FieldValue.increment(rewardVal),
+            completedTasks: firebase.firestore.FieldValue.arrayUnion(taskId)
           }, { merge: true });
         });
       } catch (err) {

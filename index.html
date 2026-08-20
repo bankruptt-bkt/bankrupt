@@ -1,186 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BANKRUPT - Meme Mining App</title>
-  <!-- Custom Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BANKRUPT Mining App</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { background-color: #0b0f0c; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+    .font-marker { font-family: 'Permanent Marker', cursive; }
+    .neon-text { color: #00ff66; text-shadow: 0 0 10px rgba(0, 255, 102, 0.6); }
+    .card-bg { background-color: #121814; border: 1px solid #1c2620; }
+    .card-inner { background-color: #0a0d0b; border: 1px solid #162019; }
+  </style>
 </head>
-<body>
+<body class="pb-28 max-w-md mx-auto relative min-h-screen border-x border-gray-900">
 
-  <!-- Top Header Navigation -->
-  <header class="header">
-    <button class="icon-btn" id="open-menu-btn">☰</button>
-    <span class="brand-font logo">👑 BANKRUPT</span>
-    <span class="username" id="header-username">Degen</span>
+  <!-- HEADER -->
+  <header class="flex items-center justify-between p-4 pt-6">
+    <button class="text-gray-300 text-xl p-2 bg-[#121814] rounded-lg border border-[#1c2620]">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="flex items-center gap-2">
+      <span class="text-2xl">👑</span>
+      <h1 class="font-marker text-2xl neon-text tracking-wide">BANKRUPT</h1>
+    </div>
+    <span class="text-gray-400 font-semibold text-sm">Probhat</span>
   </header>
 
-  <!-- Total Balance Hero Card -->
-  <div class="hero-card">
-    <div class="badge">🏹 Launching on Robinhood Chain</div>
-    <div class="balance-title">TOTAL $BANKRUPT BALANCE</div>
-    <div class="balance-val">0.0000 <span class="brand-font">BKT</span></div>
-    <div class="sub-text">⚡ Genesis Phase Rewards Active</div>
-  </div>
+  <main class="px-4 space-y-4">
 
-  <!-- Daily Streak Card -->
-  <div class="streak-card">
-    <div class="streak-header">
-      <h3 class="brand-font">DAY 1 STREAK</h3>
-      <span class="sub-label">Streak multipliers cap at Day 7 (2.0x)</span>
-    </div>
+    <!-- HERO BALANCE CARD WITH MASCOT -->
+    <div class="card-bg rounded-2xl p-4 relative overflow-hidden bg-cover bg-right-bottom" 
+         style="background-image: linear-gradient(to right, rgba(18, 24, 20, 0.95) 50%, rgba(18, 24, 20, 0.3) 100%), url('https://i.ibb.co/L5392Pq/degen-mascot.jpg');">
+      
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0d2216]/90 text-[#00ff66] text-xs border border-[#144225]">
+        <i class="fa-solid fa-leaf text-[10px]"></i>
+        <span>Launching on Robinhood Chain</span>
+      </div>
 
-    <div class="streak-days">
-      <div class="day-box"><span>Day 1</span><div class="multiplier">1.0x</div><span class="lock-icon">🔒</span></div>
-      <div class="day-box"><span>Day 2</span><div class="multiplier">1.1x</div><span class="lock-icon">🔒</span></div>
-      <div class="day-box"><span>Day 3</span><div class="multiplier">1.2x</div><span class="lock-icon">🔒</span></div>
-      <div class="day-box"><span>Day 4</span><div class="multiplier">1.3x</div><span class="lock-icon">🔒</span></div>
-      <div class="day-box"><span>Day 5+</span><div class="multiplier">1.4x+</div><span class="lock-icon">🔒</span></div>
-    </div>
-
-    <button class="btn-claim brand-font" id="main-claim-btn">CHECK IN & CLAIM</button>
-    
-    <div class="streak-footer">
-      <span>Next check-in reward: <b>+2.50 BKT</b></span>
-      <span class="timer-badge">⏳ Ready</span>
-    </div>
-  </div>
-
-  <!-- Quote Banner -->
-  <div class="quote-card">
-    "We're not poor, we early on Robinhood Chain."
-    <div class="quote-author">— $BANKRUPT Degens</div>
-  </div>
-
-  <!-- Quick Hub Section -->
-  <div class="home-actions-card">
-    <div class="card-header-row">
-      <span class="section-title-sm">QUICK HUB</span>
-      <span class="status-dot-online">● Live</span>
-    </div>
-
-    <div class="quick-grid">
-      <!-- Quick Task Action -->
-      <a href="tasks.html" class="quick-action-btn">
-        <div class="quick-icon-wrapper">📋</div>
-        <div class="quick-text-group">
-          <span class="quick-title">Daily Tasks</span>
-          <span class="quick-sub" id="pending-tasks-count">Loading Tasks...</span>
+      <div class="relative z-10 my-3">
+        <p class="text-gray-400 text-[11px] font-bold tracking-wider">TOTAL BKT BALANCE</p>
+        <div class="flex items-baseline gap-2 my-1">
+          <span id="balance-display" class="neon-text font-marker text-4xl">0.0000</span>
+          <span class="neon-text font-marker text-xl">BKT</span>
         </div>
-        <span class="quick-arrow">›</span>
-      </a>
-
-      <!-- Invite Friends Action -->
-      <a href="profile.html" class="quick-action-btn">
-        <div class="quick-icon-wrapper">👥</div>
-        <div class="quick-text-group">
-          <span class="quick-title">Invite & Earn</span>
-          <span class="quick-sub">+5.00 BKT / Referral</span>
+        <div class="flex items-center gap-1.5 text-xs text-[#00ff66]">
+          <i class="fa-solid fa-bolt"></i>
+          <span class="text-[11px] font-medium">Genesis Phase Rewards Active</span>
         </div>
-        <span class="quick-arrow">›</span>
-      </a>
+      </div>
     </div>
-  </div>
 
-  <!-- Bottom Navigation Bar -->
-  <nav class="bottom-nav">
-    <a href="index.html" class="nav-item active">
-      <span>🏠</span>
+    <!-- STREAK CARD -->
+    <div class="card-bg rounded-2xl p-4 space-y-3">
+      <div class="flex items-baseline justify-between">
+        <h2 id="streak-title" class="font-marker text-xl neon-text">UNDEFINED</h2>
+        <div class="text-right">
+          <p class="text-white text-xs font-bold">Keep your streak alive!</p>
+          <p class="text-gray-400 text-[10px]">Streak multipliers cap at Day 7 (1.6x)</p>
+        </div>
+      </div>
+
+      <!-- Days Grid -->
+      <div class="grid grid-cols-5 gap-1.5">
+        <div class="card-inner rounded-lg p-2 text-center border border-[#00ff66]/40">
+          <p class="text-[10px] text-gray-400">Day 1</p>
+          <p class="text-xs font-bold text-white italic">1.0x</p>
+          <p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-solid fa-lock"></i></p>
+        </div>
+        <div class="card-inner rounded-lg p-2 text-center opacity-60">
+          <p class="text-[10px] text-gray-400">Day 2</p>
+          <p class="text-xs font-bold text-white italic">1.1x</p>
+          <p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-solid fa-lock"></i></p>
+        </div>
+        <div class="card-inner rounded-lg p-2 text-center opacity-60">
+          <p class="text-[10px] text-gray-400">Day 3</p>
+          <p class="text-xs font-bold text-white italic">1.2x</p>
+          <p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-solid fa-lock"></i></p>
+        </div>
+        <div class="card-inner rounded-lg p-2 text-center opacity-60">
+          <p class="text-[10px] text-gray-400">Day 4</p>
+          <p class="text-xs font-bold text-white italic">1.3x</p>
+          <p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-solid fa-lock"></i></p>
+        </div>
+        <div class="card-inner rounded-lg p-2 text-center opacity-60">
+          <p class="text-[10px] text-gray-400">Day 5+</p>
+          <p class="text-xs font-bold text-white italic">1.4x+</p>
+          <p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-solid fa-lock"></i></p>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button id="claim-btn" class="w-full py-3 bg-[#1e2721] text-gray-400 font-marker text-lg rounded-xl border border-[#2a382f]">
+        CHECKED IN
+      </button>
+
+      <div class="flex items-center justify-between text-xs pt-1">
+        <span class="text-gray-300">Next check-in reward: <b class="text-white">+3.50 BKT</b></span>
+        <span id="countdown-badge" class="px-2.5 py-1 rounded-full bg-[#0d2216] text-[#00ff66] border border-[#144225] font-mono text-[11px] font-bold flex items-center gap-1">
+          <i class="fa-regular fa-clock"></i> 11h 1m 40s
+        </span>
+      </div>
+    </div>
+
+    <!-- QUOTE CARD -->
+    <div class="card-bg rounded-xl p-3 border-l-4 border-l-[#00ff66] flex items-center gap-3">
+      <i class="fa-solid fa-[#00ff66] fa-quote-left text-lg text-[#00ff66]"></i>
+      <div>
+        <p class="italic text-gray-200 text-xs">"We're not poor, we're just early."</p>
+        <p class="text-[10px] text-gray-500 mt-0.5">— BANKRUPT Community</p>
+      </div>
+    </div>
+
+    <!-- STATS GRID -->
+    <div class="space-y-2">
+      <p class="text-[11px] font-bold text-gray-400 tracking-wider uppercase">YOUR STATS</p>
+      <div class="grid grid-cols-4 gap-2">
+        <div class="card-inner p-3 rounded-xl text-center">
+          <i class="fa-solid fa-coins text-yellow-500 mb-1"></i>
+          <p id="stat-balance" class="font-marker text-xs text-white">0.00</p>
+        </div>
+        <div class="card-inner p-3 rounded-xl text-center">
+          <i class="fa-solid fa-fire text-orange-500 mb-1"></i>
+          <p class="font-marker text-xs text-white">UNDEFINED</p>
+        </div>
+        <div class="card-inner p-3 rounded-xl text-center">
+          <i class="fa-solid fa-trophy text-yellow-400 mb-1"></i>
+          <p class="font-marker text-xs text-white">UNDEFINED</p>
+        </div>
+        <div class="card-inner p-3 rounded-xl text-center">
+          <i class="fa-solid fa-users text-cyan-400 mb-1"></i>
+          <p class="font-marker text-xs text-white">0 / 10</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FLOATING ACTION BUTTON (PENCIL ICON) -->
+  <button class="fixed bottom-20 left-1/2 -translate-x-1/2 w-14 h-14 bg-[#00a896] text-black text-xl rounded-full flex items-center justify-center shadow-lg z-50 border-2 border-[#00ff66]">
+    <i class="fa-solid fa-pen"></i>
+  </button>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0a0d0b] border-t border-[#1a241e] px-4 py-2 flex justify-between items-center text-xs text-gray-500 z-40">
+    <button class="flex flex-col items-center gap-1 text-[#00ff66]">
+      <i class="fa-solid fa-house text-base"></i>
       <span>Home</span>
-    </a>
-    <a href="shop.html" class="nav-item">
-      <span>🛒</span>
+    </button>
+    <button class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-cart-shopping text-base"></i>
       <span>Shop</span>
-    </a>
-    <a href="tasks.html" class="nav-item">
-      <span>📋</span>
-      <span>Tasks</span>
-    </a>
-    <a href="leaderboard.html" class="nav-item">
-      <span>🏆</span>
+    </button>
+    <button class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-trophy text-base"></i>
       <span>Leaderboard</span>
-    </a>
-    <a href="profile.html" class="nav-item">
-      <span>👤</span>
+    </button>
+    <button class="flex flex-col items-center gap-1 hover:text-gray-300">
+      <i class="fa-solid fa-user text-base"></i>
       <span>Profile</span>
-    </a>
+    </button>
   </nav>
 
-  <!-- Centered Transparent Menu Popup -->
-  <div id="menu-overlay" class="menu-overlay">
-    <div class="menu-modal">
-      <button class="close-menu-btn" id="close-menu-btn">✕</button>
-      
-      <!-- Profile Info Block -->
-      <a href="profile.html" class="menu-user-card" style="text-decoration: none;">
-        <img id="menuUserAvatar" src="https://via.placeholder.com/60/000/00ff88?text=BKT" alt="Avatar" class="menu-avatar">
-        <div class="menu-user-details">
-          <h4 class="menu-user-name" id="menu-username-display">Degen User</h4>
-          <span class="menu-user-uid" id="menu-uid-display">UID: Connecting...</span>
-        </div>
-      </a>
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
-      <div class="menu-divider"></div>
-
-      <!-- Menu Sections -->
-      <div class="menu-section-label">COMMUNITY</div>
-      <a href="https://t.me/Masteringliquidity" target="_blank" rel="noopener" class="menu-item">
-        <span class="menu-item-icon">✈️</span> Telegram Channel
-      </a>
-      <a href="https://x.com/Bankrupt_bkt" target="_blank" rel="noopener" class="menu-item">
-        <span class="menu-item-icon">𝕏</span> X (Twitter)
-      </a>
-
-      <div class="menu-section-label">PROJECT INFO</div>
-      <div class="menu-item menu-info-btn" data-title="Whitepaper & Roadmap" data-content="Stay tuned, coming soon! 🚀">
-        <span class="menu-item-icon">📄</span> Whitepaper & Roadmap
-      </div>
-      <div class="menu-item menu-info-btn" data-title="How to Earn" data-content="1. Check in daily for streak multipliers.&#10;2. Complete social tasks.&#10;3. Invite friends to earn +5.00 BKT per referral!">
-        <span class="menu-item-icon">ℹ️</span> How to Earn
-      </div>
-
-      <div class="menu-section-label">MORE</div>
-      <div class="menu-item menu-info-btn" data-title="Achievements" data-content="🏆 Early Adopter: Unlocked&#10;🔥 7-Day Streak: In Progress&#10;👑 10 Referrals: In Progress">
-        <span class="menu-item-icon">🐰</span> Achievements
-      </div>
-      <div class="menu-item menu-info-btn" data-title="Announcements" data-content="📢 Genesis Phase is active! Earn bonus rewards for daily check-ins on Robinhood Chain.">
-        <span class="menu-item-icon">📢</span> Announcements
-      </div>
-
-      <div class="menu-section-label">SYSTEM</div>
-      <div class="menu-item menu-info-btn" data-title="Settings" data-content="⚙️ Sound Effects: ON&#10;🔔 Push Notifications: ON&#10;🌐 Language: English">
-        <span class="menu-item-icon">⚙️</span> Settings
-      </div>
-      
-      <!-- Sign Out Button -->
-      <div class="menu-item danger" id="signout-btn" style="cursor: pointer;">
-        <span class="menu-item-icon">🚪</span> Sign Out
-      </div>
-
-      <div class="menu-footer-brand">
-        <span class="brand-font">💀 BANKRUPT</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Custom Info Modal -->
-  <div id="info-modal-overlay" class="info-modal-overlay">
-    <div class="info-modal-box">
-      <button class="close-info-btn" id="close-info-btn">✕</button>
-      <h3 id="info-modal-title" class="brand-font">WHITEPAPER & ROADMAP</h3>
-      <div id="info-modal-content" class="info-modal-body">
-        Stay tuned, coming soon! 🚀
-      </div>
-      <button class="btn-claim brand-font" id="info-modal-ok-btn" style="margin-top: 15px; width: 100%;">OK</button>
-    </div>
-  </div>
-
-  <!-- JavaScript Entry Point -->
-  <script type="module" src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

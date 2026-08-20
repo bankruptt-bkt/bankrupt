@@ -36,10 +36,10 @@
   <!-- ADD NEW TASK -->
   <div class="card-bg rounded-2xl p-4 space-y-3">
     <h2 class="font-bold text-sm text-[#00ff66]">Add New Task</h2>
-    <input type="text" id="task-title" placeholder="Task Title (e.g. Join Telegram)">
+    <input type="text" id="task-title" placeholder="Task Title (e.g. Retweet Post on X)">
     <input type="number" id="task-reward" placeholder="Reward (e.g. 5.00)">
-    <input type="text" id="task-icon" placeholder="Icon Emoji (e.g. ✈️)">
-    <input type="text" id="task-link" placeholder="Target Link (https://...)">
+    <input type="text" id="task-icon" placeholder="Icon Emoji (e.g. 🐦 or 📌)">
+    <input type="text" id="task-link" placeholder="Target Link (https://x.com/...)">
     <div>
       <label class="text-[11px] text-gray-400 block mb-1">Select Tab Category:</label>
       <select id="task-category">
@@ -49,6 +49,13 @@
         <option value="Extra">Extra</option>
       </select>
     </div>
+
+    <!-- REQUIRE PROOF TOGGLE -->
+    <div class="flex items-center gap-2 pt-1">
+      <input type="checkbox" id="task-proof" class="w-4 h-4 accent-[#00ff66] cursor-pointer">
+      <label for="task-proof" class="text-xs text-gray-300 font-medium cursor-pointer">Require Proof (e.g. Tweet Link / URL)</label>
+    </div>
+
     <button onclick="publishTask()" class="w-full py-2.5 bg-[#00ff66] text-black font-bold text-xs rounded-xl hover:bg-[#00e65c]">
       Publish Task
     </button>
@@ -91,7 +98,6 @@
   <script>
     let currentMaintState = false;
 
-    // Load Maintenance Mode
     db.ref("system/maintenance").on("value", (snap) => {
       currentMaintState = snap.val() || false;
       const btn = document.getElementById("maint-btn");
@@ -108,29 +114,31 @@
       db.ref("system/maintenance").set(!currentMaintState);
     }
 
-    // Publish New Task
     function publishTask() {
       const title = document.getElementById("task-title").value.trim();
       const reward = parseFloat(document.getElementById("task-reward").value);
       const icon = document.getElementById("task-icon").value.trim() || '📌';
       const link = document.getElementById("task-link").value.trim() || '#';
       const category = document.getElementById("task-category").value;
+      const requiresProof = document.getElementById("task-proof").checked;
 
       if (!title || isNaN(reward)) return alert("Please fill Title and Reward");
 
       const newTaskRef = db.ref("tasks").push();
-      newTaskRef.set({ title, reward, icon, link, category }, (err) => {
+      newTaskRef.set({ title, reward, icon, link, category, requiresProof }, (err) => {
         if (!err) {
           alert("Task published successfully!");
           document.getElementById("task-title").value = "";
           document.getElementById("task-reward").value = "";
           document.getElementById("task-icon").value = "";
           document.getElementById("task-link").value = "";
+          document.getElementById("task-proof").checked = false;
+        } else {
+          alert("Failed to publish task.");
         }
       });
     }
 
-    // Load Tasks for Management
     db.ref("tasks").on("value", (snap) => {
       const container = document.getElementById("admin-tasks-list");
       container.innerHTML = "";
@@ -141,7 +149,7 @@
         item.className = "flex items-center justify-between p-2 rounded-lg bg-[#0a0d0b] border border-[#1c2620]";
         item.innerHTML = `
           <div>
-            <p class="text-xs font-bold text-white">${task.title} (${task.category})</p>
+            <p class="text-xs font-bold text-white">${task.title} (${task.category}) ${task.requiresProof ? '🔒' : ''}</p>
             <p class="text-[10px] text-[#00ff66]">+${task.reward} BKT</p>
           </div>
           <button onclick="deleteTask('${id}')" class="px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] rounded">Delete</button>
@@ -154,7 +162,6 @@
       if (confirm("Delete this task?")) db.ref(`tasks/${id}`).remove();
     }
 
-    // Grant Bonus
     function grantBonus() {
       const uid = document.getElementById("user-uid").value.trim();
       const bonus = parseFloat(document.getElementById("bonus-amount").value);
@@ -165,7 +172,6 @@
       });
     }
 
-    // Ban/Unban User
     function setUserBanState(isBanned) {
       const uid = document.getElementById("ban-uid").value.trim();
       if (!uid) return alert("Enter User UID");

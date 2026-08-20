@@ -6,21 +6,9 @@
   <title>BANKRUPT - Tasks</title>
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <style>
-    .tasks-container { padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 90px; }
-    .task-card { background: #111a13; border: 1px solid #1a2b1e; border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
-    .task-left { display: flex; align-items: center; gap: 12px; }
-    .task-icon-box { font-size: 1.5rem; background: #080d09; padding: 8px 12px; border-radius: 8px; border: 1px solid #1a291c; }
-    .task-title { color: #fff; font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; }
-    .task-reward { color: #00ff88; font-weight: 700; font-size: 0.85rem; }
-    .task-btn { background: #00ff88; color: #000; font-weight: 700; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; border: none; cursor: pointer; }
-    .task-btn.completed { background: #1a291c; color: #00ff88; cursor: default; border: 1px solid #00ff88; }
-    .tab-btn.active { background: #00ff88 !important; color: #000 !important; font-weight: 700; }
-  </style>
 </head>
 <body>
 
-  <!-- Top Header -->
   <header class="header" style="justify-content: flex-start; gap: 15px;">
     <button class="icon-btn" onclick="history.back()">‹</button>
     <span class="brand-font" style="font-size: 1.2rem;">Tasks</span>
@@ -33,12 +21,10 @@
     <button class="tab-btn" onclick="switchCategory('Extra', this)">Extra</button>
   </div>
 
-  <!-- Dynamic Tasks Container -->
   <div id="tasks-list" class="tasks-container">
     <div style="color: #889988; text-align: center; margin-top: 20px;">Loading tasks...</div>
   </div>
 
-  <!-- Bottom Navigation Bar -->
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item"><span>🏠</span><span>Home</span></a>
     <a href="shop.html" class="nav-item"><span>🛒</span><span>Shop</span></a>
@@ -47,121 +33,6 @@
     <a href="profile.html" class="nav-item"><span>👤</span><span>Profile</span></a>
   </nav>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQT7gM7JxE26bFq061VvZauWkEGjyHPWM",
-      authDomain: "bankrupt-9068b.firebaseapp.com",
-      databaseURL: "https://bankrupt-9068b-default-rtdb.firebaseio.com",
-      projectId: "bankrupt-9068b",
-      storageBucket: "bankrupt-9068b.firebasestorage.app",
-      messagingSenderId: "961644576786",
-      appId: "1:961644576786:web:65eff34df07a18067458cb"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    let currentUserId = localStorage.getItem("bkt_user_id") || "guest_user";
-    let currentCategory = "Daily";
-    let allTasks = [];
-    let completedTasks = [];
-
-    // Sync Completed Tasks for current user
-    db.collection("users").doc(currentUserId).onSnapshot((doc) => {
-      if (doc.exists) {
-        completedTasks = doc.data().completedTasks || [];
-      } else {
-        completedTasks = [];
-      }
-      renderTasks();
-    });
-
-    // Sync Active Tasks
-    db.collection("tasks").onSnapshot((snapshot) => {
-      allTasks = [];
-      snapshot.forEach((doc) => {
-        allTasks.push({ id: doc.id, ...doc.data() });
-      });
-      renderTasks();
-    });
-
-    function switchCategory(category, element) {
-      currentCategory = category;
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      element.classList.add('active');
-      renderTasks();
-    }
-
-    function renderTasks() {
-      const listContainer = document.getElementById("tasks-list");
-      listContainer.innerHTML = "";
-
-      const filtered = allTasks.filter(t => (t.category || "Daily") === currentCategory);
-
-      if (filtered.length === 0) {
-        listContainer.innerHTML = `<div style="color: #889988; text-align: center; margin-top: 30px;">No tasks available under ${currentCategory} yet.</div>`;
-        return;
-      }
-
-      filtered.forEach((task) => {
-        const isDone = completedTasks.includes(task.id);
-        const taskReward = parseFloat(task.reward) || 0;
-        
-        listContainer.innerHTML += `
-          <div class="task-card">
-            <div class="task-left">
-              <div class="task-icon-box">${task.icon || '📋'}</div>
-              <div>
-                <div class="task-title">${task.title}</div>
-                <div class="task-reward">+${taskReward} BKT</div>
-              </div>
-            </div>
-            ${isDone 
-              ? `<button class="task-btn completed" disabled>Completed</button>` 
-              : `<button class="task-btn" onclick="startAndCompleteTask('${task.id}', '${task.link || '#'}', ${taskReward})">Start</button>`
-            }
-          </div>
-        `;
-      });
-    }
-
-    async function startAndCompleteTask(taskId, link, reward) {
-      if (link && link !== "#") {
-        window.open(link, "_blank");
-      }
-
-      const rewardVal = parseFloat(reward);
-      if (isNaN(rewardVal) || rewardVal <= 0) {
-        console.error("Invalid task reward value:", reward);
-        return;
-      }
-
-      const userRef = db.collection("users").doc(currentUserId);
-
-      try {
-        await db.runTransaction(async (transaction) => {
-          const userDoc = await transaction.get(userRef);
-          let doneList = [];
-
-          if (userDoc.exists) {
-            doneList = userDoc.data().completedTasks || [];
-          }
-
-          if (doneList.includes(taskId)) return;
-
-          transaction.set(userRef, {
-            balance: firebase.firestore.FieldValue.increment(rewardVal),
-            completedTasks: firebase.firestore.FieldValue.arrayUnion(taskId)
-          }, { merge: true });
-        });
-      } catch (err) {
-        console.error("Task completion failed: ", err);
-      }
-    }
-  </script>
+  <script type="module" src="tasks.js"></script>
 </body>
 </html>

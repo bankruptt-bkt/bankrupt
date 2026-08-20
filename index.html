@@ -146,6 +146,38 @@
     </div>
   </div>
 
+  <!-- REFERRAL MODAL -->
+  <div id="referral-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="card-bg rounded-2xl p-5 border border-[#1c2620] max-w-sm w-full space-y-4 text-center relative">
+      <button onclick="closeReferralModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white text-lg">
+        ✕
+      </button>
+
+      <div class="text-3xl">👥</div>
+      <h3 class="text-white font-bold text-lg">Invite & Earn BKT</h3>
+      <p class="text-xs text-gray-400">Earn <span class="text-[#00ff66] font-bold">+5.00 BKT</span> for every friend who joins using your link!</p>
+
+      <div class="bg-[#0a0d0b] border border-[#1c2620] rounded-xl p-3 flex justify-between items-center text-xs">
+        <span class="text-gray-400">Invites Used / Allowed:</span>
+        <span id="ref-modal-counter" class="text-[#00ff66] font-bold">0 / 10</span>
+      </div>
+
+      <div class="space-y-1 text-left">
+        <label class="text-[10px] text-gray-400 font-semibold uppercase">Your Unique Referral Link</label>
+        <div class="flex items-center gap-2">
+          <input type="text" id="ref-modal-link" readonly class="w-full bg-[#0a0d0b] border border-[#1c2620] rounded-xl p-3 text-xs text-gray-300 focus:outline-none select-all truncate">
+          <button onclick="copyReferralLink()" class="px-4 py-3 bg-[#00ff66] text-black font-bold text-xs rounded-xl hover:bg-[#00e65c] transition-all whitespace-nowrap">
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <div id="ref-limit-warning" class="hidden text-[11px] text-yellow-400 bg-yellow-950/40 border border-yellow-800/40 rounded-lg p-2">
+        ⚠️ You have reached your invite limit! Contact admin to request more referral slots.
+      </div>
+    </div>
+  </div>
+
   <main class="px-4 space-y-4">
 
     <!-- HERO BALANCE CARD -->
@@ -255,7 +287,7 @@
           </div>
         </a>
 
-        <a href="javascript:void(0)" onclick="openComingSoon('Invite & Earn')" class="card-inner p-3 rounded-xl flex items-center justify-between cursor-pointer hover:border-gray-700 transition-colors block">
+        <a href="javascript:void(0)" onclick="openReferralModal()" class="card-inner p-3 rounded-xl flex items-center justify-between cursor-pointer hover:border-gray-700 transition-colors block">
           <div class="flex items-center gap-3">
             <div class="bg-[#18221b] p-2.5 rounded-xl text-blue-400 text-lg">👥</div>
             <div>
@@ -316,6 +348,6 @@
 
   <!-- App Scripts -->
   <script src="firebase-config.js"></script>
-  <script src="app.js?v=5.0"></script>
+  <script src="app.js?v=6.0"></script>
 </body>
 </html>

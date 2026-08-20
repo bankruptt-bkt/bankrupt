@@ -2,20 +2,20 @@ import { db, auth } from "./conf.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, setDoc, updateDoc, increment, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Constants
+// Multipliers & Base Rewards
 const STREAK_MULTIPLIERS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 2.0 };
 const BASE_REWARD = 2.5;
 
 const RANK_AVATARS = {
-  rookie: "./assets/images/profile/rookie.jpg",
-  grinder: "./assets/images/profile/grinder.jpg",
-  hustler: "./assets/images/profile/hustler.jpg",
-  degenerate: "./assets/images/profile/degenerate.jpg",
-  tycoon: "./assets/images/profile/tycoon.jpg",
-  bankruptking: "./assets/images/profile/bankruptking.jpg"
+  rookie: "https://via.placeholder.com/60/000/00ff88?text=Rookie",
+  grinder: "https://via.placeholder.com/60/000/00ff88?text=Grinder",
+  hustler: "https://via.placeholder.com/60/000/00ff88?text=Hustler",
+  degenerate: "https://via.placeholder.com/60/000/00ff88?text=Degen",
+  tycoon: "https://via.placeholder.com/60/000/00ff88?text=Tycoon",
+  bankruptking: "https://via.placeholder.com/60/000/00ff88?text=King"
 };
 
-// UI Cache
+// Cached DOM Elements
 const balanceDisplay = document.querySelector(".balance-val");
 const headerUsername = document.getElementById("header-username");
 const menuUsername = document.getElementById("menu-username-display");
@@ -36,29 +36,28 @@ let userStreak = 1;
 let lastCheckIn = null;
 let timerInterval = null;
 
-// Initialize UI listeners immediately so buttons NEVER freeze
-initUIEvents();
+// STEP 1: IMMEDIATELY bind UI events so buttons work before Firebase responds
+bindUIEvents();
 
-// 1. Auth & Fast Initial Load
-onAuthStateChanged(auth, async (user) => {
+// STEP 2: Authenticate in parallel without blocking execution
+onAuthStateChanged(auth, (user) => {
   if (user) {
     currentUser = user;
     localStorage.setItem("bkt_user_id", user.uid);
 
-    // Instant UI Fallback
+    // Immediate UI display fallback
     if (headerUsername) headerUsername.textContent = user.displayName || "Degen";
     if (menuUsername) menuUsername.textContent = user.displayName || "Degen User";
     if (menuUid) menuUid.textContent = `UID: ${user.uid.substring(0, 8)}...`;
 
-    // Load Data non-blockingly
-    await fetchUserData(user);
+    // Asynchronous non-blocking data load
+    fetchUserData(user);
     fetchPendingTasks(user.uid);
   } else {
     window.location.href = "login.html";
   }
 });
 
-// 2. Fast Data Fetching (Direct Read vs Snapshot Overload)
 async function fetchUserData(user) {
   try {
     const userRef = doc(db, "users", user.uid);
@@ -85,11 +84,10 @@ async function fetchUserData(user) {
     updateUI(data.balance || 0, data.rank || "rookie");
     checkClaimStatus();
   } catch (err) {
-    console.error("User data fetch error:", err);
+    console.error("Data fetch error:", err);
   }
 }
 
-// 3. Task Count Fetcher
 async function fetchPendingTasks(uid) {
   if (!pendingTasksBadge) return;
   try {
@@ -108,7 +106,6 @@ async function fetchPendingTasks(uid) {
   }
 }
 
-// 4. UI Engine
 function updateUI(balance, rank) {
   if (balanceDisplay) {
     balanceDisplay.innerHTML = `${Number(balance).toFixed(4)} <span class="brand-font">BKT</span>`;
@@ -137,7 +134,6 @@ function updateUI(balance, rank) {
   });
 }
 
-// 5. Timer Controls
 function checkClaimStatus() {
   if (timerInterval) clearInterval(timerInterval);
   if (!lastCheckIn) {
@@ -168,6 +164,8 @@ function enableClaimButton() {
     claimBtn.textContent = "CHECK IN & CLAIM";
     claimBtn.style.opacity = "1";
     claimBtn.style.cursor = "pointer";
+    claimBtn.style.background = "#00ff88";
+    claimBtn.style.color = "#000000";
   }
   if (timerBadge) timerBadge.textContent = "⚡ Ready";
 }
@@ -178,6 +176,8 @@ function disableClaimButton(msLeft) {
     claimBtn.textContent = "CHECKED IN";
     claimBtn.style.opacity = "0.6";
     claimBtn.style.cursor = "not-allowed";
+    claimBtn.style.background = "#1d2a20";
+    claimBtn.style.color = "#556655";
   }
   if (timerBadge) {
     const sec = Math.floor(msLeft / 1000);
@@ -189,8 +189,7 @@ function disableClaimButton(msLeft) {
   }
 }
 
-// 6. Direct & Immediate Event Setup
-function initUIEvents() {
+function bindUIEvents() {
   const openMenuBtn = document.getElementById("open-menu-btn");
   const closeMenuBtn = document.getElementById("close-menu-btn");
   const menuOverlay = document.getElementById("menu-overlay");
@@ -199,21 +198,27 @@ function initUIEvents() {
   const signoutBtn = document.getElementById("signout-btn");
 
   if (openMenuBtn && menuOverlay) {
-    openMenuBtn.onclick = () => menuOverlay.classList.add("active");
+    openMenuBtn.onclick = (e) => {
+      e.stopPropagation();
+      menuOverlay.classList.add("active");
+    };
   }
+
   if (closeMenuBtn && menuOverlay) {
     closeMenuBtn.onclick = () => menuOverlay.classList.remove("active");
   }
+
   if (menuOverlay) {
-    menuOverlay.onclick = (e) => { if (e.target === menuOverlay) menuOverlay.classList.remove("active"); };
+    menuOverlay.onclick = (e) => {
+      if (e.target === menuOverlay) menuOverlay.classList.remove("active");
+    };
   }
 
   const closeModal = () => { if (infoModal) infoModal.classList.remove("active"); };
   if (closeInfoBtn) closeInfoBtn.onclick = closeModal;
   if (okInfoBtn) okInfoBtn.onclick = closeModal;
 
-  // Info Modal Delegate
-  document.onclick = (e) => {
+  document.addEventListener("click", (e) => {
     const btn = e.target.closest(".menu-info-btn");
     if (btn) {
       if (menuOverlay) menuOverlay.classList.remove("active");
@@ -221,9 +226,8 @@ function initUIEvents() {
       if (infoContent) infoContent.textContent = btn.getAttribute("data-content");
       if (infoModal) infoModal.classList.add("active");
     }
-  };
+  });
 
-  // Check-In Claim Action
   if (claimBtn) {
     claimBtn.onclick = async () => {
       if (!currentUser || claimBtn.disabled) return;

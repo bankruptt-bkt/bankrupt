@@ -109,13 +109,13 @@ function initUserData(user) {
 async function updateUI(userData) {
   // Update Profile Text
   const nameDisplay = document.getElementById('user-display-name');
-  if (nameDisplay) nameDisplay.innerText = userData.name;
+  if (nameDisplay) nameDisplay.innerText = userData.name || 'Miner';
   
   const menuName = document.getElementById('menu-user-name');
-  if (menuName) menuName.innerText = userData.name;
+  if (menuName) menuName.innerText = userData.name || 'Miner';
 
   const menuUid = document.getElementById('menu-user-uid');
-  if (menuUid) menuUid.innerText = "UID: " + userData.uid.substring(0, 8) + "...";
+  if (menuUid) menuUid.innerText = "UID: " + (userData.uid ? userData.uid.substring(0, 8) : '000000') + "...";
 
   // Balance
   const balanceEl = document.getElementById('balance-display');
@@ -128,8 +128,14 @@ async function updateUI(userData) {
   }
 
   // Next Reward Calculation
-  const globalSnap = await db.ref('global/totalUsers').once('value');
-  const totalUsers = globalSnap.val() || 1;
+  let totalUsers = 1;
+  try {
+    const globalSnap = await db.ref('global/totalUsers').once('value');
+    totalUsers = globalSnap.val() || 1;
+  } catch(e) {
+    console.warn("Could not fetch global total user count:", e);
+  }
+
   const baseRate = calculateBaseReward(totalUsers);
   
   const now = Date.now();
@@ -143,7 +149,7 @@ async function updateUI(userData) {
 
   const nextReward = baseRate * getStreakMultiplier(nextStreak);
   
-  const rewardLabel = document.querySelector('.card-bg b.text-white');
+  const rewardLabel = document.getElementById('next-reward-val');
   if (rewardLabel) {
     rewardLabel.innerText = `+${nextReward.toFixed(2)} BKT`;
   }

@@ -46,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         currentUser = user;
         updateUserProfileUI(user);
         listenToUserData(user.uid);
+        listenToUncompletedTasks(user.uid);
 
         // Global Ban Check
         if (dbInstance) {
@@ -101,6 +102,55 @@ function listenToUserData(uid) {
     }
     renderUI();
   });
+}
+
+// Listen for uncompleted tasks and trigger home page badge updates
+function listenToUncompletedTasks(uid) {
+  const dbInstance = getDb();
+  if (!dbInstance) return;
+
+  dbInstance.ref('tasks').on('value', (tasksSnap) => {
+    const tasks = tasksSnap.val() || {};
+    
+    dbInstance.ref(`users/${uid}/completedTasks`).on('value', (completedSnap) => {
+      const completed = completedSnap.val() || {};
+
+      const totalTasks = Object.keys(tasks).length;
+      let pendingCount = 0;
+
+      Object.keys(tasks).forEach((taskId) => {
+        if (!completed[taskId]) {
+          pendingCount++;
+        }
+      });
+
+      updateTaskHubUI(pendingCount, totalTasks);
+    });
+  });
+}
+
+function updateTaskHubUI(pendingCount, totalTasks) {
+  const subtitleEl = document.getElementById('task-hub-subtitle');
+  const badgeEl = document.getElementById('task-hub-badge');
+
+  if (!subtitleEl) return;
+
+  if (pendingCount > 0) {
+    subtitleEl.innerText = `${pendingCount} New Task${pendingCount > 1 ? 's' : ''} Available`;
+    subtitleEl.className = "text-xs text-[#00ff66] font-bold";
+
+    if (badgeEl) {
+      badgeEl.innerText = pendingCount;
+      badgeEl.classList.remove('hidden');
+    }
+  } else {
+    subtitleEl.innerText = totalTasks > 0 ? "All Tasks Completed!" : "No Active Tasks";
+    subtitleEl.className = "text-xs text-gray-400 font-medium";
+
+    if (badgeEl) {
+      badgeEl.classList.add('hidden');
+    }
+  }
 }
 
 // ==========================================

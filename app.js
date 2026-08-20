@@ -1,4 +1,3 @@
-// Constants
 const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const BASE_REWARD_INITIAL = 5.0; 
 const WELCOME_BONUS = 50.00;
@@ -8,7 +7,6 @@ let currentuserData = null;
 let countdownTimer = null;
 let cachedTotalUsers = 1;
 
-// Base Rate Calculator
 function calculateBaseReward(totalUsers) {
   if (totalUsers <= 1000) return BASE_REWARD_INITIAL;
   if (totalUsers <= 10000) return BASE_REWARD_INITIAL * 0.75;
@@ -17,18 +15,16 @@ function calculateBaseReward(totalUsers) {
   return BASE_REWARD_INITIAL * 0.1;
 }
 
-// Streak Multipliers
 function getStreakMultiplier(streakDays) {
   const multipliers = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 1.6 };
   return streakDays >= 7 ? 1.6 : (multipliers[streakDays] || 1.0);
 }
 
-// Check-In Claim Action
 window.claimCheckIn = async function() {
   const claimBtn = document.getElementById('claim-btn');
 
   if (!currentUser || !currentuserData) {
-    alert("Authenticating session... Please try again.");
+    alert("Authenticating session... Please tap again.");
     return;
   }
 
@@ -67,8 +63,16 @@ window.claimCheckIn = async function() {
   }
 };
 
-// Auth Listener
+// Fallback timeout to unblock UI if network/Firebase stalls
+const authTimeout = setTimeout(() => {
+  if (!currentUser) {
+    console.warn("Auth resolution slow, enabling fallback state.");
+    renderFallbackUI();
+  }
+}, 3000);
+
 auth.onAuthStateChanged((user) => {
+  clearTimeout(authTimeout);
   if (user) {
     currentUser = user;
     initUserData(user);
@@ -77,32 +81,37 @@ auth.onAuthStateChanged((user) => {
   } else {
     auth.signInAnonymously().catch((err) => {
       console.error("Auth Error:", err);
-      // Fallback UI display if auth fails completely
-      document.getElementById('user-display-name').innerText = "Guest";
-      const claimBtn = document.getElementById('claim-btn');
-      if (claimBtn) {
-        claimBtn.innerText = "CHECK IN + CLAIM";
-        claimBtn.disabled = false;
-      }
+      renderFallbackUI();
     });
   }
 });
 
-// Non-blocking background listener for live user totals
+function renderFallbackUI() {
+  const nameDisplay = document.getElementById('user-display-name');
+  if (nameDisplay) nameDisplay.innerText = "Guest Miner";
+
+  const claimBtn = document.getElementById('claim-btn');
+  if (claimBtn) {
+    claimBtn.innerText = "CHECK IN + CLAIM";
+    claimBtn.disabled = false;
+    claimBtn.setAttribute('onclick', 'claimCheckIn()');
+    claimBtn.className = "w-full py-3 bg-[#00ff66] text-black font-marker text-lg rounded-xl border border-[#00ff66] shadow-lg shadow-[#00ff66]/30 cursor-pointer hover:bg-[#00e65c] transition-all";
+  }
+}
+
 function listenToGlobalStats() {
   db.ref('global/totalUsers').on('value', (snap) => {
     cachedTotalUsers = snap.val() || 1;
     if (currentuserData) updateUI(currentuserData);
-  });
+  }, (err) => console.log("Global stats read skipped: " + err.message));
 }
 
-// Initialize User Profile Realtime Listener
 function initUserData(user) {
   const userRef = db.ref('users/' + user.uid);
-  
+
   userRef.on('value', (snapshot) => {
     let data = snapshot.val();
-    
+
     if (!data) {
       const fallbackName = user.displayName || ('Miner_' + user.uid.substring(0, 5));
       data = {
@@ -112,48 +121,44 @@ function initUserData(user) {
         streakDays: 0,
         lastCheckIn: 0,
         referralCount: 0,
-        maxInvites: 10,
-        createdAt: firebase.database.ServerValue.TIMESTAMP
+        maxInvites: 10
       };
 
       userRef.set(data);
-      db.ref('global/totalUsers').transaction(current => (current || 0) + 1);
     }
-    
+
     currentuserData = data;
     updateUI(data);
+  }, (err) => {
+    console.error("Database user fetch error:", err);
+    renderFallbackUI();
   });
 }
 
-// Synchronous Instant UI Updates
 function updateUI(userData) {
-  // Update Profile Info with Safe Fallbacks
   const displayName = userData.name || ('Miner_' + userData.uid.substring(0, 5));
-  
+
   const nameDisplay = document.getElementById('user-display-name');
   if (nameDisplay) nameDisplay.innerText = displayName;
-  
+
   const menuName = document.getElementById('menu-user-name');
   if (menuName) menuName.innerText = displayName;
 
   const menuUid = document.getElementById('menu-user-uid');
   if (menuUid) menuUid.innerText = "UID: " + userData.uid.substring(0, 8) + "...";
 
-  // Balance Display
   const balanceEl = document.getElementById('balance-display');
   if (balanceEl) balanceEl.innerText = (userData.balance || 0).toFixed(4);
 
-  // Streak Title
   const streakTitle = document.getElementById('streak-title');
   if (streakTitle) {
     streakTitle.innerText = userData.streakDays > 0 ? `DAY ${userData.streakDays} STREAK` : 'START STREAK';
   }
 
-  // Calculate Next Reward instantly using cached global stats
   const baseRate = calculateBaseReward(cachedTotalUsers);
   const now = Date.now();
   let nextStreak = userData.streakDays || 0;
-  
+
   if (now - (userData.lastCheckIn || 0) > CHECKIN_INTERVAL_MS * 2) {
     nextStreak = 1; 
   } else if (now >= (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS) {
@@ -162,13 +167,12 @@ function updateUI(userData) {
   if (nextStreak === 0) nextStreak = 1;
 
   const nextReward = baseRate * getStreakMultiplier(nextStreak);
-  
+
   const rewardLabel = document.getElementById('next-reward-val');
   if (rewardLabel) {
     rewardLabel.innerText = `+${nextReward.toFixed(2)} BKT`;
   }
 
-  // Button & Timer state handling
   const nextAvailableTime = (userData.lastCheckIn || 0) + CHECKIN_INTERVAL_MS;
   const claimBtn = document.getElementById('claim-btn');
 
@@ -191,7 +195,6 @@ function updateUI(userData) {
   }
 }
 
-// Countdown Timer
 function startCountdown(targetTime) {
   if (countdownTimer) clearInterval(countdownTimer);
 
@@ -202,7 +205,7 @@ function startCountdown(targetTime) {
       if (currentUser) initUserData(currentUser);
       return;
     }
-    
+
     const h = Math.floor(remaining / (1000 * 60 * 60));
     const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
     const s = Math.floor((remaining % (1000 * 60)) / 1000);
@@ -224,17 +227,16 @@ function setTimerDisplay(text, isReady) {
   }
 }
 
-// Realtime Tasks Listener
 function listenToTasks() {
   db.ref('tasks').on('value', (snapshot) => {
     const tasks = snapshot.val();
     const taskStatusEl = document.querySelector('.card-inner p.text-xs.text-\\[\\#00ff66\\]');
-    
+
     if (tasks && taskStatusEl) {
       const activeCount = Object.keys(tasks).length;
       taskStatusEl.innerText = `${activeCount} New Tasks Available!`;
     } else if (taskStatusEl) {
       taskStatusEl.innerText = "No tasks right now";
     }
-  });
+  }, (err) => console.log("Tasks read skipped: " + err.message));
 }

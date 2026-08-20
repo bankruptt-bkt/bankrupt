@@ -1,27 +1,40 @@
 import { db, auth, provider } from "./firebase-config.js";
-import { onAuthStateChanged, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-auth.js";
-import { doc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js";
+import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { doc, setDoc, updateDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Multipliers & Base Rewards Formula
+// Multipliers & Base Rewards
 const STREAK_MULTIPLIERS = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4, 6: 1.5, 7: 2.0 };
-const BASE_REWARD = 2.5; // Base BKT earned per check-in
+const BASE_REWARD = 2.5;
+
+// Rank Avatars Mapping
+const RANK_AVATARS = {
+  rookie: "./assets/images/profile/rookie.png",
+  grinder: "./assets/images/profile/grinder.png",
+  hustler: "./assets/images/profile/hustler.png",
+  degenerate: "./assets/images/profile/degenerate.png",
+  tycoon: "./assets/images/profile/tycoon.png",
+  bankruptking: "./assets/images/profile/bankruptking.png"
+};
 
 // UI Elements
 const balanceDisplay = document.querySelector(".balance-val");
-const usernameDisplay = document.querySelector(".username");
-const claimBtns = document.querySelectorAll(".btn-claim, #claim-streak-btn");
+const headerUsername = document.getElementById("header-username");
+const menuUsername = document.getElementById("menu-username-display");
+const menuUid = document.getElementById("menu-uid-display");
+const claimBtn = document.getElementById("main-claim-btn");
 const timerBadge = document.querySelector(".timer-badge");
 const streakText = document.querySelector(".streak-header h3");
 const nextRewardText = document.querySelector(".streak-footer b");
+const menuAvatarImg = document.getElementById("menuUserAvatar");
 
-// Global State Variables
+// Global State
 let currentUser = null;
 let userStreak = 1;
 let lastCheckIn = null;
 let timerInterval = null;
 let unsubscribeUser = null;
 
-// Rank Upgrade Evaluator Function
+// Rank Upgrade Evaluator
 async function checkRankUpgrade(userId, currentBalance) {
   let newRank = "rookie";
 
@@ -43,14 +56,19 @@ async function checkRankUpgrade(userId, currentBalance) {
 onAuthStateChanged(auth, (user) => {
   if (user) {
     currentUser = user;
-    if (usernameDisplay) usernameDisplay.textContent = user.displayName || "Degen";
+    if (headerUsername) headerUsername.textContent = user.displayName || "Degen";
+    if (menuUsername) menuUsername.textContent = user.displayName || "Degen User";
+    if (menuUid) menuUid.textContent = `UID: ${user.uid.substring(0, 8)}...`;
+    
     listenToUserData(user);
   } else {
-    signInWithPopup(auth, provider).catch(err => console.error("Auth Error:", err));
+    signInWithPopup(auth, provider).catch(() => {
+      window.location.href = "login.html";
+    });
   }
 });
 
-// 2. Real-time Firestore Listener
+// 2. Real-time Firestore Sync
 function listenToUserData(user) {
   const userRef = doc(db, "users", user.uid);
 
@@ -69,27 +87,33 @@ function listenToUserData(user) {
       await setDoc(userRef, newData);
       userStreak = 1;
       lastCheckIn = null;
-      updateUI(0);
+      updateUI(0, "rookie");
     } else {
       const data = userSnap.data();
       userStreak = data.streak || 1;
       lastCheckIn = data.lastCheckIn ? data.lastCheckIn.toDate() : null;
       
-      const currentBalance = data.balance || 0;
-      updateUI(currentBalance);
+      updateUI(data.balance || 0, data.rank || "rookie");
       checkClaimStatus();
     }
+  }, (err) => {
+    console.error("Snapshot error:", err);
   });
 }
 
-// 3. UI Realtime Updates
-function updateUI(balance) {
+// 3. UI Update Engine
+function updateUI(balance, rank) {
   if (balanceDisplay) {
     balanceDisplay.innerHTML = `${Number(balance).toFixed(4)} <span class="brand-font">BKT</span>`;
   }
 
   if (streakText) {
     streakText.textContent = `DAY ${userStreak} STREAK`;
+  }
+
+  if (menuAvatarImg) {
+    const normalizedRank = rank.toLowerCase().replace(/\s+/g, '');
+    menuAvatarImg.src = RANK_AVATARS[normalizedRank] || RANK_AVATARS["rookie"];
   }
 
   const currentMultiplier = STREAK_MULTIPLIERS[Math.min(userStreak, 7)] || 1.0;
@@ -99,17 +123,21 @@ function updateUI(balance) {
     nextRewardText.textContent = `+${nextReward.toFixed(2)} BKT`;
   }
 
-  // Highlight active streak days on home screen UI
+  // Update streak indicators on screen
   const streakBoxes = document.querySelectorAll(".streak-days .day-box");
   streakBoxes.forEach((box, index) => {
+    const lockIcon = box.querySelector(".lock-icon");
     if (index + 1 <= userStreak) {
       box.classList.add("active");
-      box.innerHTML = box.innerHTML.replace("🔒", "✅");
+      if (lockIcon) lockIcon.textContent = "✅";
+    } else {
+      box.classList.remove("active");
+      if (lockIcon) lockIcon.textContent = "🔒";
     }
   });
 }
 
-// 4. Live Countdown & Claim Status Evaluator
+// 4. Live Countdown Timer & Status
 function checkClaimStatus() {
   if (timerInterval) clearInterval(timerInterval);
 
@@ -130,7 +158,7 @@ function updateLiveTimer() {
   if (timeRemaining <= 0) {
     clearInterval(timerInterval);
     const hoursPassed = (now - lastCheckIn) / (1000 * 60 * 60);
-    if (hoursPassed >= 48) userStreak = 1; // Reset streak after missing 48 hrs
+    if (hoursPassed >= 48) userStreak = 1;
     enableClaimButton();
   } else {
     disableClaimButton(timeRemaining);
@@ -138,25 +166,27 @@ function updateLiveTimer() {
 }
 
 function enableClaimButton() {
-  claimBtns.forEach(btn => {
-    btn.disabled = false;
-    btn.textContent = "CHECK IN & CLAIM";
-    btn.style.background = "var(--accent-green, #00ff88)";
-    btn.style.color = "#000";
-    btn.style.cursor = "pointer";
-  });
+  if (claimBtn) {
+    claimBtn.disabled = false;
+    claimBtn.textContent = "CHECK IN & CLAIM";
+    claimBtn.style.background = "#00ff88";
+    claimBtn.style.color = "#000000";
+    claimBtn.style.cursor = "pointer";
+    claimBtn.style.opacity = "1";
+  }
 
-  if (timerBadge) timerBadge.textContent = "⚡ Ready to claim!";
+  if (timerBadge) timerBadge.textContent = "⚡ Ready";
 }
 
 function disableClaimButton(msLeft) {
-  claimBtns.forEach(btn => {
-    btn.disabled = true;
-    btn.textContent = "CHECKED IN";
-    btn.style.background = "#1d2a20";
-    btn.style.color = "#556655";
-    btn.style.cursor = "not-allowed";
-  });
+  if (claimBtn) {
+    claimBtn.disabled = true;
+    claimBtn.textContent = "CHECKED IN";
+    claimBtn.style.background = "#1d2a20";
+    claimBtn.style.color = "#556655";
+    claimBtn.style.cursor = "not-allowed";
+    claimBtn.style.opacity = "0.7";
+  }
 
   if (timerBadge) {
     const totalSeconds = Math.floor(msLeft / 1000);
@@ -169,34 +199,71 @@ function disableClaimButton(msLeft) {
   }
 }
 
-// 5. Check-In & Claim Handler
-claimBtns.forEach(btn => {
-  btn.addEventListener("click", async () => {
-    if (!currentUser || btn.disabled) return;
+// 5. Event Listeners
+if (claimBtn) {
+  claimBtn.addEventListener("click", async () => {
+    if (!currentUser || claimBtn.disabled) return;
 
     const multiplier = STREAK_MULTIPLIERS[Math.min(userStreak, 7)] || 1.0;
     const reward = BASE_REWARD * multiplier;
     const userRef = doc(db, "users", currentUser.uid);
 
     try {
-      btn.disabled = true;
-      btn.textContent = "CLAIMING...";
+      claimBtn.disabled = true;
+      claimBtn.textContent = "CLAIMING...";
 
-      const nextStreak = userStreak + 1;
+      const snap = await getDoc(userRef);
+      const currentBalance = snap.exists() ? (snap.data().balance || 0) : 0;
+      const newTotalBalance = currentBalance + reward;
 
       await updateDoc(userRef, {
         balance: increment(reward),
-        streak: nextStreak,
+        streak: increment(1),
         lastCheckIn: new Date()
       });
 
-      // Calculate total for rank progression checking
-      const updatedBalance = (parseFloat(balanceDisplay?.textContent) || 0) + reward;
-      await checkRankUpgrade(currentUser.uid, updatedBalance);
+      await checkRankUpgrade(currentUser.uid, newTotalBalance);
 
     } catch (err) {
       console.error("Failed to claim reward:", err);
-      btn.disabled = false;
+      enableClaimButton();
     }
   });
+}
+
+// Menu Handlers
+const openMenuBtn = document.getElementById("open-menu-btn");
+const closeMenuBtn = document.getElementById("close-menu-btn");
+const menuOverlay = document.getElementById("menu-overlay");
+const signoutBtn = document.getElementById("signout-btn");
+
+if (openMenuBtn && menuOverlay) {
+  openMenuBtn.addEventListener("click", () => menuOverlay.classList.add("active"));
+}
+
+if (closeMenuBtn && menuOverlay) {
+  closeMenuBtn.addEventListener("click", () => menuOverlay.classList.remove("active"));
+}
+
+if (menuOverlay) {
+  menuOverlay.addEventListener("click", (e) => {
+    if (e.target === menuOverlay) menuOverlay.classList.remove("active");
+  });
+}
+
+document.querySelectorAll(".menu-info-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (menuOverlay) menuOverlay.classList.remove("active");
+    const title = btn.getAttribute("data-title");
+    const content = btn.getAttribute("data-content");
+    setTimeout(() => alert(`${title.toUpperCase()}\n\n${content}`), 200);
+  });
 });
+
+if (signoutBtn) {
+  signoutBtn.addEventListener("click", () => {
+    signOut(auth).then(() => {
+      window.location.href = "login.html";
+    });
+  });
+}

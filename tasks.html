@@ -39,6 +39,21 @@
     <p class="text-center text-gray-500 text-sm py-8">Loading tasks...</p>
   </div>
 
+  <!-- PROOF SUBMISSION MODAL -->
+  <div id="proof-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="card-bg w-full max-w-sm rounded-2xl p-5 space-y-4 border border-[#1c2620]">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-sm text-[#00ff66]">Submit Proof Link</h3>
+        <button onclick="closeProofModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <p class="text-xs text-gray-300">Paste your tweet or post link below to confirm task completion:</p>
+      <input type="text" id="proof-url" placeholder="https://x.com/username/status/..." class="w-full bg-[#0a0d0b] border border-[#1c2620] text-xs text-white p-3 rounded-xl outline-none focus:border-[#00ff66]">
+      <button onclick="submitProofTask()" class="w-full py-2.5 bg-[#00ff66] text-black font-bold text-xs rounded-xl hover:bg-[#00e65c]">
+        Verify & Claim Reward
+      </button>
+    </div>
+  </div>
+
   <!-- BOTTOM NAVIGATION -->
   <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0a0d0b] border-t border-[#1a241e] px-4 py-2 flex justify-between items-center text-xs text-gray-500 z-40">
     <a href="index.html" class="flex flex-col items-center gap-1 hover:text-gray-300">
@@ -73,24 +88,16 @@
     let activeCategory = 'Daily';
     let allTasks = {};
     let userCompletedTasks = {};
+    let activeTaskForProof = null;
 
     auth.onAuthStateChanged((user) => {
       if (!user) return (window.location.href = "login.html");
       
-      // Listen to Maintenance
-      db.ref("system/maintenance").on("value", (snap) => {
-        if (snap.val() === true) {
-          document.body.innerHTML = `<div class="flex flex-col items-center justify-center min-h-screen text-center p-6"><h1 class="font-marker text-3xl text-yellow-400 mb-2">UNDER MAINTENANCE</h1><p class="text-gray-400 text-sm">Will be back soon! Upgrade in progress...</p></div>`;
-        }
-      });
-
-      // Load user completed tasks
       db.ref(`users/${user.uid}/completedTasks`).on("value", (snap) => {
         userCompletedTasks = snap.val() || {};
         renderTasks();
       });
 
-      // Load all tasks from DB
       db.ref("tasks").on("value", (snap) => {
         allTasks = snap.val() || {};
         renderTasks();
@@ -129,7 +136,7 @@
               <p class="text-xs text-[#00ff66] font-bold">+${task.reward} BKT</p>
             </div>
           </div>
-          <button id="btn-${taskId}" onclick="handleTask('${taskId}', '${task.link}', ${task.reward})" 
+          <button id="btn-${taskId}" onclick="handleTask('${taskId}')" 
             class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
               isDone 
                 ? 'border border-[#00ff66] text-[#00ff66] bg-transparent cursor-default' 
@@ -142,24 +149,64 @@
       });
     }
 
-    function handleTask(taskId, link, reward) {
+    function handleTask(taskId) {
       const user = auth.currentUser;
-      if (!user || userCompletedTasks[taskId]) return;
+      const task = allTasks[taskId];
+      if (!user || !task || userCompletedTasks[taskId]) return;
 
-      if (link && link !== "#") {
-        window.open(link, "_blank");
+      if (task.link && task.link !== "#") {
+        window.open(task.link, "_blank");
       }
 
-      const btn = document.getElementById(`btn-${taskId}`);
-      btn.innerText = "Claiming...";
-      btn.disabled = true;
+      if (task.requiresProof) {
+        activeTaskForProof = { id: taskId, reward: task.reward };
+        document.getElementById("proof-url").value = "";
+        document.getElementById("proof-modal").classList.remove("hidden");
+      } else {
+        claimReward(taskId, task.reward);
+      }
+    }
 
-      // Add reward to main balance and mark task completed
+    function closeProofModal() {
+      document.getElementById("proof-modal").classList.add("hidden");
+      activeTaskForProof = null;
+    }
+
+    function submitProofTask() {
+      const proofUrl = document.getElementById("proof-url").value.trim();
+      if (!proofUrl || (!proofUrl.startsWith("http://") && !proofUrl.startsWith("https://"))) {
+        return alert("Please enter a valid link/URL as proof!");
+      }
+
+      if (!activeTaskForProof) return;
+
+      const user = auth.currentUser;
+      const taskId = activeTaskForProof.id;
+      const reward = activeTaskForProof.reward;
+
+      // Save submission proof link under task Submissions
+      db.ref(`taskSubmissions/${taskId}/${user.uid}`).set({
+        proofUrl: proofUrl,
+        submittedAt: Date.now()
+      });
+
+      closeProofModal();
+      claimReward(taskId, reward);
+    }
+
+    function claimReward(taskId, reward) {
+      const user = auth.currentUser;
+      const btn = document.getElementById(`btn-${taskId}`);
+      if (btn) {
+        btn.innerText = "Claiming...";
+        btn.disabled = true;
+      }
+
       setTimeout(() => {
         const userRef = db.ref(`users/${user.uid}`);
         userRef.child("balance").transaction((curr) => (curr || 0) + parseFloat(reward));
         userRef.child(`completedTasks/${taskId}`).set(true);
-      }, 2000);
+      }, 1500);
     }
   </script>
 </body>

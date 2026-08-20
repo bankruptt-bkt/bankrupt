@@ -9,12 +9,15 @@ const firebaseConfig = {
   appId: "1:961644576786:web:65eff34df07a18067458cb"
 };
 
-// Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+// Initialize Firebase safely
+if (typeof firebase !== 'undefined') {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  
+  // Expose auth & db globally
+  window.auth = firebase.auth();
+  window.db = firebase.database();
+} else {
+  console.error("Firebase SDK script tags are missing before firebase-config.js");
 }
-
-// Must be initialized like this at the bottom of firebase-config.js
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();

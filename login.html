@@ -63,7 +63,16 @@
   </div>
 
   <script>
-    // GOOGLE OAUTH SIGN IN
+    // 1. CAPTURE REFERRAL CODE ON INITIAL PAGE LOAD
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get("ref");
+      if (refCode) {
+        localStorage.setItem("pendingRef", refCode);
+      }
+    });
+
+    // 2. GOOGLE OAUTH SIGN IN
     async function handleGoogleSignIn() {
       try {
         const activeAuth = window.auth || firebase.auth();
@@ -79,7 +88,7 @@
       }
     }
 
-    // TWITTER (X) OAUTH SIGN IN
+    // 3. TWITTER (X) OAUTH SIGN IN
     async function handleTwitterSignIn() {
       try {
         const activeAuth = window.auth || firebase.auth();
@@ -95,20 +104,38 @@
       }
     }
 
-    // HELPER FUNCTION TO INITIALIZE USER PROFILE IN REALTIME DATABASE
+    // 4. USER PROFILE CREATION & REFERRAL CREDIT LOGIC
     async function handleUserDatabaseEntry(user, activeDb) {
       const userRef = activeDb.ref('users/' + user.uid);
       const snap = await userRef.once('value');
       
       if (!snap.exists()) {
+        const referrerUid = localStorage.getItem("pendingRef");
+
+        // Create new user profile
         await userRef.set({
           uid: user.uid,
           name: user.displayName || 'Miner',
           balance: 50.00,
+          referredBy: referrerUid || null,
           streakDays: 0,
           lastCheckIn: 0,
           createdAt: Date.now()
         });
+
+        // If user registered with a valid referral link, credit the inviter
+        if (referrerUid && referrerUid !== user.uid) {
+          const referrerRef = activeDb.ref('users/' + referrerUid);
+          
+          // Atomically increment referral count
+          await referrerRef.child('referralsCount').transaction((curr) => (curr || 0) + 1);
+          
+          // Atomically grant +5.00 BKT bonus
+          await referrerRef.child('balance').transaction((curr) => (curr || 0) + 5.00);
+
+          // Clear local cache after successfully crediting
+          localStorage.removeItem("pendingRef");
+        }
       }
     }
   </script>

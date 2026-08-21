@@ -23,20 +23,31 @@ let currentTab = "balance";
 let leaderboardUsers = [];
 let currentUserId = null;
 
+// Safe accessor helpers to handle async loading
+function getDb() {
+  return window.db || (typeof firebase !== 'undefined' ? firebase.database() : null);
+}
+
+function getAuth() {
+  return window.auth || (typeof firebase !== 'undefined' ? firebase.auth() : null);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  initLeaderboard();
+  // Start checking for Firebase initialization
+  startLeaderboardSync();
 });
 
-function initLeaderboard() {
-  const authInstance = window.auth || (typeof firebase !== 'undefined' ? firebase.auth() : null);
-  const dbInstance = window.db || (typeof firebase !== 'undefined' ? firebase.database() : null);
+function startLeaderboardSync() {
+  const dbInstance = getDb();
+  const authInstance = getAuth();
 
+  // Retry every 100ms until Firebase SDK is fully attached
   if (!dbInstance) {
-    setTimeout(initLeaderboard, 100);
+    setTimeout(startLeaderboardSync, 100);
     return;
   }
 
-  // Get current user ID for the bottom card highlight
+  // Get current logged-in user ID
   if (authInstance) {
     authInstance.onAuthStateChanged((user) => {
       if (user) {
@@ -46,46 +57,56 @@ function initLeaderboard() {
     });
   }
 
-  // Check 24-hour sync cache
+  // Check local 24-hour cache first
   const lastSync = localStorage.getItem("bkt_leaderboard_last_sync");
   const cachedData = localStorage.getItem("bkt_leaderboard_data");
   const now = Date.now();
 
   if (cachedData && lastSync && (now - parseInt(lastSync, 10) < SYNC_INTERVAL_MS)) {
-    // Load directly from 24h cache (Instant load)
     try {
       leaderboardUsers = JSON.parse(cachedData);
-      renderLeaderboard();
-      return;
+      if (leaderboardUsers.length > 0) {
+        renderLeaderboard();
+        return;
+      }
     } catch (e) {
       console.warn("Failed to parse cached leaderboard, fetching fresh data...");
     }
   }
 
-  // Fetch directly from Firebase Realtime Database once every 24 hours
+  // Fetch directly from Firebase Realtime Database
+  fetchFirebaseLeaderboard(dbInstance, now);
+}
+
+function fetchFirebaseLeaderboard(dbInstance, syncTimestamp) {
   dbInstance.ref("users").once("value").then((snapshot) => {
     const usersObj = snapshot.val() || {};
 
-    leaderboardUsers = Object.keys(usersObj).map((uidKey) => {
-      const u = usersObj[uidKey];
-      return {
-        uid: uidKey,
-        name: u.displayName || u.username || ("Miner_" + uidKey.substring(0, 5)),
-        avatar: u.activeProfileLogo || u.avatar || u.photoURL || FALLBACK_AVATAR,
-        tier: u.userTier || u.badge || null,
-        balance: parseFloat(u.balance || 0),
-        streak: parseInt(u.streakDays || 0, 10),
-        referrals: parseInt(u.referralsUsed || 0, 10)
-      };
-    });
+    leaderboardUsers = Object.keys(usersObj)
+      .filter((uidKey) => !usersObj[uidKey].isBanned) // Exclude banned users
+      .map((uidKey) => {
+        const u = usersObj[uidKey];
+        return {
+          uid: uidKey,
+          name: u.displayName || u.username || ("Miner_" + uidKey.substring(0, 5)),
+          avatar: u.activeProfileLogo || u.avatar || u.photoURL || FALLBACK_AVATAR,
+          balance: parseFloat(u.balance || 0),
+          streak: parseInt(u.streakDays || 0, 10),
+          referrals: parseInt(u.referralsUsed || 0, 10)
+        };
+      });
 
-    // Save sync timestamp and dataset
-    localStorage.setItem("bkt_leaderboard_last_sync", now.toString());
+    // Save sync timestamp and dataset to localStorage
+    localStorage.setItem("bkt_leaderboard_last_sync", syncTimestamp.toString());
     localStorage.setItem("bkt_leaderboard_data", JSON.stringify(leaderboardUsers));
 
     renderLeaderboard();
   }).catch((err) => {
     console.error("Firebase Leaderboard fetch failed:", err);
+    const container = document.getElementById("leaderboard-list");
+    if (container) {
+      container.innerHTML = `<p class="text-center text-xs text-red-500 py-4">Failed to load rankings. Please reload.</p>`;
+    }
   });
 }
 
@@ -119,9 +140,15 @@ function getRankLogo(rankNumber) {
 }
 
 function renderLeaderboard() {
-  if (!leaderboardUsers || leaderboardUsers.length === 0) return;
+  const container = document.getElementById("leaderboard-list");
+  if (!leaderboardUsers || leaderboardUsers.length === 0) {
+    if (container) {
+      container.innerHTML = `<p class="text-center text-xs text-gray-500 py-4">No active miners found.</p>`;
+    }
+    return;
+  }
 
-  // Sort by active tab metric (Highest to Lowest)
+  // Sort by selected metric (Descending)
   const sorted = [...leaderboardUsers].sort((a, b) => b[currentTab] - a[currentTab]);
 
   renderPodium(sorted.slice(0, 3));

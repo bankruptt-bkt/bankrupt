@@ -2,10 +2,9 @@
 // LEADERBOARD LOGIC (REAL-TIME BALANCE & DYNAMIC RANK LOGOS)
 // ==========================================
 
-const FALLBACK_AVATAR = "assets/images/profile/rookie.jpg";
-const SYNC_INTERVAL_MS = 10 * 60 * 1000; // 10 Minutes Cache
-
+const FALLBACK_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=Bankrupt";
 const LEADERBOARD_IMG_PATH = "assets/images/leaderboard/";
+
 const LOGO_MAP = {
   rank1: LEADERBOARD_IMG_PATH + "rank1.jpg",
   rank2: LEADERBOARD_IMG_PATH + "rank2.jpg",
@@ -25,26 +24,56 @@ let currentTab = "balance";
 let cachedLeaderboardData = [];
 let currentUserId = null;
 
+// Safe accessor helpers
+function getAuthInstance() {
+  return window.auth || (typeof firebase !== 'undefined' ? firebase.auth() : null);
+}
+
+function getDbInstance() {
+  return window.db || (typeof firebase !== 'undefined' ? firebase.database() : null);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  setupAuthListener();
+  initLeaderboard();
 });
 
-function setupAuthListener() {
-  const checkAuth = setInterval(() => {
-    if (typeof firebase !== "undefined" && firebase.auth) {
-      clearInterval(checkAuth);
-      firebase.auth().onAuthStateChanged(async (user) => {
-        if (user) {
-          currentUserId = user.uid;
-        }
-        await loadOrSyncLeaderboard();
-        renderLeaderboard();
-        if (user) {
-          listenToUserRealtimeData(user.uid);
-        }
-      });
+function initLeaderboard() {
+  const authInstance = getAuthInstance();
+  const dbInstance = getDbInstance();
+
+  if (!authInstance || !dbInstance) {
+    setTimeout(initLeaderboard, 150);
+    return;
+  }
+
+  // Set up active user track
+  authInstance.onAuthStateChanged((user) => {
+    if (user) {
+      currentUserId = user.uid;
     }
-  }, 100);
+  });
+
+  // Realtime global users listener
+  dbInstance.ref("users").on("value", (snap) => {
+    const usersObj = snap.val() || {};
+    
+    cachedLeaderboardData = Object.keys(usersObj).map((uidKey) => {
+      const u = usersObj[uidKey];
+      return {
+        uid: uidKey,
+        name: u.displayName || u.username || ("Miner_" + uidKey.substring(0, 5)),
+        avatar: u.activeProfileLogo || u.avatar || u.photoURL || FALLBACK_AVATAR,
+        tier: u.userTier || u.badge || null,
+        balance: parseFloat(u.balance || 0),
+        streak: parseInt(u.streakDays || 0, 10),
+        referrals: parseInt(u.referralsUsed || 0, 10)
+      };
+    });
+
+    renderLeaderboard();
+  }, (err) => {
+    console.error("Leaderboard Realtime Sync Error:", err);
+  });
 }
 
 function getLeaderboardBadge(rankNumber, userTierKey) {
@@ -63,33 +92,6 @@ function getLeaderboardBadge(rankNumber, userTierKey) {
   if (rankNumber <= 500) return LOGO_MAP.gold;
   if (rankNumber <= 1000) return LOGO_MAP.silver;
   return LOGO_MAP.bronze;
-}
-
-async function loadOrSyncLeaderboard() {
-  const dbInstance = typeof firebase !== "undefined" ? firebase.database() : null;
-  if (!dbInstance) return;
-
-  try {
-    const snap = await dbInstance.ref("users").once("value");
-    const usersObj = snap.val() || {};
-    
-    cachedLeaderboardData = Object.keys(usersObj).map((uidKey) => {
-      const u = usersObj[uidKey];
-      return {
-        uid: uidKey,
-        name: u.displayName || u.username || ("Miner_" + uidKey.substring(0, 5)),
-        avatar: u.activeProfileLogo || u.avatar || u.photoURL || FALLBACK_AVATAR,
-        tier: u.userTier || u.badge || null,
-        balance: parseFloat(u.balance || u.bktBalance || 0),
-        streak: parseInt(u.streakDays || u.streak || 0, 10),
-        referrals: parseInt(u.referralsUsed || u.referrals || 0, 10)
-      };
-    });
-
-    localStorage.setItem("bkt_leaderboard_cache", JSON.stringify(cachedLeaderboardData));
-  } catch (err) {
-    console.error("Leaderboard synchronization error:", err);
-  }
 }
 
 function switchLeaderboardTab(tab) {
@@ -129,8 +131,9 @@ function renderPodium(top3) {
   ];
 
   displayOrder.forEach((item) => {
-    const user = item.data || { name: "N/A", avatar: FALLBACK_AVATAR, [currentTab]: 0 };
-    const valueFormatted = formatTabScore(user[currentTab]);
+    const user = item.data || { name: "Empty", avatar: FALLBACK_AVATAR, balance: 0, streak: 0, referrals: 0 };
+    const rawVal = user[currentTab] || 0;
+    const valueFormatted = formatTabScore(rawVal);
 
     const card = document.createElement("div");
     card.className = `card-bg rounded-2xl p-3 flex flex-col items-center justify-between text-center ${item.height} relative w-full`;
@@ -211,25 +214,6 @@ function updateUserRankCard(sortedList) {
     if (scoreElem) scoreElem.innerText = `${formatTabScore(userObj[currentTab])} ${getTabUnit()}`;
     if (avatarElem && userObj.avatar) avatarElem.src = userObj.avatar;
   }
-}
-
-function listenToUserRealtimeData(uid) {
-  if (typeof firebase === "undefined") return;
-
-  firebase.database().ref("users/" + uid).on("value", (snap) => {
-    const data = snap.val() || {};
-    
-    const existingIndex = cachedLeaderboardData.findIndex((u) => u.uid === uid);
-    if (existingIndex !== -1) {
-      cachedLeaderboardData[existingIndex].balance = parseFloat(data.balance || data.bktBalance || 0);
-      cachedLeaderboardData[existingIndex].streak = parseInt(data.streakDays || data.streak || 0, 10);
-      cachedLeaderboardData[existingIndex].referrals = parseInt(data.referralsUsed || data.referrals || 0, 10);
-      cachedLeaderboardData[existingIndex].avatar = data.activeProfileLogo || data.avatar || FALLBACK_AVATAR;
-      cachedLeaderboardData[existingIndex].name = data.displayName || data.username || cachedLeaderboardData[existingIndex].name;
-      
-      renderLeaderboard();
-    }
-  });
 }
 
 function formatTabScore(val) {

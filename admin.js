@@ -1,3 +1,14 @@
+// ==========================================
+// CONFIGURATION & GLOBAL STATES
+// ==========================================
+const ADMIN_PASSCODE = "98309308@Bktadmin"; 
+
+const ALLOWED_ADMIN_EMAILS = [
+  "probhats208@gmail.com"
+];
+
+let isMaintenanceActive = false;
+
 // Safe Database & Auth Accessors
 function getDb() {
   return window.db || (typeof firebase !== 'undefined' ? firebase.database() : null);
@@ -7,25 +18,154 @@ function getAuth() {
   return window.auth || (typeof firebase !== 'undefined' ? firebase.auth() : null);
 }
 
-let isMaintenanceActive = false;
-
-// Initialization Guard & Listeners
+// ==========================================
+// 1. AUTHENTICATION & SECURITY GATEWAY
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
+  // Check if session was previously unlocked via passcode
+  if (sessionStorage.getItem("admin_authenticated") === "true") {
+    unlockPanelUI("Passcode Authenticated");
+  }
+
   const authInstance = getAuth();
   if (authInstance) {
     authInstance.onAuthStateChanged((user) => {
-      if (!user) {
-        window.location.href = "login.html";
+      if (user) {
+        if (ALLOWED_ADMIN_EMAILS.includes(user.email)) {
+          unlockPanelUI(`Google Admin: ${user.email}`);
+        } else if (sessionStorage.getItem("admin_authenticated") !== "true") {
+          showAuthError(`Access Denied: ${user.email} is not authorized.`);
+        }
       }
     });
   }
-
-  listenToMaintenanceState();
-  listenToActiveTasks();
 });
 
+function verifyPasscode() {
+  const inputEl = document.getElementById("admin-passcode-input");
+  
+  if (!inputEl) return;
+
+  if (inputEl.value === ADMIN_PASSCODE) {
+    sessionStorage.setItem("admin_authenticated", "true");
+    unlockPanelUI("Session Verified");
+    showAuthError(""); // Clear any error message
+  } else {
+    showAuthError("Invalid Admin Passcode.");
+  }
+}
+
+function signInAdminGoogle() {
+  const authInstance = getAuth();
+  if (!authInstance) return;
+
+  const provider = new firebase.auth.GoogleAuthProvider();
+  authInstance.signInWithPopup(provider).then((result) => {
+    if (!ALLOWED_ADMIN_EMAILS.includes(result.user.email)) {
+      showAuthError(`Account ${result.user.email} is not authorized.`);
+      authInstance.signOut();
+    }
+  }).catch((error) => {
+    if (error.code !== "auth/popup-closed-by-user") {
+      showAuthError("Google Sign-In Error: " + error.message);
+    }
+  });
+}
+
+function unlockPanelUI(identityLabel) {
+  const overlay = document.getElementById("admin-auth-overlay");
+  const content = document.getElementById("admin-main-content");
+  const emailLabel = document.getElementById("admin-user-email");
+
+  if (overlay) overlay.classList.add("hidden");
+  if (content) content.classList.remove("hidden");
+  if (emailLabel) emailLabel.innerText = identityLabel;
+
+  // Initialize listeners & screener once unlocked
+  listenToMaintenanceState();
+  listenToActiveTasks();
+  initAdminScreener();
+}
+
+function lockAdminPanel() {
+  sessionStorage.removeItem("admin_authenticated");
+  const authInstance = getAuth();
+  if (authInstance) authInstance.signOut();
+  window.location.reload();
+}
+
+function showAuthError(msg) {
+  const errorEl = document.getElementById("admin-auth-error");
+  if (errorEl) {
+    if (msg) {
+      errorEl.innerText = msg;
+      errorEl.classList.remove("hidden");
+    } else {
+      errorEl.classList.add("hidden");
+    }
+  }
+}
+
 // ==========================================
-// 1. MAINTENANCE MODE TOGGLE
+// 2. LIVE SCREENER & ANALYTICS ENGINE
+// ==========================================
+function initAdminScreener() {
+  const dbInstance = getDb();
+  if (!dbInstance) return;
+
+  const usersRef = dbInstance.ref("users");
+
+  usersRef.on("value", (snapshot) => {
+    const usersData = snapshot.val() || {};
+
+    let totalUsers = 0;
+    let totalMinedTokens = 0;
+    let dailyActiveUsers = 0;
+    let totalReferralsCount = 0;
+
+    const now = Date.now();
+    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+    Object.keys(usersData).forEach((uid) => {
+      const user = usersData[uid];
+      totalUsers++;
+
+      if (user.balance) {
+        totalMinedTokens += parseFloat(user.balance) || 0;
+      }
+
+      if (user.lastCheckIn && (now - user.lastCheckIn) <= TWENTY_FOUR_HOURS_MS) {
+        dailyActiveUsers++;
+      }
+
+      if (user.referralsCount) {
+        totalReferralsCount += parseInt(user.referralsCount, 10) || 0;
+      }
+    });
+
+    renderScreenerMetrics({
+      totalUsers,
+      totalMinedTokens,
+      dailyActiveUsers,
+      totalReferralsCount
+    });
+  });
+}
+
+function renderScreenerMetrics(stats) {
+  const minedEl = document.getElementById("stat-total-mined");
+  const totalUsersEl = document.getElementById("stat-total-users");
+  const dauEl = document.getElementById("stat-dau");
+  const refsEl = document.getElementById("stat-total-refs");
+
+  if (minedEl) minedEl.innerText = stats.totalMinedTokens.toFixed(2) + " BKT";
+  if (totalUsersEl) totalUsersEl.innerText = stats.totalUsers.toLocaleString();
+  if (dauEl) dauEl.innerText = stats.dailyActiveUsers.toLocaleString();
+  if (refsEl) refsEl.innerText = stats.totalReferralsCount.toLocaleString();
+}
+
+// ==========================================
+// 3. MAINTENANCE MODE TOGGLE
 // ==========================================
 function listenToMaintenanceState() {
   const dbInstance = getDb();
@@ -58,7 +198,7 @@ async function toggleMaintenance() {
 }
 
 // ==========================================
-// 2. TASK MANAGEMENT
+// 4. TASK MANAGEMENT
 // ==========================================
 async function handlePublishTask() {
   const title = document.getElementById('task-title').value.trim();
@@ -145,7 +285,7 @@ async function handleDeleteTask(taskId) {
 }
 
 // ==========================================
-// 3. GRANT TOKEN BONUS
+// 5. GRANT TOKEN BONUS
 // ==========================================
 async function handleGrantBonus() {
   const uid = document.getElementById('bonus-uid-input').value.trim();
@@ -180,7 +320,7 @@ async function handleGrantBonus() {
 }
 
 // ==========================================
-// 4. ADD ADDITIONAL REFERRAL SLOTS / COUNTS
+// 6. ADD ADDITIONAL REFERRAL SLOTS / COUNTS
 // ==========================================
 async function handleAddReferrals() {
   const uid = document.getElementById('ref-uid-input').value.trim();
@@ -215,7 +355,7 @@ async function handleAddReferrals() {
 }
 
 // ==========================================
-// 5. BAN / UNBAN USER
+// 7. BAN / UNBAN USER
 // ==========================================
 async function handleBanUser(shouldBan) {
   const uid = document.getElementById('ban-uid-input').value.trim();

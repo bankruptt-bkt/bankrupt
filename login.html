@@ -62,7 +62,7 @@
 
   </div>
 
-  <script>
+    <script>
     // 1. CAPTURE REFERRAL CODE ON INITIAL PAGE LOAD
     document.addEventListener("DOMContentLoaded", () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -104,7 +104,7 @@
       }
     }
 
-    // 4. USER PROFILE CREATION & REFERRAL CREDIT LOGIC
+    // 4. USER PROFILE CREATION
     async function handleUserDatabaseEntry(user, activeDb) {
       const userRef = activeDb.ref('users/' + user.uid);
       const snap = await userRef.once('value');
@@ -112,28 +112,21 @@
       if (!snap.exists()) {
         const referrerUid = localStorage.getItem("pendingRef");
 
-        // Create new user profile
+        // Safe initial profile creation (Complies with Rule: !data.exists())
         await userRef.set({
           uid: user.uid,
           name: user.displayName || 'Miner',
           balance: 50.00,
           referredBy: referrerUid || null,
+          referralsCount: 0,
           streakDays: 0,
           lastCheckIn: 0,
           createdAt: Date.now()
         });
 
-        // If user registered with a valid referral link, credit the inviter
+        // Store referrer link locally for background processing
         if (referrerUid && referrerUid !== user.uid) {
-          const referrerRef = activeDb.ref('users/' + referrerUid);
-          
-          // Atomically increment referral count
-          await referrerRef.child('referralsCount').transaction((curr) => (curr || 0) + 1);
-          
-          // Atomically grant +5.00 BKT bonus
-          await referrerRef.child('balance').transaction((curr) => (curr || 0) + 5.00);
-
-          // Clear local cache after successfully crediting
+          localStorage.setItem("processReferralFor", referrerUid);
           localStorage.removeItem("pendingRef");
         }
       }

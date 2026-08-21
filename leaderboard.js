@@ -1,3 +1,19 @@
+
+const LEADERBOARD_IMG_PATH = "./assets/images/leaderboard/";
+
+const LOGO_MAP = {
+  rank1: LEADERBOARD_IMG_PATH + "rank1.jpg",
+  rank2: LEADERBOARD_IMG_PATH + "rank2.jpg",
+  rank3: LEADERBOARD_IMG_PATH + "rank3.jpg",
+  top10: LEADERBOARD_IMG_PATH + "top10.jpg",
+  gold: LEADERBOARD_IMG_PATH + "gold.jpg",
+  silver: LEADERBOARD_IMG_PATH + "silver.jpg",
+  bronze: LEADERBOARD_IMG_PATH + "bronze.jpg",
+  daimond: LEADERBOARD_IMG_PATH + "daimond.jpg",
+  platinum: LEADERBOARD_IMG_PATH + "platinum.jpg",
+  legend: LEADERBOARD_IMG_PATH + "legend.jpg"
+};
+
 // ==========================================
 // 24-HOUR SYNCHRONIZED LEADERBOARD LOGIC
 // ==========================================

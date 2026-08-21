@@ -26,16 +26,25 @@ let currentTab = "balance"; // "balance" | "streak" | "referrals"
 let cachedLeaderboardData = [];
 let currentUserId = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-  const authInstance = getAuth();
+document.addEventListener("DOMContentLoaded", async () => {
+  // Load leaderboard immediately so data displays right away
+  await loadOrSyncLeaderboard();
+  renderLeaderboard();
 
-  if (authInstance) {
-    authInstance.onAuthStateChanged((user) => {
-      if (user) {
-        currentUserId = user.uid;
-        initLeaderboard(user.uid);
-      }
-    });
+  // Listen for user auth state to link "YOU" card
+  try {
+    const authInstance = getAuth();
+    if (authInstance) {
+      authInstance.onAuthStateChanged((user) => {
+        if (user) {
+          currentUserId = user.uid;
+          listenToUserRealtimeData(user.uid);
+          updateUserRankCard(cachedLeaderboardData);
+        }
+      });
+    }
+  } catch(e) {
+    console.warn("Auth initialization pending...", e);
   }
 });
 
@@ -46,12 +55,10 @@ function getLeaderboardBadge(rankNumber, userTierKey) {
   if (rankNumber === 3) return LOGO_MAP.rank3;
   if (rankNumber <= 10) return LOGO_MAP.top10;
   
-  // Custom user tier fallback check if provided by DB (e.g. userTierKey = "legend")
   if (userTierKey && LOGO_MAP[userTierKey]) {
     return LOGO_MAP[userTierKey];
   }
 
-  // General Rank Bracket Badges
   if (rankNumber <= 50) return LOGO_MAP.legend;
   if (rankNumber <= 100) return LOGO_MAP.daimond;
   if (rankNumber <= 250) return LOGO_MAP.platinum;
@@ -60,17 +67,13 @@ function getLeaderboardBadge(rankNumber, userTierKey) {
   return LOGO_MAP.bronze;
 }
 
-// Primary initialization
-async function initLeaderboard(uid) {
-  await loadOrSyncLeaderboard();
-  renderLeaderboard();
-  listenToUserRealtimeData(uid);
-}
-
 // 24-Hour Synchronization & Caching Engine
 async function loadOrSyncLeaderboard() {
-  const dbInstance = getDb();
-  if (!dbInstance) return;
+  const dbInstance = typeof getDb === "function" ? getDb() : (window.db || null);
+  if (!dbInstance) {
+    console.error("Firebase DB instance not ready.");
+    return;
+  }
 
   const localCache = localStorage.getItem("bkt_leaderboard_cache");
   const lastSyncTime = localStorage.getItem("bkt_leaderboard_last_sync");
@@ -79,7 +82,7 @@ async function loadOrSyncLeaderboard() {
   if (localCache && lastSyncTime && (now - parseInt(lastSyncTime, 10) < SYNC_INTERVAL_MS)) {
     try {
       cachedLeaderboardData = JSON.parse(localCache);
-      return;
+      if (cachedLeaderboardData.length > 0) return;
     } catch (e) {
       console.warn("Failed to parse local leaderboard cache, re-fetching...");
     }
@@ -136,7 +139,7 @@ function renderLeaderboard() {
   updateUserRankCard(sorted);
 }
 
-// Render Top 3 Podium Cards with Custom Rank Logos
+// Render Top 3 Podium Cards
 function renderPodium(top3) {
   const container = document.getElementById("podium-container");
   if (!container) return;
@@ -177,7 +180,7 @@ function renderPodium(top3) {
   });
 }
 
-// Render Rankings 4 and onwards with Rank/Tier Badge Logos
+// Render Rankings 4 and onwards
 function renderList(listData) {
   const container = document.getElementById("leaderboard-list");
   if (!container) return;
@@ -218,7 +221,7 @@ function renderList(listData) {
 
 // Update Fixed Bottom User Rank Card
 function updateUserRankCard(sortedList) {
-  if (!currentUserId) return;
+  if (!currentUserId || !sortedList.length) return;
 
   const rankIndex = sortedList.findIndex((u) => u.uid === currentUserId);
   const userObj = sortedList[rankIndex];
@@ -241,7 +244,7 @@ function updateUserRankCard(sortedList) {
 
 // Real-time update listener for current user
 function listenToUserRealtimeData(uid) {
-  const dbInstance = getDb();
+  const dbInstance = typeof getDb === "function" ? getDb() : (window.db || null);
   if (!dbInstance) return;
 
   dbInstance.ref("users/" + uid).on("value", (snap) => {

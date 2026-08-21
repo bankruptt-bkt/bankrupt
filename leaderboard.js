@@ -1,5 +1,5 @@
 // ==========================================
-// LEADERBOARD LOGIC (REAL-TIME BALANCE & DYNAMIC RANK LOGOS)
+// LEADERBOARD LOGIC (FAST CACHE & REALTIME SYNC)
 // ==========================================
 
 const FALLBACK_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=Bankrupt";
@@ -24,7 +24,6 @@ let currentTab = "balance";
 let cachedLeaderboardData = [];
 let currentUserId = null;
 
-// Safe accessor helpers
 function getAuthInstance() {
   return window.auth || (typeof firebase !== 'undefined' ? firebase.auth() : null);
 }
@@ -34,26 +33,45 @@ function getDbInstance() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // 1. Instant Cache Load (Prevents endless "Loading..." screen)
+  loadCachedLeaderboard();
+  
+  // 2. Initialize Firebase realtime connection
   initLeaderboard();
 });
+
+function loadCachedLeaderboard() {
+  try {
+    const rawCache = localStorage.getItem("bkt_leaderboard_cache");
+    if (rawCache) {
+      cachedLeaderboardData = JSON.parse(rawCache);
+      if (cachedLeaderboardData.length > 0) {
+        renderLeaderboard();
+      }
+    }
+  } catch (e) {
+    console.warn("Local leaderboard cache parse failed:", e);
+  }
+}
 
 function initLeaderboard() {
   const authInstance = getAuthInstance();
   const dbInstance = getDbInstance();
 
   if (!authInstance || !dbInstance) {
-    setTimeout(initLeaderboard, 150);
+    setTimeout(initLeaderboard, 100);
     return;
   }
 
-  // Set up active user track
   authInstance.onAuthStateChanged((user) => {
     if (user) {
       currentUserId = user.uid;
+      // Re-render once user ID is known to highlight "YOU" card
+      renderLeaderboard();
     }
   });
 
-  // Realtime global users listener
+  // Realtime global users listener with optimized fetch
   dbInstance.ref("users").on("value", (snap) => {
     const usersObj = snap.val() || {};
     
@@ -69,6 +87,9 @@ function initLeaderboard() {
         referrals: parseInt(u.referralsUsed || 0, 10)
       };
     });
+
+    // Cache updated data locally for sub-second loads next time
+    localStorage.setItem("bkt_leaderboard_cache", JSON.stringify(cachedLeaderboardData));
 
     renderLeaderboard();
   }, (err) => {
@@ -111,6 +132,8 @@ function switchLeaderboardTab(tab) {
 }
 
 function renderLeaderboard() {
+  if (!cachedLeaderboardData || cachedLeaderboardData.length === 0) return;
+
   const sorted = [...cachedLeaderboardData].sort((a, b) => b[currentTab] - a[currentTab]);
 
   renderPodium(sorted.slice(0, 3));

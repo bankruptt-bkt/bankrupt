@@ -1,11 +1,10 @@
 // ==========================================
-// LEADERBOARD LOGIC (DYNAMIC LOGO MAPPING & REALTIME RANK)
+// LEADERBOARD LOGIC (REAL-TIME BALANCE & DYNAMIC RANK LOGOS)
 // ==========================================
 
-const FALLBACK_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=Bankrupt";
-const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 Hours in milliseconds
+const FALLBACK_AVATAR = "assets/images/profile/rookie.jpg";
+const SYNC_INTERVAL_MS = 10 * 60 * 1000; // 10 Minutes Cache
 
-// LEADERBOARD DIRECTORY ASSETS
 const LEADERBOARD_IMG_PATH = "assets/images/leaderboard/";
 const LOGO_MAP = {
   rank1: LEADERBOARD_IMG_PATH + "rank1.jpg",
@@ -22,33 +21,32 @@ const LOGO_MAP = {
   legend: LEADERBOARD_IMG_PATH + "legend.jpg"
 };
 
-let currentTab = "balance"; // "balance" | "streak" | "referrals"
+let currentTab = "balance";
 let cachedLeaderboardData = [];
 let currentUserId = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // Load leaderboard immediately so data displays right away
-  await loadOrSyncLeaderboard();
-  renderLeaderboard();
+document.addEventListener("DOMContentLoaded", () => {
+  setupAuthListener();
+});
 
-  // Listen for user auth state to link "YOU" card
-  try {
-    const authInstance = getAuth();
-    if (authInstance) {
-      authInstance.onAuthStateChanged((user) => {
+function setupAuthListener() {
+  const checkAuth = setInterval(() => {
+    if (typeof firebase !== "undefined" && firebase.auth) {
+      clearInterval(checkAuth);
+      firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
           currentUserId = user.uid;
+        }
+        await loadOrSyncLeaderboard();
+        renderLeaderboard();
+        if (user) {
           listenToUserRealtimeData(user.uid);
-          updateUserRankCard(cachedLeaderboardData);
         }
       });
     }
-  } catch(e) {
-    console.warn("Auth initialization pending...", e);
-  }
-});
+  }, 100);
+}
 
-// Helper to determine which rank image/badge to display for a user
 function getLeaderboardBadge(rankNumber, userTierKey) {
   if (rankNumber === 1) return LOGO_MAP.rank1;
   if (rankNumber === 2) return LOGO_MAP.rank2;
@@ -67,53 +65,33 @@ function getLeaderboardBadge(rankNumber, userTierKey) {
   return LOGO_MAP.bronze;
 }
 
-// 24-Hour Synchronization & Caching Engine
 async function loadOrSyncLeaderboard() {
-  const dbInstance = typeof getDb === "function" ? getDb() : (window.db || null);
-  if (!dbInstance) {
-    console.error("Firebase DB instance not ready.");
-    return;
-  }
-
-  const localCache = localStorage.getItem("bkt_leaderboard_cache");
-  const lastSyncTime = localStorage.getItem("bkt_leaderboard_last_sync");
-  const now = Date.now();
-
-  if (localCache && lastSyncTime && (now - parseInt(lastSyncTime, 10) < SYNC_INTERVAL_MS)) {
-    try {
-      cachedLeaderboardData = JSON.parse(localCache);
-      if (cachedLeaderboardData.length > 0) return;
-    } catch (e) {
-      console.warn("Failed to parse local leaderboard cache, re-fetching...");
-    }
-  }
+  const dbInstance = typeof firebase !== "undefined" ? firebase.database() : null;
+  if (!dbInstance) return;
 
   try {
     const snap = await dbInstance.ref("users").once("value");
     const usersObj = snap.val() || {};
     
-    const userList = Object.keys(usersObj).map((uidKey) => {
+    cachedLeaderboardData = Object.keys(usersObj).map((uidKey) => {
       const u = usersObj[uidKey];
       return {
         uid: uidKey,
-        name: u.displayName || ("Miner_" + uidKey.substring(0, 5)),
-        avatar: u.activeProfileLogo || "assets/images/profile/rookie.jpg",
-        tier: u.userTier || null,
-        balance: parseFloat(u.balance || 0),
-        streak: parseInt(u.streakDays || 0, 10),
-        referrals: parseInt(u.referralsUsed || 0, 10)
+        name: u.displayName || u.username || ("Miner_" + uidKey.substring(0, 5)),
+        avatar: u.activeProfileLogo || u.avatar || u.photoURL || FALLBACK_AVATAR,
+        tier: u.userTier || u.badge || null,
+        balance: parseFloat(u.balance || u.bktBalance || 0),
+        streak: parseInt(u.streakDays || u.streak || 0, 10),
+        referrals: parseInt(u.referralsUsed || u.referrals || 0, 10)
       };
     });
 
-    cachedLeaderboardData = userList;
-    localStorage.setItem("bkt_leaderboard_cache", JSON.stringify(userList));
-    localStorage.setItem("bkt_leaderboard_last_sync", now.toString());
+    localStorage.setItem("bkt_leaderboard_cache", JSON.stringify(cachedLeaderboardData));
   } catch (err) {
     console.error("Leaderboard synchronization error:", err);
   }
 }
 
-// Tab Switcher Handler
 function switchLeaderboardTab(tab) {
   if (currentTab === tab) return;
   currentTab = tab;
@@ -130,7 +108,6 @@ function switchLeaderboardTab(tab) {
   renderLeaderboard();
 }
 
-// Render Podium & Ranked List
 function renderLeaderboard() {
   const sorted = [...cachedLeaderboardData].sort((a, b) => b[currentTab] - a[currentTab]);
 
@@ -139,7 +116,6 @@ function renderLeaderboard() {
   updateUserRankCard(sorted);
 }
 
-// Render Top 3 Podium Cards
 function renderPodium(top3) {
   const container = document.getElementById("podium-container");
   if (!container) return;
@@ -148,21 +124,21 @@ function renderPodium(top3) {
 
   const displayOrder = [
     { rank: 2, data: top3[1], border: "border-gray-400", logo: LOGO_MAP.rank2, height: "h-36" },
-    { rank: 1, data: top3[0], border: "border-yellow-400", logo: LOGO_MAP.rank1, height: "h-44", isCrown: true },
+    { rank: 1, data: top3[0], border: "border-yellow-400", logo: LOGO_MAP.rank1, height: "h-44" },
     { rank: 3, data: top3[2], border: "border-amber-700", logo: LOGO_MAP.rank3, height: "h-36" }
   ];
 
   displayOrder.forEach((item) => {
-    const user = item.data || { name: "N/A", avatar: "", [currentTab]: 0 };
+    const user = item.data || { name: "N/A", avatar: FALLBACK_AVATAR, [currentTab]: 0 };
     const valueFormatted = formatTabScore(user[currentTab]);
 
     const card = document.createElement("div");
-    card.className = `card-bg rounded-2xl p-3 flex flex-col items-center justify-between text-center ${item.height} relative`;
+    card.className = `card-bg rounded-2xl p-3 flex flex-col items-center justify-between text-center ${item.height} relative w-full`;
 
     card.innerHTML = `
       <div class="relative mt-1">
         <div class="w-14 h-14 rounded-full border-2 ${item.border} overflow-hidden bg-[#0a0d0b] flex items-center justify-center">
-          <img src="${user.avatar || 'assets/images/profile/rookie.jpg'}" alt="${user.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${FALLBACK_AVATAR}';">
+          <img src="${user.avatar}" alt="${user.name}" class="w-full h-full object-cover" onerror="this.src='${FALLBACK_AVATAR}';">
         </div>
         <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full overflow-hidden border border-black/50 shadow-md">
           <img src="${item.logo}" alt="Rank ${item.rank}" class="w-full h-full object-cover"/>
@@ -180,7 +156,6 @@ function renderPodium(top3) {
   });
 }
 
-// Render Rankings 4 and onwards
 function renderList(listData) {
   const container = document.getElementById("leaderboard-list");
   if (!container) return;
@@ -206,7 +181,7 @@ function renderList(listData) {
           <img src="${badgeImg}" alt="Badge" class="w-4 h-4 rounded-full object-cover border border-gray-700"/>
         </div>
         <div class="w-8 h-8 rounded-full overflow-hidden bg-[#0a0d0b] border border-gray-800">
-          <img src="${user.avatar || 'assets/images/profile/rookie.jpg'}" alt="${user.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${FALLBACK_AVATAR}';">
+          <img src="${user.avatar}" alt="${user.name}" class="w-full h-full object-cover" onerror="this.src='${FALLBACK_AVATAR}';">
         </div>
         <span class="font-semibold text-xs text-white truncate max-w-[120px]">${user.name}</span>
       </div>
@@ -219,7 +194,6 @@ function renderList(listData) {
   });
 }
 
-// Update Fixed Bottom User Rank Card
 function updateUserRankCard(sortedList) {
   if (!currentUserId || !sortedList.length) return;
 
@@ -236,35 +210,28 @@ function updateUserRankCard(sortedList) {
     if (subtextElem) subtextElem.innerText = `#${(rankIndex + 1).toLocaleString()} of ${sortedList.length.toLocaleString()} miners`;
     if (scoreElem) scoreElem.innerText = `${formatTabScore(userObj[currentTab])} ${getTabUnit()}`;
     if (avatarElem && userObj.avatar) avatarElem.src = userObj.avatar;
-  } else {
-    if (rankElem) rankElem.innerText = "#-";
-    if (subtextElem) subtextElem.innerText = "Unranked";
   }
 }
 
-// Real-time update listener for current user
 function listenToUserRealtimeData(uid) {
-  const dbInstance = typeof getDb === "function" ? getDb() : (window.db || null);
-  if (!dbInstance) return;
+  if (typeof firebase === "undefined") return;
 
-  dbInstance.ref("users/" + uid).on("value", (snap) => {
+  firebase.database().ref("users/" + uid).on("value", (snap) => {
     const data = snap.val() || {};
     
     const existingIndex = cachedLeaderboardData.findIndex((u) => u.uid === uid);
     if (existingIndex !== -1) {
-      cachedLeaderboardData[existingIndex].balance = parseFloat(data.balance || 0);
-      cachedLeaderboardData[existingIndex].streak = parseInt(data.streakDays || 0, 10);
-      cachedLeaderboardData[existingIndex].referrals = parseInt(data.referralsUsed || 0, 10);
-      cachedLeaderboardData[existingIndex].avatar = data.activeProfileLogo || "assets/images/profile/rookie.jpg";
-      cachedLeaderboardData[existingIndex].tier = data.userTier || null;
+      cachedLeaderboardData[existingIndex].balance = parseFloat(data.balance || data.bktBalance || 0);
+      cachedLeaderboardData[existingIndex].streak = parseInt(data.streakDays || data.streak || 0, 10);
+      cachedLeaderboardData[existingIndex].referrals = parseInt(data.referralsUsed || data.referrals || 0, 10);
+      cachedLeaderboardData[existingIndex].avatar = data.activeProfileLogo || data.avatar || FALLBACK_AVATAR;
+      cachedLeaderboardData[existingIndex].name = data.displayName || data.username || cachedLeaderboardData[existingIndex].name;
       
-      localStorage.setItem("bkt_leaderboard_cache", JSON.stringify(cachedLeaderboardData));
       renderLeaderboard();
     }
   });
 }
 
-// Formatting Helpers
 function formatTabScore(val) {
   if (currentTab === "balance") {
     return (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });

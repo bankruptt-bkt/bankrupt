@@ -1,8 +1,6 @@
 // ==========================================
 // CONFIGURATION & GLOBAL STATES
 // ==========================================
-const ADMIN_PASSCODE = "98309308@Bktadmin"; 
-
 const ALLOWED_ADMIN_EMAILS = [
   "probhats208@gmail.com"
 ];
@@ -19,41 +17,25 @@ function getAuth() {
 }
 
 // ==========================================
-// 1. AUTHENTICATION & SECURITY GATEWAY
+// 1. GOOGLE OAUTH SECURITY GATEWAY
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-  // Check if session was previously unlocked via passcode
-  if (sessionStorage.getItem("admin_authenticated") === "true") {
-    unlockPanelUI("Passcode Authenticated");
-  }
-
   const authInstance = getAuth();
   if (authInstance) {
     authInstance.onAuthStateChanged((user) => {
       if (user) {
         if (ALLOWED_ADMIN_EMAILS.includes(user.email)) {
           unlockPanelUI(`Google Admin: ${user.email}`);
-        } else if (sessionStorage.getItem("admin_authenticated") !== "true") {
+        } else {
           showAuthError(`Access Denied: ${user.email} is not authorized.`);
+          lockAdminUI();
         }
+      } else {
+        lockAdminUI();
       }
     });
   }
 });
-
-function verifyPasscode() {
-  const inputEl = document.getElementById("admin-passcode-input");
-  
-  if (!inputEl) return;
-
-  if (inputEl.value === ADMIN_PASSCODE) {
-    sessionStorage.setItem("admin_authenticated", "true");
-    unlockPanelUI("Session Verified");
-    showAuthError(""); // Clear any error message
-  } else {
-    showAuthError("Invalid Admin Passcode.");
-  }
-}
 
 function signInAdminGoogle() {
   const authInstance = getAuth();
@@ -87,8 +69,15 @@ function unlockPanelUI(identityLabel) {
   initAdminScreener();
 }
 
+function lockAdminUI() {
+  const overlay = document.getElementById("admin-auth-overlay");
+  const content = document.getElementById("admin-main-content");
+
+  if (overlay) overlay.classList.remove("hidden");
+  if (content) content.classList.add("hidden");
+}
+
 function lockAdminPanel() {
-  sessionStorage.removeItem("admin_authenticated");
   const authInstance = getAuth();
   if (authInstance) authInstance.signOut();
   window.location.reload();

@@ -27,12 +27,28 @@ function handleTelegramClick() {
   openComingSoon("Telegram Channel");
 }
 
+// Initialize Telegram Mini App SDK
+if (window.Telegram && window.Telegram.WebApp) {
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand(); // Expands app to full height inside Telegram
+}
+
 // ==========================================
 // 1. GLOBAL SYSTEM LISTENERS & AUTH GUARD
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
   const authInstance = getAuth();
   const dbInstance = getDb();
+
+  // Catch pending Google Redirect results on page reload
+  if (authInstance) {
+    authInstance.getRedirectResult().catch((error) => {
+      if (error && error.code) {
+        console.error("Redirect Sign-In Error:", error.message);
+      }
+    });
+  }
 
   // Global Maintenance Mode Check
   if (dbInstance) {
@@ -105,7 +121,6 @@ function listenToUserData(uid) {
         streakDays: data.streakDays || 0,
         lastCheckIn: data.lastCheckIn || 0,
         referralsUsed: data.referralsUsed || 0,
-        // Default base limit is 10 plus extra granted by admin in referralsCount
         referralsAllowed: 10 + (data.referralsCount || 0)
       };
     } else {
@@ -122,7 +137,6 @@ function listenToUserData(uid) {
   });
 }
 
-// Listen for uncompleted tasks and trigger home page badge updates
 function listenToUncompletedTasks(uid) {
   const dbInstance = getDb();
   if (!dbInstance) return;
@@ -322,7 +336,6 @@ function updateReferralModalUI() {
   const counterEl = document.getElementById('ref-modal-counter');
   const warningEl = document.getElementById('ref-limit-warning');
 
-  // Build full unique URL with user UID parameter
   const uniqueLink = `${window.location.origin}${window.location.pathname}?ref=${currentUser.uid}`;
 
   if (linkInput) linkInput.value = uniqueLink;
@@ -353,6 +366,29 @@ function copyReferralLink() {
     document.execCommand('copy');
     alert("Referral link copied!");
   });
+}
+
+// ==========================================
+// GOOGLE AUTH HANDLER FOR TELEGRAM & BROWSER
+// ==========================================
+function signInWithGoogle() {
+  const authInstance = getAuth();
+  if (!authInstance) return;
+
+  const provider = new firebase.auth.GoogleAuthProvider();
+  const isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData;
+
+  if (isTelegram) {
+    // Redirect mode prevents Telegram's embedded browser from closing auth popups
+    authInstance.signInWithRedirect(provider);
+  } else {
+    // Normal browser popup
+    authInstance.signInWithPopup(provider).catch((error) => {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        alert("Google Sign-In Error: " + error.message);
+      }
+    });
+  }
 }
 
 // ==========================================

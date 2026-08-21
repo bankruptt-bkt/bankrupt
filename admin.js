@@ -180,14 +180,14 @@ async function handleGrantBonus() {
 }
 
 // ==========================================
-// 4. ADD ADDITIONAL REFERRALS
+// 4. ADD ADDITIONAL REFERRAL SLOTS / COUNTS
 // ==========================================
 async function handleAddReferrals() {
   const uid = document.getElementById('ref-uid-input').value.trim();
   const refCountStr = document.getElementById('ref-count-input').value.trim();
-  const additionalRefs = parseInt(refCountStr, 10);
+  const additionalSlots = parseInt(refCountStr, 10);
 
-  if (!uid || isNaN(additionalRefs) || additionalRefs <= 0) {
+  if (!uid || isNaN(additionalSlots) || additionalSlots <= 0) {
     alert("Please enter a valid User UID and positive referral count.");
     return;
   }
@@ -198,19 +198,19 @@ async function handleAddReferrals() {
   const userRef = dbInstance.ref(`users/${uid}`);
 
   try {
-    const result = await userRef.child('referralsCount').transaction((currentCount) => {
-      return (currentCount || 0) + additionalRefs;
+    const result = await userRef.child('bonusReferralSlots').transaction((currentSlots) => {
+      return (currentSlots || 0) + additionalSlots;
     });
 
     if (result.committed) {
-      alert(`Successfully added +${additionalRefs} referrals to User: ${uid}`);
+      alert(`Successfully added +${additionalSlots} invite slots to User: ${uid}`);
       document.getElementById('ref-uid-input').value = '';
       document.getElementById('ref-count-input').value = '';
     } else {
-      alert("Failed to update referrals. Please verify the UID.");
+      alert("Failed to update referral slots. Please verify the UID.");
     }
   } catch (error) {
-    alert("Error updating referrals: " + error.message);
+    alert("Error updating referral slots: " + error.message);
   }
 }
 

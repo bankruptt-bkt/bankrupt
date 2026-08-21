@@ -1,9 +1,26 @@
 // ==========================================
-// LEADERBOARD LOGIC (24H SYNC & REALTIME RANK)
+// LEADERBOARD LOGIC (DYNAMIC LOGO MAPPING & REALTIME RANK)
 // ==========================================
 
 const FALLBACK_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=Bankrupt";
 const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 Hours in milliseconds
+
+// LEADERBOARD DIRECTORY ASSETS
+const LEADERBOARD_IMG_PATH = "assets/images/leaderboard/";
+const LOGO_MAP = {
+  rank1: LEADERBOARD_IMG_PATH + "rank1.jpg",
+  rank2: LEADERBOARD_IMG_PATH + "rank2.jpg",
+  rank3: LEADERBOARD_IMG_PATH + "rank3.jpg",
+  top10: LEADERBOARD_IMG_PATH + "top10.jpg",
+  bkt_og: LEADERBOARD_IMG_PATH + "bkt_og.jpg",
+  gold: LEADERBOARD_IMG_PATH + "gold.jpg",
+  silver: LEADERBOARD_IMG_PATH + "silver.jpg",
+  bronze: LEADERBOARD_IMG_PATH + "bronze.jpg",
+  daimond: LEADERBOARD_IMG_PATH + "daimond.jpg",
+  platinum: LEADERBOARD_IMG_PATH + "platinum.jpg",
+  elite: LEADERBOARD_IMG_PATH + "elite.jpg",
+  legend: LEADERBOARD_IMG_PATH + "legend.jpg"
+};
 
 let currentTab = "balance"; // "balance" | "streak" | "referrals"
 let cachedLeaderboardData = [];
@@ -22,6 +39,27 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+// Helper to determine which rank image/badge to display for a user
+function getLeaderboardBadge(rankNumber, userTierKey) {
+  if (rankNumber === 1) return LOGO_MAP.rank1;
+  if (rankNumber === 2) return LOGO_MAP.rank2;
+  if (rankNumber === 3) return LOGO_MAP.rank3;
+  if (rankNumber <= 10) return LOGO_MAP.top10;
+  
+  // Custom user tier fallback check if provided by DB (e.g. userTierKey = "legend")
+  if (userTierKey && LOGO_MAP[userTierKey]) {
+    return LOGO_MAP[userTierKey];
+  }
+
+  // General Rank Bracket Badges
+  if (rankNumber <= 50) return LOGO_MAP.legend;
+  if (rankNumber <= 100) return LOGO_MAP.daimond;
+  if (rankNumber <= 250) return LOGO_MAP.platinum;
+  if (rankNumber <= 500) return LOGO_MAP.gold;
+  if (rankNumber <= 1000) return LOGO_MAP.silver;
+  return LOGO_MAP.bronze;
+}
+
 // Primary initialization
 async function initLeaderboard(uid) {
   await loadOrSyncLeaderboard();
@@ -38,7 +76,6 @@ async function loadOrSyncLeaderboard() {
   const lastSyncTime = localStorage.getItem("bkt_leaderboard_last_sync");
   const now = Date.now();
 
-  // If cache exists and is younger than 24 hours, use local cache
   if (localCache && lastSyncTime && (now - parseInt(lastSyncTime, 10) < SYNC_INTERVAL_MS)) {
     try {
       cachedLeaderboardData = JSON.parse(localCache);
@@ -48,7 +85,6 @@ async function loadOrSyncLeaderboard() {
     }
   }
 
-  // Otherwise perform a full DB synchronization snapshot
   try {
     const snap = await dbInstance.ref("users").once("value");
     const usersObj = snap.val() || {};
@@ -59,6 +95,7 @@ async function loadOrSyncLeaderboard() {
         uid: uidKey,
         name: u.displayName || ("Miner_" + uidKey.substring(0, 5)),
         avatar: u.activeProfileLogo || "assets/images/profile/rookie.jpg",
+        tier: u.userTier || null,
         balance: parseFloat(u.balance || 0),
         streak: parseInt(u.streakDays || 0, 10),
         referrals: parseInt(u.referralsUsed || 0, 10)
@@ -78,15 +115,12 @@ function switchLeaderboardTab(tab) {
   if (currentTab === tab) return;
   currentTab = tab;
 
-  // Update tab visual states
   ["balance", "streak", "referrals"].forEach((t) => {
     const btn = document.getElementById(`tab-${t}`);
     if (btn) {
-      if (t === tab) {
-        btn.className = "py-2 text-xs rounded-lg transition-all tab-active";
-      } else {
-        btn.className = "py-2 text-xs rounded-lg text-gray-400 hover:text-white transition-all font-medium";
-      }
+      btn.className = (t === tab) 
+        ? "py-2 text-xs rounded-lg transition-all tab-active" 
+        : "py-2 text-xs rounded-lg text-gray-400 hover:text-white transition-all font-medium";
     }
   });
 
@@ -95,7 +129,6 @@ function switchLeaderboardTab(tab) {
 
 // Render Podium & Ranked List
 function renderLeaderboard() {
-  // Sort dataset based on active tab
   const sorted = [...cachedLeaderboardData].sort((a, b) => b[currentTab] - a[currentTab]);
 
   renderPodium(sorted.slice(0, 3));
@@ -103,18 +136,17 @@ function renderLeaderboard() {
   updateUserRankCard(sorted);
 }
 
-// Render Top 3 Podium Cards
+// Render Top 3 Podium Cards with Custom Rank Logos
 function renderPodium(top3) {
   const container = document.getElementById("podium-container");
   if (!container) return;
 
   container.innerHTML = "";
 
-  // Visual layout mapping: [Rank 2 (Left), Rank 1 (Center), Rank 3 (Right)]
   const displayOrder = [
-    { rank: 2, data: top3[1], border: "border-gray-400", badge: "2", height: "h-36" },
-    { rank: 1, data: top3[0], border: "border-yellow-400", badge: "👑", height: "h-44", isCrown: true },
-    { rank: 3, data: top3[2], border: "border-amber-700", badge: "3", height: "h-36" }
+    { rank: 2, data: top3[1], border: "border-gray-400", logo: LOGO_MAP.rank2, height: "h-36" },
+    { rank: 1, data: top3[0], border: "border-yellow-400", logo: LOGO_MAP.rank1, height: "h-44", isCrown: true },
+    { rank: 3, data: top3[2], border: "border-amber-700", logo: LOGO_MAP.rank3, height: "h-36" }
   ];
 
   displayOrder.forEach((item) => {
@@ -129,8 +161,8 @@ function renderPodium(top3) {
         <div class="w-14 h-14 rounded-full border-2 ${item.border} overflow-hidden bg-[#0a0d0b] flex items-center justify-center">
           <img src="${user.avatar || 'assets/images/profile/rookie.jpg'}" alt="${user.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${FALLBACK_AVATAR}';">
         </div>
-        <div class="absolute -top-3 left-1/2 -translate-x-1/2 ${item.isCrown ? 'text-yellow-400 text-sm' : 'bg-gray-800 border border-gray-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold'}">
-          ${item.badge}
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full overflow-hidden border border-black/50 shadow-md">
+          <img src="${item.logo}" alt="Rank ${item.rank}" class="w-full h-full object-cover"/>
         </div>
       </div>
 
@@ -145,7 +177,7 @@ function renderPodium(top3) {
   });
 }
 
-// Render Rankings 4 and onwards
+// Render Rankings 4 and onwards with Rank/Tier Badge Logos
 function renderList(listData) {
   const container = document.getElementById("leaderboard-list");
   if (!container) return;
@@ -159,12 +191,17 @@ function renderList(listData) {
 
   listData.forEach((user, idx) => {
     const rankNum = idx + 4;
+    const badgeImg = getLeaderboardBadge(rankNum, user.tier);
+
     const item = document.createElement("div");
     item.className = "card-bg rounded-xl p-3 flex items-center justify-between border border-[#1c2620]";
 
     item.innerHTML = `
       <div class="flex items-center gap-3">
-        <span class="font-bold text-xs text-gray-400 w-4 text-center">${rankNum}</span>
+        <div class="flex items-center gap-1.5 w-10">
+          <span class="font-bold text-xs text-gray-400 w-4 text-center">${rankNum}</span>
+          <img src="${badgeImg}" alt="Badge" class="w-4 h-4 rounded-full object-cover border border-gray-700"/>
+        </div>
         <div class="w-8 h-8 rounded-full overflow-hidden bg-[#0a0d0b] border border-gray-800">
           <img src="${user.avatar || 'assets/images/profile/rookie.jpg'}" alt="${user.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${FALLBACK_AVATAR}';">
         </div>
@@ -179,7 +216,7 @@ function renderList(listData) {
   });
 }
 
-// Update Fixed User Rank Card
+// Update Fixed Bottom User Rank Card
 function updateUserRankCard(sortedList) {
   if (!currentUserId) return;
 
@@ -192,7 +229,7 @@ function updateUserRankCard(sortedList) {
   const avatarElem = document.getElementById("user-rank-avatar");
 
   if (rankIndex !== -1 && userObj) {
-    if (rankElem) rankElem.innerText = `${rankIndex + 1}`;
+    if (rankElem) rankElem.innerText = `#${rankIndex + 1}`;
     if (subtextElem) subtextElem.innerText = `#${(rankIndex + 1).toLocaleString()} of ${sortedList.length.toLocaleString()} miners`;
     if (scoreElem) scoreElem.innerText = `${formatTabScore(userObj[currentTab])} ${getTabUnit()}`;
     if (avatarElem && userObj.avatar) avatarElem.src = userObj.avatar;
@@ -202,7 +239,7 @@ function updateUserRankCard(sortedList) {
   }
 }
 
-// Real-time update for current user's balance/stats on the sticky card
+// Real-time update listener for current user
 function listenToUserRealtimeData(uid) {
   const dbInstance = getDb();
   if (!dbInstance) return;
@@ -210,18 +247,15 @@ function listenToUserRealtimeData(uid) {
   dbInstance.ref("users/" + uid).on("value", (snap) => {
     const data = snap.val() || {};
     
-    // Update local cache entry for current user real-time
     const existingIndex = cachedLeaderboardData.findIndex((u) => u.uid === uid);
     if (existingIndex !== -1) {
       cachedLeaderboardData[existingIndex].balance = parseFloat(data.balance || 0);
       cachedLeaderboardData[existingIndex].streak = parseInt(data.streakDays || 0, 10);
       cachedLeaderboardData[existingIndex].referrals = parseInt(data.referralsUsed || 0, 10);
       cachedLeaderboardData[existingIndex].avatar = data.activeProfileLogo || "assets/images/profile/rookie.jpg";
+      cachedLeaderboardData[existingIndex].tier = data.userTier || null;
       
-      // Save back to local storage
       localStorage.setItem("bkt_leaderboard_cache", JSON.stringify(cachedLeaderboardData));
-      
-      // Re-render view with new real-time values
       renderLeaderboard();
     }
   });

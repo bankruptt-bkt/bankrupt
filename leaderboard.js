@@ -1,81 +1,72 @@
 // ==========================================
-// LEADERBOARD LOGIC (FAST CACHE & REALTIME SYNC)
+// 24-HOUR SYNCHRONIZED LEADERBOARD LOGIC
 // ==========================================
 
 const FALLBACK_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=Bankrupt";
 const LEADERBOARD_IMG_PATH = "assets/images/leaderboard/";
+const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 Hours
 
 const LOGO_MAP = {
   rank1: LEADERBOARD_IMG_PATH + "rank1.jpg",
   rank2: LEADERBOARD_IMG_PATH + "rank2.jpg",
   rank3: LEADERBOARD_IMG_PATH + "rank3.jpg",
   top10: LEADERBOARD_IMG_PATH + "top10.jpg",
-  bkt_og: LEADERBOARD_IMG_PATH + "bkt_og.jpg",
   gold: LEADERBOARD_IMG_PATH + "gold.jpg",
   silver: LEADERBOARD_IMG_PATH + "silver.jpg",
   bronze: LEADERBOARD_IMG_PATH + "bronze.jpg",
   daimond: LEADERBOARD_IMG_PATH + "daimond.jpg",
   platinum: LEADERBOARD_IMG_PATH + "platinum.jpg",
-  elite: LEADERBOARD_IMG_PATH + "elite.jpg",
   legend: LEADERBOARD_IMG_PATH + "legend.jpg"
 };
 
 let currentTab = "balance";
-let cachedLeaderboardData = [];
+let leaderboardUsers = [];
 let currentUserId = null;
 
-function getAuthInstance() {
-  return window.auth || (typeof firebase !== 'undefined' ? firebase.auth() : null);
-}
-
-function getDbInstance() {
-  return window.db || (typeof firebase !== 'undefined' ? firebase.database() : null);
-}
-
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Instant Cache Load (Prevents endless "Loading..." screen)
-  loadCachedLeaderboard();
-  
-  // 2. Initialize Firebase realtime connection
   initLeaderboard();
 });
 
-function loadCachedLeaderboard() {
-  try {
-    const rawCache = localStorage.getItem("bkt_leaderboard_cache");
-    if (rawCache) {
-      cachedLeaderboardData = JSON.parse(rawCache);
-      if (cachedLeaderboardData.length > 0) {
-        renderLeaderboard();
-      }
-    }
-  } catch (e) {
-    console.warn("Local leaderboard cache parse failed:", e);
-  }
-}
-
 function initLeaderboard() {
-  const authInstance = getAuthInstance();
-  const dbInstance = getDbInstance();
+  const authInstance = window.auth || (typeof firebase !== 'undefined' ? firebase.auth() : null);
+  const dbInstance = window.db || (typeof firebase !== 'undefined' ? firebase.database() : null);
 
-  if (!authInstance || !dbInstance) {
+  if (!dbInstance) {
     setTimeout(initLeaderboard, 100);
     return;
   }
 
-  authInstance.onAuthStateChanged((user) => {
-    if (user) {
-      currentUserId = user.uid;
-      // Re-render once user ID is known to highlight "YOU" card
-      renderLeaderboard();
-    }
-  });
+  // Get current user ID for the bottom card highlight
+  if (authInstance) {
+    authInstance.onAuthStateChanged((user) => {
+      if (user) {
+        currentUserId = user.uid;
+        updateUserRankCard();
+      }
+    });
+  }
 
-  // Realtime global users listener with optimized fetch
-  dbInstance.ref("users").on("value", (snap) => {
-    const usersObj = snap.val() || {};
-    
-    cachedLeaderboardData = Object.keys(usersObj).map((uidKey) => {
+  // Check 24-hour sync cache
+  const lastSync = localStorage.getItem("bkt_leaderboard_last_sync");
+  const cachedData = localStorage.getItem("bkt_leaderboard_data");
+  const now = Date.now();
+
+  if (cachedData && lastSync && (now - parseInt(lastSync, 10) < SYNC_INTERVAL_MS)) {
+    // Load directly from 24h cache (Instant load)
+    try {
+      leaderboardUsers = JSON.parse(cachedData);
+      renderLeaderboard();
+      return;
+    } catch (e) {
+      console.warn("Failed to parse cached leaderboard, fetching fresh data...");
+    }
+  }
+
+  // Fetch directly from Firebase Realtime Database once every 24 hours
+  dbInstance.ref("users").once("value").then((snapshot) => {
+    const usersObj = snapshot.val() || {};
+
+    leaderboardUsers = Object.keys(usersObj).map((uidKey) => {
       const u = usersObj[uidKey];
       return {
         uid: uidKey,
@@ -88,31 +79,14 @@ function initLeaderboard() {
       };
     });
 
-    // Cache updated data locally for sub-second loads next time
-    localStorage.setItem("bkt_leaderboard_cache", JSON.stringify(cachedLeaderboardData));
+    // Save sync timestamp and dataset
+    localStorage.setItem("bkt_leaderboard_last_sync", now.toString());
+    localStorage.setItem("bkt_leaderboard_data", JSON.stringify(leaderboardUsers));
 
     renderLeaderboard();
-  }, (err) => {
-    console.error("Leaderboard Realtime Sync Error:", err);
+  }).catch((err) => {
+    console.error("Firebase Leaderboard fetch failed:", err);
   });
-}
-
-function getLeaderboardBadge(rankNumber, userTierKey) {
-  if (rankNumber === 1) return LOGO_MAP.rank1;
-  if (rankNumber === 2) return LOGO_MAP.rank2;
-  if (rankNumber === 3) return LOGO_MAP.rank3;
-  if (rankNumber <= 10) return LOGO_MAP.top10;
-  
-  if (userTierKey && LOGO_MAP[userTierKey]) {
-    return LOGO_MAP[userTierKey];
-  }
-
-  if (rankNumber <= 50) return LOGO_MAP.legend;
-  if (rankNumber <= 100) return LOGO_MAP.daimond;
-  if (rankNumber <= 250) return LOGO_MAP.platinum;
-  if (rankNumber <= 500) return LOGO_MAP.gold;
-  if (rankNumber <= 1000) return LOGO_MAP.silver;
-  return LOGO_MAP.bronze;
 }
 
 function switchLeaderboardTab(tab) {
@@ -131,10 +105,24 @@ function switchLeaderboardTab(tab) {
   renderLeaderboard();
 }
 
-function renderLeaderboard() {
-  if (!cachedLeaderboardData || cachedLeaderboardData.length === 0) return;
+function getRankLogo(rankNumber) {
+  if (rankNumber === 1) return LOGO_MAP.rank1;
+  if (rankNumber === 2) return LOGO_MAP.rank2;
+  if (rankNumber === 3) return LOGO_MAP.rank3;
+  if (rankNumber <= 10) return LOGO_MAP.top10;
+  if (rankNumber <= 50) return LOGO_MAP.legend;
+  if (rankNumber <= 100) return LOGO_MAP.daimond;
+  if (rankNumber <= 250) return LOGO_MAP.platinum;
+  if (rankNumber <= 500) return LOGO_MAP.gold;
+  if (rankNumber <= 1000) return LOGO_MAP.silver;
+  return LOGO_MAP.bronze;
+}
 
-  const sorted = [...cachedLeaderboardData].sort((a, b) => b[currentTab] - a[currentTab]);
+function renderLeaderboard() {
+  if (!leaderboardUsers || leaderboardUsers.length === 0) return;
+
+  // Sort by active tab metric (Highest to Lowest)
+  const sorted = [...leaderboardUsers].sort((a, b) => b[currentTab] - a[currentTab]);
 
   renderPodium(sorted.slice(0, 3));
   renderList(sorted.slice(3));
@@ -154,9 +142,8 @@ function renderPodium(top3) {
   ];
 
   displayOrder.forEach((item) => {
-    const user = item.data || { name: "Empty", avatar: FALLBACK_AVATAR, balance: 0, streak: 0, referrals: 0 };
+    const user = item.data || { name: "Miner", avatar: FALLBACK_AVATAR, balance: 0, streak: 0, referrals: 0 };
     const rawVal = user[currentTab] || 0;
-    const valueFormatted = formatTabScore(rawVal);
 
     const card = document.createElement("div");
     card.className = `card-bg rounded-2xl p-3 flex flex-col items-center justify-between text-center ${item.height} relative w-full`;
@@ -173,7 +160,7 @@ function renderPodium(top3) {
 
       <div class="w-full truncate px-1">
         <p class="font-bold text-xs text-white truncate">${user.name}</p>
-        <p class="text-xs font-black text-[#00ff66] tracking-tight mt-0.5">${valueFormatted}</p>
+        <p class="text-xs font-black text-[#00ff66] tracking-tight mt-0.5">${formatScore(rawVal)}</p>
         <p class="text-[9px] text-gray-500 uppercase">${getTabUnit()}</p>
       </div>
     `;
@@ -187,7 +174,7 @@ function renderList(listData) {
   if (!container) return;
 
   if (listData.length === 0) {
-    container.innerHTML = `<p class="text-center text-xs text-gray-500 py-4">No additional rankings available.</p>`;
+    container.innerHTML = `<p class="text-center text-xs text-gray-500 py-4">No additional rankings.</p>`;
     return;
   }
 
@@ -195,7 +182,7 @@ function renderList(listData) {
 
   listData.forEach((user, idx) => {
     const rankNum = idx + 4;
-    const badgeImg = getLeaderboardBadge(rankNum, user.tier);
+    const badgeImg = getRankLogo(rankNum);
 
     const item = document.createElement("div");
     item.className = "card-bg rounded-xl p-3 flex items-center justify-between border border-[#1c2620]";
@@ -212,7 +199,7 @@ function renderList(listData) {
         <span class="font-semibold text-xs text-white truncate max-w-[120px]">${user.name}</span>
       </div>
       <div class="text-right">
-        <span class="font-bold text-xs text-white">${formatTabScore(user[currentTab])} ${getTabUnit()}</span>
+        <span class="font-bold text-xs text-white">${formatScore(user[currentTab])} ${getTabUnit()}</span>
       </div>
     `;
 
@@ -220,8 +207,8 @@ function renderList(listData) {
   });
 }
 
-function updateUserRankCard(sortedList) {
-  if (!currentUserId || !sortedList.length) return;
+function updateUserRankCard(sortedList = []) {
+  if (!currentUserId || sortedList.length === 0) return;
 
   const rankIndex = sortedList.findIndex((u) => u.uid === currentUserId);
   const userObj = sortedList[rankIndex];
@@ -233,17 +220,17 @@ function updateUserRankCard(sortedList) {
 
   if (rankIndex !== -1 && userObj) {
     if (rankElem) rankElem.innerText = `#${rankIndex + 1}`;
-    if (subtextElem) subtextElem.innerText = `#${(rankIndex + 1).toLocaleString()} of ${sortedList.length.toLocaleString()} miners`;
-    if (scoreElem) scoreElem.innerText = `${formatTabScore(userObj[currentTab])} ${getTabUnit()}`;
+    if (subtextElem) subtextElem.innerText = `#${rankIndex + 1} of ${sortedList.length} miners`;
+    if (scoreElem) scoreElem.innerText = `${formatScore(userObj[currentTab])} ${getTabUnit()}`;
     if (avatarElem && userObj.avatar) avatarElem.src = userObj.avatar;
   }
 }
 
-function formatTabScore(val) {
+function formatScore(val) {
   if (currentTab === "balance") {
-    return (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+    return (val || 0).toFixed(2);
   }
-  return (val || 0).toLocaleString();
+  return (val || 0).toString();
 }
 
 function getTabUnit() {

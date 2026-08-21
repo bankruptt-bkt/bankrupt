@@ -21,6 +21,12 @@ function getDb() {
   return window.db || (typeof firebase !== 'undefined' ? firebase.database() : null);
 }
 
+// Handler for Telegram Link (Placeholder for custom verification script)
+function handleTelegramClick() {
+  console.log("Telegram button clicked. Waiting for script integration...");
+  openComingSoon("Telegram Channel");
+}
+
 // ==========================================
 // 1. GLOBAL SYSTEM LISTENERS & AUTH GUARD
 // ==========================================

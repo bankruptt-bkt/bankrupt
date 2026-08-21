@@ -2,13 +2,17 @@
 // CONFIGURATION & GLOBAL STATES
 // ==========================================
 const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 Hours
+const REFERRAL_REWARD_BKT = 5.00; // Flat reward per valid referral
+const DEFAULT_COMMISSION_RATE = 0.05; // 5% standard commission (adjustable between 0.02 - 0.10)
+
 let currentUser = null;
 let userData = {
   balance: 0.00,
   streakDays: 0,
   lastCheckIn: 0,
   referralsUsed: 0,
-  referralsAllowed: 10
+  referralsAllowed: 10,
+  referredBy: null
 };
 let countdownInterval = null;
 
@@ -21,7 +25,7 @@ function getDb() {
   return window.db || (typeof firebase !== 'undefined' ? firebase.database() : null);
 }
 
-// Handler for Telegram Link (Placeholder for custom verification script)
+// Handler for Telegram Link
 function handleTelegramClick() {
   console.log("Telegram button clicked. Waiting for script integration...");
   openComingSoon("Telegram Channel");
@@ -31,15 +35,18 @@ function handleTelegramClick() {
 if (window.Telegram && window.Telegram.WebApp) {
   const tg = window.Telegram.WebApp;
   tg.ready();
-  tg.expand(); // Expands app to full height inside Telegram
+  tg.expand();
 }
 
 // ==========================================
-// 1. GLOBAL SYSTEM LISTENERS & AUTH GUARD
+// 1. GLOBAL SYSTEM LISTENERS, REF CAPTURE & AUTH
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
   const authInstance = getAuth();
   const dbInstance = getDb();
+
+  // Capture Referral Link Parameter (?ref=REFERRER_UID)
+  captureReferralCode();
 
   // Catch pending Google Redirect results on page reload
   if (authInstance) {
@@ -93,6 +100,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+function captureReferralCode() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const refCode = urlParams.get('ref');
+  if (refCode) {
+    localStorage.setItem('pending_referrer', refCode.trim());
+  }
+}
+
 function updateUserProfileUI(user) {
   const headerName = document.getElementById('user-display-name');
   const menuName = document.getElementById('menu-user-name');
@@ -106,7 +121,7 @@ function updateUserProfileUI(user) {
 }
 
 // ==========================================
-// 2. REAL-TIME FIREBASE DATABASE SYNC
+// 2. REAL-TIME FIREBASE DATABASE SYNC & REFERRAL PROCESSING
 // ==========================================
 function listenToUserData(uid) {
   const dbInstance = getDb();
@@ -120,21 +135,116 @@ function listenToUserData(uid) {
         balance: data.balance || 0.00,
         streakDays: data.streakDays || 0,
         lastCheckIn: data.lastCheckIn || 0,
-        referralsUsed: data.referralsUsed || 0,
-        referralsAllowed: 10 + (data.referralsCount || 0)
+        referralsUsed: data.referralsCount || 0,
+        referralsAllowed: 10 + (data.bonusReferralSlots || 0),
+        referredBy: data.referredBy || null
       };
+
+      // Check for pending referral link process on first load
+      checkAndProcessPendingReferral(uid, data);
     } else {
-      userRef.set({
+      const pendingReferrer = localStorage.getItem('pending_referrer');
+      const initialRecord = {
         balance: 0.00,
         streakDays: 0,
         lastCheckIn: 0,
-        referralsUsed: 0,
-        referralsCount: 0
+        referralsCount: 0,
+        bonusReferralSlots: 0,
+        createdAt: Date.now()
+      };
+
+      if (pendingReferrer && pendingReferrer !== uid) {
+        initialRecord.referredBy = pendingReferrer;
+      }
+
+      userRef.set(initialRecord).then(() => {
+        if (pendingReferrer && pendingReferrer !== uid) {
+          processReferralReward(pendingReferrer, uid);
+        }
       });
     }
     renderUI();
     updateReferralModalUI();
   });
+}
+
+async function checkAndProcessPendingReferral(newUserId, currentData) {
+  const pendingReferrer = localStorage.getItem('pending_referrer');
+  if (!pendingReferrer || pendingReferrer === newUserId) return;
+
+  // If user hasn't been tagged as referred yet
+  if (!currentData.referredBy) {
+    const dbInstance = getDb();
+    if (!dbInstance) return;
+
+    try {
+      await dbInstance.ref(`users/${newUserId}`).update({
+        referredBy: pendingReferrer
+      });
+
+      await processReferralReward(pendingReferrer, newUserId);
+      localStorage.removeItem('pending_referrer');
+    } catch (err) {
+      console.error("Error processing delayed referral:", err);
+    }
+  } else {
+    localStorage.removeItem('pending_referrer');
+  }
+}
+
+async function processReferralReward(referrerUid, newUserId) {
+  const dbInstance = getDb();
+  if (!dbInstance) return;
+
+  const referrerRef = dbInstance.ref(`users/${referrerUid}`);
+
+  try {
+    await referrerRef.transaction((referrerData) => {
+      if (!referrerData) return referrerData;
+
+      referrerData.referralsCount = (referrerData.referralsCount || 0) + 1;
+      referrerData.balance = (referrerData.balance || 0) + REFERRAL_REWARD_BKT;
+
+      return referrerData;
+    });
+
+    // Write referral history record for referrer
+    await dbInstance.ref(`users/${referrerUid}/referralHistory`).push({
+      referredUserId: newUserId,
+      reward: REFERRAL_REWARD_BKT,
+      timestamp: Date.now()
+    });
+
+    console.log(`Referral successfully rewarded to ${referrerUid}`);
+  } catch (err) {
+    console.error("Failed to credit referral reward:", err);
+  }
+}
+
+// 2–10% Referral Commission Engine
+async function payReferralCommission(earnerUid, earnedAmount, commissionRate = DEFAULT_COMMISSION_RATE) {
+  const dbInstance = getDb();
+  if (!dbInstance || earnedAmount <= 0) return;
+
+  try {
+    const earnerSnap = await dbInstance.ref(`users/${earnerUid}/referredBy`).once('value');
+    const referrerUid = earnerSnap.val();
+
+    if (referrerUid) {
+      const commission = earnedAmount * commissionRate;
+      await dbInstance.ref(`users/${referrerUid}/balance`).transaction((curr) => (curr || 0) + commission);
+      
+      await dbInstance.ref(`users/${referrerUid}/transactionHistory`).push({
+        type: 'COMMISSION',
+        amount: commission,
+        fromUser: earnerUid,
+        rate: `${(commissionRate * 100).toFixed(1)}%`,
+        timestamp: Date.now()
+      });
+    }
+  } catch (err) {
+    console.error("Error crediting referral commission:", err);
+  }
 }
 
 function listenToUncompletedTasks(uid) {
@@ -277,7 +387,8 @@ async function handleClaim() {
     claimBtn.disabled = true;
   }
 
-  userData.balance += 5.00;
+  const claimRewardAmount = 5.00;
+  userData.balance += claimRewardAmount;
   userData.streakDays += 1;
   userData.lastCheckIn = Date.now();
 
@@ -291,6 +402,9 @@ async function handleClaim() {
         streakDays: userData.streakDays,
         lastCheckIn: userData.lastCheckIn
       });
+
+      // Credit referral commission to inviter
+      payReferralCommission(currentUser.uid, claimRewardAmount);
     } catch (e) {
       console.error("Failed to commit claim:", e.message);
     }
@@ -379,10 +493,8 @@ function signInWithGoogle() {
   const isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData;
 
   if (isTelegram) {
-    // Redirect mode prevents Telegram's embedded browser from closing auth popups
     authInstance.signInWithRedirect(provider);
   } else {
-    // Normal browser popup
     authInstance.signInWithPopup(provider).catch((error) => {
       if (error.code !== 'auth/popup-closed-by-user') {
         alert("Google Sign-In Error: " + error.message);

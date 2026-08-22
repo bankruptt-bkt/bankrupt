@@ -22,7 +22,7 @@ const MASTER_BADGES = [
     id: "hustler",
     title: "Hustler",
     icon: "assets/images/profile/hustler.jpg",
-    condition: (data) => (data.referralsUsed || 0) >= 1
+    condition: (data) => (data.referralsCount || 0) >= 1
   },
   {
     id: "tycoon",
@@ -64,11 +64,11 @@ function listenToProfileRealtimeData(uid) {
   dbInstance.ref('users/' + uid).on('value', (snapshot) => {
     const data = snapshot.val() || {};
     
-    // Update basic stats
+    // Update basic stats using unified referralsCount field
     const balance = data.balance || 0.0;
     const streak = data.streakDays || 0;
     const longestStreak = data.longestStreak || streak;
-    const referrals = data.referralsUsed || 0;
+    const referrals = data.referralsCount || 0;
     const activeLogo = data.activeProfileLogo || "assets/images/profile/rookie.jpg";
 
     const nameElem = document.getElementById('profile-display-name');
@@ -77,10 +77,15 @@ function listenToProfileRealtimeData(uid) {
     const uidElem = document.getElementById('profile-uid');
     if (uidElem) uidElem.innerText = "UID: " + uid;
     
-    document.getElementById('stat-balance').innerText = balance.toFixed(2);
-    document.getElementById('stat-streak').innerText = streak;
-    document.getElementById('stat-longest').innerText = longestStreak;
-    document.getElementById('stat-referrals').innerText = referrals;
+    const balanceElem = document.getElementById('stat-balance');
+    const streakElem = document.getElementById('stat-streak');
+    const longestElem = document.getElementById('stat-longest');
+    const refElem = document.getElementById('stat-referrals');
+
+    if (balanceElem) balanceElem.innerText = balance.toFixed(2);
+    if (streakElem) streakElem.innerText = streak;
+    if (longestElem) longestElem.innerText = longestStreak;
+    if (refElem) refElem.innerText = referrals;
 
     // Update main avatar photo
     const avatarImg = document.getElementById('user-avatar');
@@ -223,9 +228,9 @@ function openHistoryModal(type) {
     });
   } else if (type === 'transaction') {
     title.innerText = "Transaction History";
-    dbInstance.ref('users/' + currentUser.uid + '/completedTasks').once('value', (snap) => {
-      const tasks = snap.val() || {};
-      const keys = Object.keys(tasks);
+    dbInstance.ref('users/' + currentUser.uid + '/transactionHistory').once('value', (snap) => {
+      const txs = snap.val() || {};
+      const keys = Object.keys(txs);
 
       if (keys.length === 0) {
         list.innerHTML = `<p class="text-gray-500 text-center py-4">No completed transactions yet.</p>`;
@@ -234,13 +239,14 @@ function openHistoryModal(type) {
 
       list.innerHTML = "";
       keys.forEach((k) => {
+        const item = txs[k];
         list.innerHTML += `
           <div class="card-inner p-3 rounded-xl flex justify-between items-center">
             <div>
-              <p class="font-bold text-white">Task Reward: ${k}</p>
-              <p class="text-[10px] text-gray-500">Completed</p>
+              <p class="font-bold text-white">${item.type || 'Reward'}</p>
+              <p class="text-[10px] text-gray-500">${new Date(item.timestamp || Date.now()).toLocaleDateString()}</p>
             </div>
-            <span class="text-[#00ff66] font-mono font-bold">+Reward</span>
+            <span class="text-[#00ff66] font-mono font-bold">+${(item.amount || 0).toFixed(2)} BKT</span>
           </div>
         `;
       });
@@ -249,13 +255,15 @@ function openHistoryModal(type) {
     title.innerText = "Referral History";
     dbInstance.ref('users/' + currentUser.uid).once('value', (snap) => {
       const data = snap.val() || {};
+      const refCount = data.referralsCount || 0;
+
       list.innerHTML = `
         <div class="card-inner p-3 rounded-xl flex justify-between items-center">
           <div>
             <p class="font-bold text-white">Successful Invites</p>
-            <p class="text-[10px] text-gray-500">Earned +5.00 BKT per referral</p>
+            <p class="text-[10px] text-gray-500">Earned +5.00 BKT per referral + 5% mining bonus</p>
           </div>
-          <span class="text-blue-400 font-mono font-bold">${data.referralsUsed || 0} Joined</span>
+          <span class="text-blue-400 font-mono font-bold">${refCount} Joined</span>
         </div>
       `;
     });

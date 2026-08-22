@@ -1,4 +1,4 @@
-// Preserve referral parameters before any login redirects occur
+// Capture referral parameters prior to authentication redirects
 (function captureReferralOnLanding() {
   const urlParams = new URLSearchParams(window.location.search);
   const refCode = urlParams.get("ref");
@@ -18,7 +18,7 @@ let userData = {
   balance: 0.00,
   streakDays: 0,
   lastCheckIn: 0,
-  referralsUsed: 0,
+  referralsCount: 0,
   referralsAllowed: 10,
   referredBy: null
 };
@@ -129,7 +129,7 @@ function listenToUserData(uid) {
         balance: data.balance || 0.00,
         streakDays: data.streakDays || 0,
         lastCheckIn: data.lastCheckIn || 0,
-        referralsUsed: data.referralsCount || 0,
+        referralsCount: data.referralsCount || 0,
         referralsAllowed: 10 + (data.bonusReferralSlots || 0),
         referredBy: data.referredBy || null
       };
@@ -140,7 +140,7 @@ function listenToUserData(uid) {
   });
 }
 
-// 5% Mining Referral Commission Processor
+// Real-Time 5% Mining Referral Commission Processor
 async function payReferralCommission(earnerUid, earnedAmount, commissionRate = DEFAULT_COMMISSION_RATE) {
   const dbInstance = getDb();
   if (!dbInstance || earnedAmount <= 0) return;
@@ -152,7 +152,6 @@ async function payReferralCommission(earnerUid, earnedAmount, commissionRate = D
     if (referrerUid) {
       const commission = earnedAmount * commissionRate;
       
-      // Update inviter's main balance in real-time
       await dbInstance.ref(`users/${referrerUid}/balance`).transaction((currBalance) => {
         return (currBalance || 0) + commission;
       });
@@ -326,7 +325,6 @@ async function handleClaim() {
         return data;
       });
 
-      // Pay 5% commission directly to inviter's main balance
       await payReferralCommission(currentUser.uid, claimRewardAmount, 0.05);
 
     } catch (e) {
@@ -377,10 +375,10 @@ function updateReferralModalUI() {
   const uniqueLink = `${window.location.origin}/login.html?ref=${currentUser.uid}`;
 
   if (linkInput) linkInput.value = uniqueLink;
-  if (counterEl) counterEl.innerText = `${userData.referralsUsed} / ${userData.referralsAllowed}`;
+  if (counterEl) counterEl.innerText = `${userData.referralsCount} / ${userData.referralsAllowed}`;
 
   if (warningEl) {
-    if (userData.referralsUsed >= userData.referralsAllowed) {
+    if (userData.referralsCount >= userData.referralsAllowed) {
       warningEl.classList.remove('hidden');
     } else {
       warningEl.classList.add('hidden');
@@ -392,7 +390,7 @@ function copyReferralLink() {
   const linkInput = document.getElementById('ref-modal-link');
   if (!linkInput || !linkInput.value) return;
 
-  if (userData.referralsUsed >= userData.referralsAllowed) {
+  if (userData.referralsCount >= userData.referralsAllowed) {
     alert("You have reached your invite limit. Extra invites must be granted by admin.");
     return;
   }

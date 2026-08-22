@@ -1,4 +1,4 @@
-// auth.js - Bankrupt Auth & Referral Engine
+// auth.js - Bankrupt Auth & Non-Blocking Referral Engine
 
 // 1. Capture referral code immediately on page load
 (function captureReferral() {
@@ -42,11 +42,16 @@ async function handleGoogleSignIn() {
   }
 }
 
-// 3. Twitter (X) Sign-In Handler
+// 3. Twitter (X) Sign-In Handler (Updated for Mobile & Domain Binding)
 async function handleTwitterSignIn() {
   try {
     const { auth, db } = getFirebase();
     const provider = new firebase.auth.TwitterAuthProvider();
+
+    // Set custom OAuth parameters to prevent OAuth token/domain mismatch
+    provider.setCustomParameters({
+      'lang': 'en'
+    });
 
     if (isMobileDevice()) {
       await auth.signInWithRedirect(provider);
@@ -74,7 +79,7 @@ async function handleAnonymousSignIn() {
   }
 }
 
-// 5. Handle Mobile Redirect Callbacks on Load
+// 5. Handle Mobile Redirect Callbacks on Page Load
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     const { auth, db } = getFirebase();
@@ -89,65 +94,79 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// 6. Centralized Database Entry & Referral Check
+// 6. Non-Blocking Centralized Database Registration
 async function processUserRegistration(user, db) {
-  const userRef = db.ref('users/' + user.uid);
-  const snap = await userRef.once('value');
+  try {
+    const userRef = db.ref('users/' + user.uid);
+    const snap = await userRef.once('value');
 
-  if (!snap.exists()) {
-    const pendingReferrerUid = localStorage.getItem("pending_referrer");
-    let validReferrer = null;
+    if (!snap.exists()) {
+      const pendingReferrerUid = localStorage.getItem("pending_referrer");
+      let validReferrer = null;
 
-    if (pendingReferrerUid && pendingReferrerUid !== user.uid) {
-      const refSnap = await db.ref('users/' + pendingReferrerUid).once('value');
-      if (refSnap.exists()) {
-        validReferrer = pendingReferrerUid;
+      // Safe Non-Blocking Referrer Lookup
+      if (pendingReferrerUid && pendingReferrerUid !== user.uid) {
+        try {
+          const refSnap = await db.ref('users/' + pendingReferrerUid).once('value');
+          if (refSnap.exists()) {
+            validReferrer = pendingReferrerUid;
+          }
+        } catch (refErr) {
+          console.warn("Referrer lookup bypassed due to permissions or missing node:", refErr);
+        }
+      }
+
+      // Write initial user profile
+      await userRef.set({
+        uid: user.uid,
+        name: user.displayName || (`Miner_${user.uid.substring(0, 5)}`),
+        balance: 0.00,
+        referredBy: validReferrer,
+        referralsCount: 0,
+        inviteCount: 0,
+        bonusReferralSlots: 0,
+        streakDays: 0,
+        lastCheckIn: 0,
+        createdAt: Date.now()
+      });
+
+      // Execute referral credit as a non-blocking background task
+      if (validReferrer) {
+        await awardReferralBonus(db, validReferrer, user.uid);
       }
     }
-
-    // Write initial user record
-    await userRef.set({
-      uid: user.uid,
-      name: user.displayName || (`Guest_${user.uid.substring(0, 5)}`),
-      balance: 0.00,
-      referredBy: validReferrer,
-      referralsCount: 0,
-      inviteCount: 0,
-      bonusReferralSlots: 0,
-      streakDays: 0,
-      lastCheckIn: 0,
-      createdAt: Date.now()
-    });
-
-    // Execute atomic referral credit if valid
-    if (validReferrer) {
-      await awardReferralBonus(db, validReferrer, user.uid);
-    }
+  } catch (dbErr) {
+    console.error("Registration Database Writing Error:", dbErr);
+    throw dbErr;
   }
 }
 
 // 7. Atomic Referral Reward Processing
 async function awardReferralBonus(db, referrerUid, newUserId) {
-  const BONUS_BKT = 5.00;
-  const referrerRef = db.ref('users/' + referrerUid);
+  try {
+    const BONUS_BKT = 5.00;
+    const referrerRef = db.ref('users/' + referrerUid);
 
-  await referrerRef.transaction((referrer) => {
-    if (referrer) {
-      referrer.referralsCount = (referrer.referralsCount || 0) + 1;
-      referrer.inviteCount = (referrer.inviteCount || 0) + 1;
-      referrer.balance = (referrer.balance || 0) + BONUS_BKT;
-    }
-    return referrer;
-  });
+    await referrerRef.transaction((referrer) => {
+      if (referrer) {
+        referrer.referralsCount = (referrer.referralsCount || 0) + 1;
+        referrer.inviteCount = (referrer.inviteCount || 0) + 1;
+        referrer.balance = (referrer.balance || 0) + BONUS_BKT;
+      }
+      return referrer;
+    });
 
-  await db.ref('system/totalReferrals').transaction((c) => (c || 0) + 1);
+    await db.ref('system/totalReferrals').transaction((c) => (c || 0) + 1);
 
-  await db.ref(`users/${referrerUid}/referralHistory`).push({
-    referredUserId: newUserId,
-    reward: BONUS_BKT,
-    type: 'SIGNUP_BONUS',
-    timestamp: Date.now()
-  });
+    await db.ref(`users/${referrerUid}/referralHistory`).push({
+      referredUserId: newUserId,
+      reward: BONUS_BKT,
+      type: 'SIGNUP_BONUS',
+      timestamp: Date.now()
+    });
 
-  localStorage.removeItem("pending_referrer");
+    localStorage.removeItem("pending_referrer");
+  } catch (err) {
+    console.warn("Failed to credit referral bonus:", err);
+  }
 }

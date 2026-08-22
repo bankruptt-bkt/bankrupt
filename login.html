@@ -63,14 +63,14 @@
   </div>
 
   <script>
-    // 1. CAPTURE REFERRAL CODE ON INITIAL PAGE LOAD
-    document.addEventListener("DOMContentLoaded", () => {
+    // 1. IMMEDIATE CAPTURE OF REFERRAL PARAMETER
+    (function captureReferral() {
       const urlParams = new URLSearchParams(window.location.search);
       const refCode = urlParams.get("ref");
       if (refCode) {
         localStorage.setItem("pending_referrer", refCode.trim());
       }
-    });
+    })();
 
     // 2. GOOGLE OAUTH SIGN IN
     async function handleGoogleSignIn() {
@@ -104,51 +104,59 @@
       }
     }
 
-    // 4. USER PROFILE CREATION & REAL-TIME REFERRAL REWARDING
+    // 4. ATOMIC DATABASE ENTRY & REAL-TIME REFERRAL COUNTING
     async function handleUserDatabaseEntry(user, activeDb) {
       const userRef = activeDb.ref('users/' + user.uid);
       const snap = await userRef.once('value');
-      
-      // Execute profile creation and referral tracking only for NEW accounts
-      if (!snap.exists()) {
-        const referrerUid = localStorage.getItem("pending_referrer");
+      const referrerUid = localStorage.getItem("pending_referrer");
 
-        const initialUserData = {
+      if (!snap.exists()) {
+        const isSelfReferral = referrerUid === user.uid;
+        const validReferrer = (referrerUid && !isSelfReferral) ? referrerUid : null;
+
+        await userRef.set({
           uid: user.uid,
-          name: user.displayName || 'Miner_' + user.uid.substring(0, 5),
+          name: user.displayName || ('Miner_' + user.uid.substring(0, 5)),
           balance: 0.00,
-          referredBy: (referrerUid && referrerUid !== user.uid) ? referrerUid : null,
+          referredBy: validReferrer,
           referralsCount: 0,
           streakDays: 0,
           lastCheckIn: 0,
           createdAt: Date.now()
-        };
+        });
 
-        await userRef.set(initialUserData);
-
-        // Real-time Referral Increment & Sign-Up Bonus Credit to Inviter
-        if (referrerUid && referrerUid !== user.uid) {
-          const referrerRef = activeDb.ref('users/' + referrerUid);
-          const REFERRAL_SIGNUP_BONUS = 5.00;
-
-          await referrerRef.transaction((referrer) => {
-            if (referrer) {
-              referrer.referralsCount = (referrer.referralsCount || 0) + 1;
-              referrer.balance = (referrer.balance || 0) + REFERRAL_SIGNUP_BONUS;
-            }
-            return referrer;
-          });
-
-          // Record history entry
-          await activeDb.ref(`users/${referrerUid}/referralHistory`).push({
-            referredUserId: user.uid,
-            reward: REFERRAL_SIGNUP_BONUS,
-            timestamp: Date.now()
-          });
-
-          localStorage.removeItem("pending_referrer");
+        if (validReferrer) {
+          await processReferralBonus(activeDb, validReferrer, user.uid);
+        }
+      } else {
+        const userData = snap.val();
+        if (referrerUid && referrerUid !== user.uid && !userData.referredBy) {
+          await userRef.update({ referredBy: referrerUid });
+          await processReferralBonus(activeDb, referrerUid, user.uid);
         }
       }
+    }
+
+    async function processReferralBonus(activeDb, referrerUid, newUserId) {
+      const referrerRef = activeDb.ref('users/' + referrerUid);
+      const REFERRAL_SIGNUP_BONUS = 5.00;
+
+      await referrerRef.transaction((referrer) => {
+        if (referrer) {
+          referrer.referralsCount = (referrer.referralsCount || 0) + 1;
+          referrer.balance = (referrer.balance || 0) + REFERRAL_SIGNUP_BONUS;
+        }
+        return referrer;
+      });
+
+      await activeDb.ref(`users/${referrerUid}/referralHistory`).push({
+        referredUserId: newUserId,
+        reward: REFERRAL_SIGNUP_BONUS,
+        type: 'SIGNUP_BONUS',
+        timestamp: Date.now()
+      });
+
+      localStorage.removeItem("pending_referrer");
     }
   </script>
 </body>

@@ -1,3 +1,11 @@
+// Preserve referral parameters before any login redirects occur
+(function captureReferralOnLanding() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const refCode = urlParams.get("ref");
+  if (refCode) {
+    localStorage.setItem("pendingRef", refCode);
+  }
+})();
 // ==========================================
 // CONFIGURATION & GLOBAL STATES
 // ==========================================

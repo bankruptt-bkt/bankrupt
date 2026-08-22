@@ -53,13 +53,13 @@
         <i class="fa-brands fa-x-twitter text-lg text-white"></i>
         <span>Continue with X</span>
       </button>
+
+      <!-- ANONYMOUS GUEST LOGIN (TESTING & QUICK ENTRY) -->
+      <button onclick="handleAnonymousSignIn()" type="button" class="w-full py-3 bg-[#162019] hover:bg-[#1e2c22] text-[#00ff66] border border-[#213226] font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 mt-3">
+        <span>⚡</span> Continue as Guest (Test Account)
+      </button>
     </div>
-<!-- ANONYMOUS GUEST LOGIN (TESTING ONLY) -->
-<button onclick="handleAnonymousSignIn()" class="w-full py-3 bg-[#162019] hover:bg-[#1e2c22] text-[#00ff66] border border-[#213226] font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 mt-3">
-  <span>⚡</span> Continue as Guest (Test Account)
-</button>
-    
-    
+
     <!-- Terms Footer -->
     <p class="text-[11px] text-gray-500 text-center leading-relaxed">
       By signing in, you agree to our Terms of Service & Privacy Policy.
@@ -109,7 +109,23 @@
       }
     }
 
-    // 4. DATABASE ENTRY & REFERRAL PROCESSING
+    // 4. ANONYMOUS / GUEST SIGN IN
+    async function handleAnonymousSignIn() {
+      try {
+        const activeAuth = window.auth || firebase.auth();
+        const activeDb = window.db || firebase.database();
+
+        const res = await activeAuth.signInAnonymously();
+        await handleUserDatabaseEntry(res.user, activeDb);
+
+        window.location.href = 'index.html';
+      } catch (err) {
+        console.error("Guest Sign-In Error:", err);
+        alert("Guest Sign-In Error: " + err.message);
+      }
+    }
+
+    // 5. UNIFIED DATABASE ENTRY & REFERRAL PROCESSING Engine
     async function handleUserDatabaseEntry(user, activeDb) {
       const userRef = activeDb.ref('users/' + user.uid);
       const snap = await userRef.once('value');
@@ -139,10 +155,11 @@
         // Initialize user database record
         await userRef.set({
           uid: user.uid,
-          name: user.displayName || ('Miner_' + user.uid.substring(0, 5)),
+          name: user.displayName || (`Guest_${user.uid.substring(0, 5)}`),
           balance: 0.00,
           referredBy: validReferrer,
           referralsCount: 0,
+          inviteCount: 0,
           bonusReferralSlots: 0,
           streakDays: 0,
           lastCheckIn: 0,
@@ -155,7 +172,7 @@
       }
     }
 
-    // 5. ATOMIC REWARD PROCESSOR (5 BKT INSTANT + COUNTER INCREMENT)
+    // 6. ATOMIC REWARD PROCESSOR (5 BKT INSTANT + COUNTER INCREMENT)
     async function processReferralReward(activeDb, referrerUid, newUserId) {
       const REFERRAL_SIGNUP_BONUS = 5.00;
       const referrerRef = activeDb.ref('users/' + referrerUid);
@@ -164,6 +181,7 @@
       await referrerRef.transaction((referrer) => {
         if (referrer) {
           referrer.referralsCount = (referrer.referralsCount || 0) + 1;
+          referrer.inviteCount = (referrer.inviteCount || 0) + 1;
           referrer.balance = (referrer.balance || 0) + REFERRAL_SIGNUP_BONUS;
         }
         return referrer;
@@ -182,48 +200,6 @@
 
       localStorage.removeItem("pending_referrer");
     }
-    
-  async function handleAnonymousSignIn() {
-    try {
-      // 1. Check for referral code in the URL (?ref=...)
-      const urlParams = new URLSearchParams(window.location.search);
-      const refCode = urlParams.get('ref');
-
-      // 2. Sign in anonymously via Firebase
-      const result = await firebase.auth().signInAnonymously();
-      const user = result.user;
-
-      // 3. Create or fetch user document in Realtime Database
-      const userRef = firebase.database().ref(`users/${user.uid}`);
-      const snapshot = await userRef.once('value');
-
-      if (!snapshot.exists()) {
-        // Set up the initial user node
-        await userRef.set({
-          displayName: `Guest_${user.uid.slice(0, 5)}`,
-          balance: 0,
-          referralsCount: 0,
-          referredBy: refCode || null,
-          createdAt: firebase.database.ServerValue.TIMESTAMP
-        });
-
-        // If referred, update the referrer's counter immediately
-        if (refCode) {
-          const referrerRef = firebase.database().ref(`users/${refCode}`);
-          const refSnap = await referrerRef.once('value');
-          if (refSnap.exists()) {
-            await referrerRef.child('referralsCount').transaction((count) => (count || 0) + 1);
-          }
-        }
-      }
-
-      // 4. Redirect to the main app dashboard
-      window.location.href = "index.html";
-    } catch (error) {
-      console.error("Guest Sign-In Error:", error);
-      alert("Guest Sign-In Error: " + error.message);
-    }
-  }
-</script>
+  </script>
 </body>
 </html>

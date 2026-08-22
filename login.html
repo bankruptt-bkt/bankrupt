@@ -1,89 +1,155 @@
-<script>
-  // 1. CAPTURE REFERRAL CODE ON INITIAL PAGE LOAD
-  document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get("ref");
-    if (refCode) {
-      localStorage.setItem("pending_referrer", refCode.trim());
-    }
-  });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BANKRUPT - Sign In</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body { background-color: #000000; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+    .font-marker { font-family: 'Permanent Marker', cursive; }
+    .sheet-bg { background-color: #0c120e; border: 1px solid #1a261f; }
+  </style>
 
-  // 2. GOOGLE OAUTH SIGN IN
-  async function handleGoogleSignIn() {
-    try {
-      const activeAuth = window.auth || firebase.auth();
-      const activeDb = window.db || firebase.database();
+  <!-- Firebase Web SDK v10 Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
-      const provider = new firebase.auth.GoogleAuthProvider();
-      const res = await activeAuth.signInWithPopup(provider);
-      await handleUserDatabaseEntry(res.user, activeDb);
-      
-      window.location.href = 'index.html';
-    } catch (err) {
-      alert("Google Sign-In Error: " + err.message);
-    }
-  }
+  <!-- App Config -->
+  <script src="firebase-config.js"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 max-w-md mx-auto relative overflow-y-auto">
 
-  // 3. TWITTER (X) OAUTH SIGN IN
-  async function handleTwitterSignIn() {
-    try {
-      const activeAuth = window.auth || firebase.auth();
-      const activeDb = window.db || firebase.database();
-
-      const provider = new firebase.auth.TwitterAuthProvider();
-      const res = await activeAuth.signInWithPopup(provider);
-      await handleUserDatabaseEntry(res.user, activeDb);
-
-      window.location.href = 'index.html';
-    } catch (err) {
-      alert("X (Twitter) Sign-In Error: " + err.message);
-    }
-  }
-
-  // 4. USER PROFILE CREATION & REAL-TIME REFERRAL REWARDING
-  async function handleUserDatabaseEntry(user, activeDb) {
-    const userRef = activeDb.ref('users/' + user.uid);
-    const snap = await userRef.once('value');
+  <!-- AUTHENTICATION CARD CONTAINER -->
+  <div class="sheet-bg rounded-3xl p-6 space-y-6 w-full relative z-10 shadow-2xl">
     
-    // Execute profile creation and referral tracking only for NEW accounts
-    if (!snap.exists()) {
-      const referrerUid = localStorage.getItem("pending_referrer");
+    <!-- Header -->
+    <div class="text-center space-y-2">
+      <div class="w-14 h-14 bg-[#131b15] border border-[#212f25] rounded-2xl flex items-center justify-center mx-auto text-[#00ff66] text-xl shadow-lg">
+        <i class="fa-solid fa-coins text-[#00ff66]"></i>
+      </div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Welcome to Bankrupt</h1>
+      <p class="text-xs text-gray-400">Sign in with your social account to start mining.</p>
+    </div>
 
-      const initialUserData = {
-        uid: user.uid,
-        name: user.displayName || 'Miner_' + user.uid.substring(0, 5),
-        balance: 0.00,
-        referredBy: (referrerUid && referrerUid !== user.uid) ? referrerUid : null,
-        referralsCount: 0,
-        streakDays: 0,
-        lastCheckIn: 0,
-        createdAt: Date.now()
-      };
+    <!-- SOCIAL OAUTH BUTTONS -->
+    <div class="space-y-3">
+      <!-- GOOGLE BUTTON -->
+      <button onclick="handleGoogleSignIn()" type="button" class="w-full py-3.5 bg-[#131b15] border border-[#212f25] rounded-xl flex items-center justify-center gap-3 text-sm font-semibold text-white hover:border-[#00ff66] hover:bg-[#1a251d] transition-all">
+        <svg class="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
 
-      await userRef.set(initialUserData);
+      <!-- TWITTER (X) BUTTON -->
+      <button onclick="handleTwitterSignIn()" type="button" class="w-full py-3.5 bg-[#131b15] border border-[#212f25] rounded-xl flex items-center justify-center gap-3 text-sm font-semibold text-white hover:border-[#00ff66] hover:bg-[#1a251d] transition-all">
+        <i class="fa-brands fa-x-twitter text-lg text-white"></i>
+        <span>Continue with X</span>
+      </button>
+    </div>
 
-      // Real-time Referral Increment & Sign-Up Bonus Credit to Inviter
-      if (referrerUid && referrerUid !== user.uid) {
-        const referrerRef = activeDb.ref('users/' + referrerUid);
-        const REFERRAL_SIGNUP_BONUS = 5.00;
+    <!-- Terms Footer -->
+    <p class="text-[11px] text-gray-500 text-center leading-relaxed">
+      By signing in, you agree to our Terms of Service & Privacy Policy.
+    </p>
 
-        await referrerRef.transaction((referrer) => {
-          if (referrer) {
-            referrer.referralsCount = (referrer.referralsCount || 0) + 1;
-            referrer.balance = (referrer.balance || 0) + REFERRAL_SIGNUP_BONUS;
-          }
-          return referrer;
-        });
+  </div>
 
-        // Record history entry
-        await activeDb.ref(`users/${referrerUid}/referralHistory`).push({
-          referredUserId: user.uid,
-          reward: REFERRAL_SIGNUP_BONUS,
-          timestamp: Date.now()
-        });
+  <script>
+    // 1. CAPTURE REFERRAL CODE ON INITIAL PAGE LOAD
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get("ref");
+      if (refCode) {
+        localStorage.setItem("pending_referrer", refCode.trim());
+      }
+    });
 
-        localStorage.removeItem("pending_referrer");
+    // 2. GOOGLE OAUTH SIGN IN
+    async function handleGoogleSignIn() {
+      try {
+        const activeAuth = window.auth || firebase.auth();
+        const activeDb = window.db || firebase.database();
+
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const res = await activeAuth.signInWithPopup(provider);
+        await handleUserDatabaseEntry(res.user, activeDb);
+        
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert("Google Sign-In Error: " + err.message);
       }
     }
-  }
-</script>
+
+    // 3. TWITTER (X) OAUTH SIGN IN
+    async function handleTwitterSignIn() {
+      try {
+        const activeAuth = window.auth || firebase.auth();
+        const activeDb = window.db || firebase.database();
+
+        const provider = new firebase.auth.TwitterAuthProvider();
+        const res = await activeAuth.signInWithPopup(provider);
+        await handleUserDatabaseEntry(res.user, activeDb);
+
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert("X (Twitter) Sign-In Error: " + err.message);
+      }
+    }
+
+    // 4. USER PROFILE CREATION & REAL-TIME REFERRAL REWARDING
+    async function handleUserDatabaseEntry(user, activeDb) {
+      const userRef = activeDb.ref('users/' + user.uid);
+      const snap = await userRef.once('value');
+      
+      // Execute profile creation and referral tracking only for NEW accounts
+      if (!snap.exists()) {
+        const referrerUid = localStorage.getItem("pending_referrer");
+
+        const initialUserData = {
+          uid: user.uid,
+          name: user.displayName || 'Miner_' + user.uid.substring(0, 5),
+          balance: 0.00,
+          referredBy: (referrerUid && referrerUid !== user.uid) ? referrerUid : null,
+          referralsCount: 0,
+          streakDays: 0,
+          lastCheckIn: 0,
+          createdAt: Date.now()
+        };
+
+        await userRef.set(initialUserData);
+
+        // Real-time Referral Increment & Sign-Up Bonus Credit to Inviter
+        if (referrerUid && referrerUid !== user.uid) {
+          const referrerRef = activeDb.ref('users/' + referrerUid);
+          const REFERRAL_SIGNUP_BONUS = 5.00;
+
+          await referrerRef.transaction((referrer) => {
+            if (referrer) {
+              referrer.referralsCount = (referrer.referralsCount || 0) + 1;
+              referrer.balance = (referrer.balance || 0) + REFERRAL_SIGNUP_BONUS;
+            }
+            return referrer;
+          });
+
+          // Record history entry
+          await activeDb.ref(`users/${referrerUid}/referralHistory`).push({
+            referredUserId: user.uid,
+            reward: REFERRAL_SIGNUP_BONUS,
+            timestamp: Date.now()
+          });
+
+          localStorage.removeItem("pending_referrer");
+        }
+      }
+    }
+  </script>
+</body>
+</html>

@@ -12,6 +12,7 @@
 // ==========================================
 const CHECKIN_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 Hours
 const DEFAULT_COMMISSION_RATE = 0.05; // 5% standard mining commission
+const BASE_REFERRAL_LIMIT = 10; // Fixed standard 10 invites cap
 
 let currentUser = null;
 let userData = {
@@ -19,6 +20,7 @@ let userData = {
   streakDays: 0,
   lastCheckIn: 0,
   referralsCount: 0,
+  bonusReferralSlots: 0,
   referralsAllowed: 10,
   referredBy: null,
   completedTasks: {}
@@ -63,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Global Maintenance Mode Check (1-time check on load to save bandwidth)
+  // Global Maintenance Mode Check
   if (dbInstance) {
     dbInstance.ref("system/maintenance").once("value", (snap) => {
       if (snap.val() === true && !window.location.pathname.includes("admin.html")) {
@@ -83,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
         currentUser = user;
         updateUserProfileUI(user);
         
-        // Fetch data once on login to prevent open socket connection overhead
+        // Fetch data once on login
         fetchUserDataOnce(user.uid);
         fetchUncompletedTasksOnce(user.uid);
 
@@ -120,7 +122,7 @@ function updateUserProfileUI(user) {
 }
 
 // ==========================================
-// 2. ONE-TIME DATABASE SYNC ENGINE (OPTIMIZED)
+// 2. ONE-TIME DATABASE SYNC ENGINE
 // ==========================================
 async function fetchUserDataOnce(uid) {
   const dbInstance = getDb();
@@ -130,12 +132,14 @@ async function fetchUserDataOnce(uid) {
     const snapshot = await dbInstance.ref('users/' + uid).once('value');
     const data = snapshot.val();
     if (data) {
+      const bonus = data.bonusReferralSlots || 0;
       userData = {
         balance: data.balance || 0.00,
         streakDays: data.streakDays || 0,
         lastCheckIn: data.lastCheckIn || 0,
         referralsCount: data.referralsCount || 0,
-        referralsAllowed: 10 + (data.bonusReferralSlots || 0),
+        bonusReferralSlots: bonus,
+        referralsAllowed: BASE_REFERRAL_LIMIT + bonus, // Dynamically calculates (10 + admin bonus)
         referredBy: data.referredBy || null,
         completedTasks: data.completedTasks || {}
       };
@@ -174,7 +178,7 @@ async function fetchUncompletedTasksOnce(uid) {
   }
 }
 
-// Referral Commission Background Processor
+// Lifetime 5% Referral Commission Engine
 async function payReferralCommission(earnerUid, earnedAmount, commissionRate = DEFAULT_COMMISSION_RATE) {
   const dbInstance = getDb();
   if (!dbInstance || earnedAmount <= 0) return;
@@ -186,15 +190,16 @@ async function payReferralCommission(earnerUid, earnedAmount, commissionRate = D
     if (referrerUid) {
       const commission = earnedAmount * commissionRate;
       
+      // Real-time addition to referrer balance
       await dbInstance.ref(`users/${referrerUid}/balance`).transaction((currBalance) => {
         return (currBalance || 0) + commission;
       });
       
+      // Transaction history record
       await dbInstance.ref(`users/${referrerUid}/transactionHistory`).push({
-        type: 'COMMISSION_5_PERCENT',
+        type: 'MINING_COMMISSION_5_PERCENT',
         amount: commission,
         fromUser: earnerUid,
-        rate: `${(commissionRate * 100).toFixed(0)}%`,
         timestamp: Date.now()
       });
     }
@@ -315,22 +320,21 @@ function padZero(num) {
 async function handleClaim() {
   if (!currentUser) return;
 
-  const claimBtn = document.getElementById('claim-btn');
   const claimRewardAmount = 5.00;
 
-  // Preserve previous state for rollback if transaction fails
+  // Preserve state for rollback
   const prevBalance = userData.balance;
   const prevLastCheckIn = userData.lastCheckIn;
   const prevStreak = userData.streakDays;
 
-  // --- 1. OPTIMISTIC UI UPDATE (0ms Instant Feedback) ---
+  // --- 1. OPTIMISTIC UI UPDATE ---
   userData.balance += claimRewardAmount;
   userData.lastCheckIn = Date.now();
   userData.streakDays += 1;
 
-  renderUI(); // Render instant update to screen
+  renderUI();
 
-  // --- 2. BACKGROUND DATABASE TRANSACTION ---
+  // --- 2. BACKGROUND WRITE ---
   const dbInstance = getDb();
   if (dbInstance) {
     try {
@@ -351,7 +355,7 @@ async function handleClaim() {
     } catch (e) {
       console.error("Failed to commit claim, rolling back UI:", e.message);
       
-      // --- 3. ROLLBACK ON ERROR ---
+      // Rollback on network failure
       userData.balance = prevBalance;
       userData.lastCheckIn = prevLastCheckIn;
       userData.streakDays = prevStreak;
@@ -361,7 +365,6 @@ async function handleClaim() {
   }
 }
 
-// Generic Optimistic Task Execution Handler
 async function handleCompleteTask(taskId, rewardAmount, taskBtnElement) {
   if (!currentUser) return;
 
@@ -382,7 +385,7 @@ async function handleCompleteTask(taskId, rewardAmount, taskBtnElement) {
     taskBtnElement.className = "px-4 py-2 bg-gray-800 text-gray-500 rounded-lg text-xs font-bold cursor-not-allowed";
   }
 
-  // --- 2. BACKGROUND SINGLE WRITE ---
+  // --- 2. BACKGROUND WRITE ---
   if (dbInstance) {
     try {
       const updates = {};
@@ -390,12 +393,11 @@ async function handleCompleteTask(taskId, rewardAmount, taskBtnElement) {
       updates[`users/${currentUser.uid}/completedTasks/${taskId}`] = true;
 
       await dbInstance.ref().update(updates);
-      fetchUncompletedTasksOnce(currentUser.uid); // Refresh task counter badge
+      fetchUncompletedTasksOnce(currentUser.uid);
 
     } catch (err) {
       console.error("Task update failed, rolling back UI:", err);
 
-      // --- 3. ROLLBACK ON ERROR ---
       userData.balance = prevBalance;
       delete userData.completedTasks[taskId];
 
@@ -468,7 +470,7 @@ function copyReferralLink() {
   if (!linkInput || !linkInput.value) return;
 
   if (userData.referralsCount >= userData.referralsAllowed) {
-    alert("You have reached your invite limit. Extra invites must be granted by admin.");
+    alert(`You have reached your invite limit (${userData.referralsAllowed} Max). Extra invites must be granted by admin.`);
     return;
   }
 

@@ -182,6 +182,48 @@
 
       localStorage.removeItem("pending_referrer");
     }
-  </script>
+    
+  async function handleAnonymousSignIn() {
+    try {
+      // 1. Check for referral code in the URL (?ref=...)
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get('ref');
+
+      // 2. Sign in anonymously via Firebase
+      const result = await firebase.auth().signInAnonymously();
+      const user = result.user;
+
+      // 3. Create or fetch user document in Realtime Database
+      const userRef = firebase.database().ref(`users/${user.uid}`);
+      const snapshot = await userRef.once('value');
+
+      if (!snapshot.exists()) {
+        // Set up the initial user node
+        await userRef.set({
+          displayName: `Guest_${user.uid.slice(0, 5)}`,
+          balance: 0,
+          referralsCount: 0,
+          referredBy: refCode || null,
+          createdAt: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        // If referred, update the referrer's counter immediately
+        if (refCode) {
+          const referrerRef = firebase.database().ref(`users/${refCode}`);
+          const refSnap = await referrerRef.once('value');
+          if (refSnap.exists()) {
+            await referrerRef.child('referralsCount').transaction((count) => (count || 0) + 1);
+          }
+        }
+      }
+
+      // 4. Redirect to the main app dashboard
+      window.location.href = "index.html";
+    } catch (error) {
+      console.error("Guest Sign-In Error:", error);
+      alert("Guest Sign-In Error: " + error.message);
+    }
+  }
+</script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// auth.js - Bankrupt Auth & Non-Blocking Referral Engine
+// auth.js - Bankrupt Clean Auth & Instant Referral Engine
 
 // 1. Capture referral code immediately on page load
 (function captureReferral() {
@@ -10,12 +10,6 @@
   }
 })();
 
-// Helper to check for mobile device viewport or user agent
-function isMobileDevice() {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-    || window.innerWidth <= 768;
-}
-
 // Helper to access Firebase instances safely
 function getFirebase() {
   const auth = window.auth || firebase.auth();
@@ -23,16 +17,15 @@ function getFirebase() {
   return { auth, db };
 }
 
-// 2. Google Sign-In Handler
+// 2. GOOGLE OAUTH SIGN IN
 async function handleGoogleSignIn() {
   try {
     const { auth, db } = getFirebase();
     const provider = new firebase.auth.GoogleAuthProvider();
-
-    if (isMobileDevice()) {
-      await auth.signInWithRedirect(provider);
-    } else {
-      const res = await auth.signInWithPopup(provider);
+    
+    // Explicitly request popup authentication
+    const res = await auth.signInWithPopup(provider);
+    if (res && res.user) {
       await processUserRegistration(res.user, db);
       window.location.href = 'index.html';
     }
@@ -42,21 +35,15 @@ async function handleGoogleSignIn() {
   }
 }
 
-// 3. Twitter (X) Sign-In Handler (Updated for Mobile & Domain Binding)
+// 3. TWITTER (X) OAUTH SIGN IN
 async function handleTwitterSignIn() {
   try {
     const { auth, db } = getFirebase();
     const provider = new firebase.auth.TwitterAuthProvider();
-
-    // Set custom OAuth parameters to prevent OAuth token/domain mismatch
-    provider.setCustomParameters({
-      'lang': 'en'
-    });
-
-    if (isMobileDevice()) {
-      await auth.signInWithRedirect(provider);
-    } else {
-      const res = await auth.signInWithPopup(provider);
+    
+    // Explicitly request popup authentication
+    const res = await auth.signInWithPopup(provider);
+    if (res && res.user) {
       await processUserRegistration(res.user, db);
       window.location.href = 'index.html';
     }
@@ -66,45 +53,33 @@ async function handleTwitterSignIn() {
   }
 }
 
-// 4. Anonymous Guest Handler (Testing & Quick Mobile Entry)
+// 4. ANONYMOUS GUEST SIGN IN (TESTING & GUESTS)
 async function handleAnonymousSignIn() {
   try {
     const { auth, db } = getFirebase();
     const res = await auth.signInAnonymously();
-    await processUserRegistration(res.user, db);
-    window.location.href = 'index.html';
+    if (res && res.user) {
+      await processUserRegistration(res.user, db);
+      window.location.href = 'index.html';
+    }
   } catch (err) {
     console.error("Guest Auth Error:", err);
     alert("Guest Sign-In Error: " + err.message);
   }
 }
 
-// 5. Handle Mobile Redirect Callbacks on Page Load
-window.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const { auth, db } = getFirebase();
-    const result = await auth.getRedirectResult();
-    
-    if (result && result.user) {
-      await processUserRegistration(result.user, db);
-      window.location.href = 'index.html';
-    }
-  } catch (err) {
-    console.error("Redirect Completion Error:", err);
-  }
-});
-
-// 6. Non-Blocking Centralized Database Registration
+// 5. CENTRALIZED USER REGISTRATION & REFERRAL ENGINE
 async function processUserRegistration(user, db) {
   try {
     const userRef = db.ref('users/' + user.uid);
     const snap = await userRef.once('value');
 
+    // Only run registration logic for NEW users
     if (!snap.exists()) {
       const pendingReferrerUid = localStorage.getItem("pending_referrer");
       let validReferrer = null;
 
-      // Safe Non-Blocking Referrer Lookup
+      // Check if referrer exists in DB
       if (pendingReferrerUid && pendingReferrerUid !== user.uid) {
         try {
           const refSnap = await db.ref('users/' + pendingReferrerUid).once('value');
@@ -112,7 +87,7 @@ async function processUserRegistration(user, db) {
             validReferrer = pendingReferrerUid;
           }
         } catch (refErr) {
-          console.warn("Referrer lookup bypassed due to permissions or missing node:", refErr);
+          console.warn("Referrer lookup bypassed:", refErr);
         }
       }
 
@@ -130,18 +105,18 @@ async function processUserRegistration(user, db) {
         createdAt: Date.now()
       });
 
-      // Execute referral credit as a non-blocking background task
+      // Award referral bonus if valid
       if (validReferrer) {
         await awardReferralBonus(db, validReferrer, user.uid);
       }
     }
   } catch (dbErr) {
-    console.error("Registration Database Writing Error:", dbErr);
+    console.error("Registration Database Error:", dbErr);
     throw dbErr;
   }
 }
 
-// 7. Atomic Referral Reward Processing
+// 6. ATOMIC REFERRAL REWARD PROCESSOR
 async function awardReferralBonus(db, referrerUid, newUserId) {
   try {
     const BONUS_BKT = 5.00;

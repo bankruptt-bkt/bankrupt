@@ -18,8 +18,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
-  <!-- App Config -->
+  <!-- App Configuration & Authentication Logic -->
   <script src="firebase-config.js"></script>
+  <script src="auth.js"></script>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 max-w-md mx-auto relative overflow-y-auto">
 
@@ -66,140 +67,5 @@
     </p>
 
   </div>
-
-  <script>
-    // 1. IMMEDIATE CAPTURE OF REFERRAL PARAMETER
-    (function captureReferral() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const refCode = urlParams.get("ref");
-      if (refCode) {
-        localStorage.setItem("pending_referrer", refCode.trim());
-      }
-    })();
-
-    // 2. GOOGLE OAUTH SIGN IN
-    async function handleGoogleSignIn() {
-      try {
-        const activeAuth = window.auth || firebase.auth();
-        const activeDb = window.db || firebase.database();
-
-        const provider = new firebase.auth.GoogleAuthProvider();
-        const res = await activeAuth.signInWithPopup(provider);
-        await handleUserDatabaseEntry(res.user, activeDb);
-        
-        window.location.href = 'index.html';
-      } catch (err) {
-        alert("Google Sign-In Error: " + err.message);
-      }
-    }
-
-    // 3. TWITTER (X) OAUTH SIGN IN
-    async function handleTwitterSignIn() {
-      try {
-        const activeAuth = window.auth || firebase.auth();
-        const activeDb = window.db || firebase.database();
-
-        const provider = new firebase.auth.TwitterAuthProvider();
-        const res = await activeAuth.signInWithPopup(provider);
-        await handleUserDatabaseEntry(res.user, activeDb);
-
-        window.location.href = 'index.html';
-      } catch (err) {
-        alert("X (Twitter) Sign-In Error: " + err.message);
-      }
-    }
-
-    // 4. ANONYMOUS / GUEST SIGN IN
-    async function handleAnonymousSignIn() {
-      try {
-        const activeAuth = window.auth || firebase.auth();
-        const activeDb = window.db || firebase.database();
-
-        const res = await activeAuth.signInAnonymously();
-        await handleUserDatabaseEntry(res.user, activeDb);
-
-        window.location.href = 'index.html';
-      } catch (err) {
-        console.error("Guest Sign-In Error:", err);
-        alert("Guest Sign-In Error: " + err.message);
-      }
-    }
-
-    // 5. UNIFIED DATABASE ENTRY & REFERRAL PROCESSING Engine
-    async function handleUserDatabaseEntry(user, activeDb) {
-      const userRef = activeDb.ref('users/' + user.uid);
-      const snap = await userRef.once('value');
-      const pendingReferrer = localStorage.getItem("pending_referrer");
-
-      if (!snap.exists()) {
-        let validReferrer = null;
-
-        // Verify referrer capacity if a code exists
-        if (pendingReferrer && pendingReferrer !== user.uid) {
-          const referrerRef = activeDb.ref('users/' + pendingReferrer);
-          const referrerSnap = await referrerRef.once('value');
-
-          if (referrerSnap.exists()) {
-            const refData = referrerSnap.val();
-            const BASE_LIMIT = 10;
-            const bonusSlots = refData.bonusReferralSlots || 0;
-            const maxAllowed = BASE_LIMIT + bonusSlots;
-            const currentCount = refData.referralsCount || 0;
-
-            if (currentCount < maxAllowed) {
-              validReferrer = pendingReferrer;
-            }
-          }
-        }
-
-        // Initialize user database record
-        await userRef.set({
-          uid: user.uid,
-          name: user.displayName || (`Guest_${user.uid.substring(0, 5)}`),
-          balance: 0.00,
-          referredBy: validReferrer,
-          referralsCount: 0,
-          inviteCount: 0,
-          bonusReferralSlots: 0,
-          streakDays: 0,
-          lastCheckIn: 0,
-          createdAt: Date.now()
-        });
-
-        if (validReferrer) {
-          await processReferralReward(activeDb, validReferrer, user.uid);
-        }
-      }
-    }
-
-    // 6. ATOMIC REWARD PROCESSOR (5 BKT INSTANT + COUNTER INCREMENT)
-    async function processReferralReward(activeDb, referrerUid, newUserId) {
-      const REFERRAL_SIGNUP_BONUS = 5.00;
-      const referrerRef = activeDb.ref('users/' + referrerUid);
-
-      // Atomic update to referrer balance and count
-      await referrerRef.transaction((referrer) => {
-        if (referrer) {
-          referrer.referralsCount = (referrer.referralsCount || 0) + 1;
-          referrer.inviteCount = (referrer.inviteCount || 0) + 1;
-          referrer.balance = (referrer.balance || 0) + REFERRAL_SIGNUP_BONUS;
-        }
-        return referrer;
-      });
-
-      // Update global system stats for Admin Panel
-      await activeDb.ref('system/totalReferrals').transaction((c) => (c || 0) + 1);
-
-      // Log referral history transaction
-      await activeDb.ref(`users/${referrerUid}/referralHistory`).push({
-        referredUserId: newUserId,
-        reward: REFERRAL_SIGNUP_BONUS,
-        type: 'SIGNUP_BONUS',
-        timestamp: Date.now()
-      });
-
-      localStorage.removeItem("pending_referrer");
-    }
-  </script>
 </body>
 </html>

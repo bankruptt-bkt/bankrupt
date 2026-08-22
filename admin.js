@@ -1,3 +1,5 @@
+// admin.js - BANKRUPT Admin Panel Script (Fully Updated & Fixed)
+
 // ==========================================
 // CONFIGURATION & GLOBAL STATES
 // ==========================================
@@ -197,7 +199,7 @@ async function toggleMaintenance() {
 }
 
 // ==========================================
-// 4. TASK MANAGEMENT
+// 4. TASK MANAGEMENT (FIXED & IMPROVED)
 // ==========================================
 async function handlePublishTask() {
   const title = document.getElementById('task-title').value.trim();
@@ -251,20 +253,33 @@ function listenToActiveTasks() {
 
     const tasks = snap.val();
     if (!tasks) {
-      listEl.innerHTML = '<p class="text-gray-500 italic">No active tasks found.</p>';
+      listEl.innerHTML = '<p class="text-gray-500 italic py-2">No active tasks found.</p>';
       return;
     }
 
     let html = '';
     Object.keys(tasks).forEach((taskId) => {
       const task = tasks[taskId];
+      if (!task) return;
+
+      const title = task.title || 'Untitled Task';
+      const icon = task.icon || '📌';
+      const category = task.category || 'Daily';
+      const reward = task.reward || 0;
+      const isLocked = task.proofReq ? '🔒' : '';
+
       html += `
-        <div class="card-bg p-3 rounded-xl flex items-center justify-between border border-[#1c2620]">
-          <div>
-            <p class="font-semibold text-white">${task.title} <span class="text-gray-500 text-[10px]">(${task.category})</span> ${task.proofReq ? '🔒' : ''}</p>
-            <p class="text-[#00ff66] text-[11px]">+${task.reward} BKT</p>
+        <div class="card-bg p-3 rounded-xl flex items-center justify-between border border-[#1c2620] gap-2">
+          <div class="flex items-center gap-2.5 overflow-hidden">
+            <span class="text-base flex-shrink-0">${icon}</span>
+            <div class="truncate">
+              <p class="font-semibold text-white text-xs truncate">
+                ${title} <span class="text-gray-500 text-[10px]">(${category})</span> ${isLocked}
+              </p>
+              <p class="text-[#00ff66] text-[11px] font-mono">+${reward} BKT</p>
+            </div>
           </div>
-          <button onclick="handleDeleteTask('${taskId}')" class="px-3 py-1.5 bg-red-900/30 text-red-400 border border-red-800/40 rounded-lg text-xs font-semibold hover:bg-red-800/40">
+          <button onclick="handleDeleteTask('${taskId}')" class="flex-shrink-0 px-3 py-1.5 bg-red-900/30 text-red-400 border border-red-800/40 rounded-lg text-xs font-semibold hover:bg-red-800/40 transition-colors">
             Delete
           </button>
         </div>
@@ -272,6 +287,12 @@ function listenToActiveTasks() {
     });
 
     listEl.innerHTML = html;
+  }, (err) => {
+    console.error("Task Retrieval Error:", err);
+    const listEl = document.getElementById('active-tasks-list');
+    if (listEl) {
+      listEl.innerHTML = `<p class="text-red-400 text-xs py-2">Error loading tasks: ${err.message}</p>`;
+    }
   });
 }
 
@@ -279,7 +300,11 @@ async function handleDeleteTask(taskId) {
   if (!confirm("Are you sure you want to delete this task?")) return;
   const dbInstance = getDb();
   if (dbInstance) {
-    await dbInstance.ref(`tasks/${taskId}`).remove();
+    try {
+      await dbInstance.ref(`tasks/${taskId}`).remove();
+    } catch (err) {
+      alert("Failed to delete task: " + err.message);
+    }
   }
 }
 

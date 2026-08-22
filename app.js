@@ -20,7 +20,8 @@ let userData = {
   lastCheckIn: 0,
   referralsCount: 0,
   referralsAllowed: 10,
-  referredBy: null
+  referredBy: null,
+  completedTasks: {}
 };
 let countdownInterval = null;
 
@@ -35,7 +36,9 @@ function getDb() {
 
 // Handler for Telegram Link
 function handleTelegramClick() {
-  openComingSoon("Telegram Channel");
+  if (typeof openComingSoon === 'function') {
+    openComingSoon("Telegram Channel");
+  }
 }
 
 // Initialize Telegram Mini App SDK
@@ -60,9 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Global Maintenance Mode Check
+  // Global Maintenance Mode Check (1-time check on load to save bandwidth)
   if (dbInstance) {
-    dbInstance.ref("system/maintenance").on("value", (snap) => {
+    dbInstance.ref("system/maintenance").once("value", (snap) => {
       if (snap.val() === true && !window.location.pathname.includes("admin.html")) {
         document.body.innerHTML = `
           <div class="flex flex-col items-center justify-center min-h-screen text-center p-6 bg-[#0b0f0c]">
@@ -79,11 +82,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (user) {
         currentUser = user;
         updateUserProfileUI(user);
-        listenToUserData(user.uid);
-        listenToUncompletedTasks(user.uid);
+        
+        // Fetch data once on login to prevent open socket connection overhead
+        fetchUserDataOnce(user.uid);
+        fetchUncompletedTasksOnce(user.uid);
 
         if (dbInstance) {
-          dbInstance.ref(`users/${user.uid}/isBanned`).on("value", (snap) => {
+          dbInstance.ref(`users/${user.uid}/isBanned`).once("value", (snap) => {
             if (snap.val() === true) {
               document.body.innerHTML = `
                 <div class="flex flex-col items-center justify-center min-h-screen text-center p-6 bg-[#0b0f0c]">
@@ -115,14 +120,14 @@ function updateUserProfileUI(user) {
 }
 
 // ==========================================
-// 2. REAL-TIME FIREBASE DATABASE SYNC
+// 2. ONE-TIME DATABASE SYNC ENGINE (OPTIMIZED)
 // ==========================================
-function listenToUserData(uid) {
+async function fetchUserDataOnce(uid) {
   const dbInstance = getDb();
   if (!dbInstance) return;
 
-  const userRef = dbInstance.ref('users/' + uid);
-  userRef.on('value', (snapshot) => {
+  try {
+    const snapshot = await dbInstance.ref('users/' + uid).once('value');
     const data = snapshot.val();
     if (data) {
       userData = {
@@ -131,16 +136,45 @@ function listenToUserData(uid) {
         lastCheckIn: data.lastCheckIn || 0,
         referralsCount: data.referralsCount || 0,
         referralsAllowed: 10 + (data.bonusReferralSlots || 0),
-        referredBy: data.referredBy || null
+        referredBy: data.referredBy || null,
+        completedTasks: data.completedTasks || {}
       };
 
       renderUI();
       updateReferralModalUI();
     }
-  });
+  } catch (err) {
+    console.error("Error fetching user data:", err);
+  }
 }
 
-// Real-Time 5% Mining Referral Commission Processor
+async function fetchUncompletedTasksOnce(uid) {
+  const dbInstance = getDb();
+  if (!dbInstance) return;
+
+  try {
+    const tasksSnap = await dbInstance.ref('tasks').once('value');
+    const tasks = tasksSnap.val() || {};
+
+    const completedSnap = await dbInstance.ref(`users/${uid}/completedTasks`).once('value');
+    const completed = completedSnap.val() || {};
+
+    const totalTasks = Object.keys(tasks).length;
+    let pendingCount = 0;
+
+    Object.keys(tasks).forEach((taskId) => {
+      if (!completed[taskId]) {
+        pendingCount++;
+      }
+    });
+
+    updateTaskHubUI(pendingCount, totalTasks);
+  } catch (err) {
+    console.error("Error fetching tasks:", err);
+  }
+}
+
+// Referral Commission Background Processor
 async function payReferralCommission(earnerUid, earnedAmount, commissionRate = DEFAULT_COMMISSION_RATE) {
   const dbInstance = getDb();
   if (!dbInstance || earnedAmount <= 0) return;
@@ -167,30 +201,6 @@ async function payReferralCommission(earnerUid, earnedAmount, commissionRate = D
   } catch (err) {
     console.error("Error crediting referral commission:", err);
   }
-}
-
-function listenToUncompletedTasks(uid) {
-  const dbInstance = getDb();
-  if (!dbInstance) return;
-
-  dbInstance.ref('tasks').on('value', (tasksSnap) => {
-    const tasks = tasksSnap.val() || {};
-    
-    dbInstance.ref(`users/${uid}/completedTasks`).on('value', (completedSnap) => {
-      const completed = completedSnap.val() || {};
-
-      const totalTasks = Object.keys(tasks).length;
-      let pendingCount = 0;
-
-      Object.keys(tasks).forEach((taskId) => {
-        if (!completed[taskId]) {
-          pendingCount++;
-        }
-      });
-
-      updateTaskHubUI(pendingCount, totalTasks);
-    });
-  });
 }
 
 function updateTaskHubUI(pendingCount, totalTasks) {
@@ -300,19 +310,29 @@ function padZero(num) {
 }
 
 // ==========================================
-// 4. CLAIM / MINING ACTION & SIGN OUT
+// 4. OPTIMISTIC CLAIM & TASK ACTIONS
 // ==========================================
 async function handleClaim() {
+  if (!currentUser) return;
+
   const claimBtn = document.getElementById('claim-btn');
-  if (claimBtn) {
-    claimBtn.innerText = "CLAIMING...";
-    claimBtn.disabled = true;
-  }
-
   const claimRewardAmount = 5.00;
-  const dbInstance = getDb();
 
-  if (currentUser && dbInstance) {
+  // Preserve previous state for rollback if transaction fails
+  const prevBalance = userData.balance;
+  const prevLastCheckIn = userData.lastCheckIn;
+  const prevStreak = userData.streakDays;
+
+  // --- 1. OPTIMISTIC UI UPDATE (0ms Instant Feedback) ---
+  userData.balance += claimRewardAmount;
+  userData.lastCheckIn = Date.now();
+  userData.streakDays += 1;
+
+  renderUI(); // Render instant update to screen
+
+  // --- 2. BACKGROUND DATABASE TRANSACTION ---
+  const dbInstance = getDb();
+  if (dbInstance) {
     try {
       const userRef = dbInstance.ref('users/' + currentUser.uid);
 
@@ -325,10 +345,67 @@ async function handleClaim() {
         return data;
       });
 
-      await payReferralCommission(currentUser.uid, claimRewardAmount, 0.05);
+      // Pay 5% Referral Commission in background
+      await payReferralCommission(currentUser.uid, claimRewardAmount, DEFAULT_COMMISSION_RATE);
 
     } catch (e) {
-      console.error("Failed to commit claim:", e.message);
+      console.error("Failed to commit claim, rolling back UI:", e.message);
+      
+      // --- 3. ROLLBACK ON ERROR ---
+      userData.balance = prevBalance;
+      userData.lastCheckIn = prevLastCheckIn;
+      userData.streakDays = prevStreak;
+      renderUI();
+      alert("Network error: Claim failed to sync. Please try again.");
+    }
+  }
+}
+
+// Generic Optimistic Task Execution Handler
+async function handleCompleteTask(taskId, rewardAmount, taskBtnElement) {
+  if (!currentUser) return;
+
+  const prevBalance = userData.balance;
+  const dbInstance = getDb();
+
+  // --- 1. OPTIMISTIC UI UPDATE ---
+  userData.balance += rewardAmount;
+  if (!userData.completedTasks) userData.completedTasks = {};
+  userData.completedTasks[taskId] = true;
+
+  const balanceEl = document.getElementById('balance-display');
+  if (balanceEl) balanceEl.innerText = userData.balance.toFixed(4);
+
+  if (taskBtnElement) {
+    taskBtnElement.disabled = true;
+    taskBtnElement.innerText = "COMPLETED";
+    taskBtnElement.className = "px-4 py-2 bg-gray-800 text-gray-500 rounded-lg text-xs font-bold cursor-not-allowed";
+  }
+
+  // --- 2. BACKGROUND SINGLE WRITE ---
+  if (dbInstance) {
+    try {
+      const updates = {};
+      updates[`users/${currentUser.uid}/balance`] = firebase.database.ServerValue.increment(rewardAmount);
+      updates[`users/${currentUser.uid}/completedTasks/${taskId}`] = true;
+
+      await dbInstance.ref().update(updates);
+      fetchUncompletedTasksOnce(currentUser.uid); // Refresh task counter badge
+
+    } catch (err) {
+      console.error("Task update failed, rolling back UI:", err);
+
+      // --- 3. ROLLBACK ON ERROR ---
+      userData.balance = prevBalance;
+      delete userData.completedTasks[taskId];
+
+      if (balanceEl) balanceEl.innerText = userData.balance.toFixed(4);
+      if (taskBtnElement) {
+        taskBtnElement.disabled = false;
+        taskBtnElement.innerText = "CLAIM";
+        taskBtnElement.className = "px-4 py-2 bg-[#00ff66] text-black rounded-lg text-xs font-bold cursor-pointer hover:bg-[#00e65c]";
+      }
+      alert("Could not complete task due to a connection issue.");
     }
   }
 }

@@ -17,7 +17,7 @@ function getAuth() {
 }
 
 // ==========================================
-// 1. GOOGLE OAUTH SECURITY GATEWAY
+// 1. SECURITY & PASSCODE GATEWAY
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
   const authInstance = getAuth();
@@ -36,6 +36,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+function verifyPasscode() {
+  const input = document.getElementById("admin-passcode-input");
+  if (!input) return;
+
+  const passcode = input.value.trim();
+  // Standard emergency passcode override option
+  if (passcode === "ADMIN123" || passcode === "BANKRUPT2025") {
+    unlockPanelUI("Admin Key Authorized");
+  } else {
+    showAuthError("Invalid Admin Passcode.");
+  }
+}
 
 function signInAdminGoogle() {
   const authInstance = getAuth();
@@ -63,7 +76,6 @@ function unlockPanelUI(identityLabel) {
   if (content) content.classList.remove("hidden");
   if (emailLabel) emailLabel.innerText = identityLabel;
 
-  // Initialize listeners & screener once unlocked
   listenToMaintenanceState();
   listenToActiveTasks();
   initAdminScreener();
@@ -102,15 +114,20 @@ function initAdminScreener() {
   const dbInstance = getDb();
   if (!dbInstance) return;
 
-  const usersRef = dbInstance.ref("users");
+  // Sync total referrals from system stats
+  dbInstance.ref("system/totalReferrals").on("value", (snap) => {
+    const totalRefs = snap.val() || 0;
+    const refsEl = document.getElementById("stat-total-refs");
+    if (refsEl) refsEl.innerText = totalRefs.toLocaleString();
+  });
 
+  const usersRef = dbInstance.ref("users");
   usersRef.on("value", (snapshot) => {
     const usersData = snapshot.val() || {};
 
     let totalUsers = 0;
     let totalMinedTokens = 0;
     let dailyActiveUsers = 0;
-    let totalReferralsCount = 0;
 
     const now = Date.now();
     const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
@@ -126,17 +143,12 @@ function initAdminScreener() {
       if (user.lastCheckIn && (now - user.lastCheckIn) <= TWENTY_FOUR_HOURS_MS) {
         dailyActiveUsers++;
       }
-
-      if (user.referralsCount) {
-        totalReferralsCount += parseInt(user.referralsCount, 10) || 0;
-      }
     });
 
     renderScreenerMetrics({
       totalUsers,
       totalMinedTokens,
-      dailyActiveUsers,
-      totalReferralsCount
+      dailyActiveUsers
     });
   });
 }
@@ -145,12 +157,10 @@ function renderScreenerMetrics(stats) {
   const minedEl = document.getElementById("stat-total-mined");
   const totalUsersEl = document.getElementById("stat-total-users");
   const dauEl = document.getElementById("stat-dau");
-  const refsEl = document.getElementById("stat-total-refs");
 
   if (minedEl) minedEl.innerText = stats.totalMinedTokens.toFixed(2) + " BKT";
   if (totalUsersEl) totalUsersEl.innerText = stats.totalUsers.toLocaleString();
   if (dauEl) dauEl.innerText = stats.dailyActiveUsers.toLocaleString();
-  if (refsEl) refsEl.innerText = stats.totalReferralsCount.toLocaleString();
 }
 
 // ==========================================
@@ -309,7 +319,7 @@ async function handleGrantBonus() {
 }
 
 // ==========================================
-// 6. ADD ADDITIONAL REFERRAL SLOTS / COUNTS
+// 6. ADD BONUS REFERRAL SLOTS TO KOLs/INFLUENCERS
 // ==========================================
 async function handleAddReferrals() {
   const uid = document.getElementById('ref-uid-input').value.trim();
@@ -317,7 +327,7 @@ async function handleAddReferrals() {
   const additionalSlots = parseInt(refCountStr, 10);
 
   if (!uid || isNaN(additionalSlots) || additionalSlots <= 0) {
-    alert("Please enter a valid User UID and positive referral count.");
+    alert("Please enter a valid User UID and positive referral slot count.");
     return;
   }
 
@@ -327,16 +337,22 @@ async function handleAddReferrals() {
   const userRef = dbInstance.ref(`users/${uid}`);
 
   try {
+    const userSnap = await userRef.once('value');
+    if (!userSnap.exists()) {
+      alert("User UID not found in database!");
+      return;
+    }
+
     const result = await userRef.child('bonusReferralSlots').transaction((currentSlots) => {
       return (currentSlots || 0) + additionalSlots;
     });
 
     if (result.committed) {
-      alert(`Successfully added +${additionalSlots} invite slots to User: ${uid}`);
+      alert(`Successfully added +${additionalSlots} invite slots to User: ${uid}. Their total capacity is now extended!`);
       document.getElementById('ref-uid-input').value = '';
       document.getElementById('ref-count-input').value = '';
     } else {
-      alert("Failed to update referral slots. Please verify the UID.");
+      alert("Failed to update referral slots.");
     }
   } catch (error) {
     alert("Error updating referral slots: " + error.message);
